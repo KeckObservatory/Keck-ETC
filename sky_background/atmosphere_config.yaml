@@ -1,0 +1,7 @@
+---
+
+# Default values
+defaults:
+    seeing: 0.8 arcsec
+    airmass: 0.0
+    water_vapor: 1.0 mm
