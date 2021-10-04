@@ -1,0 +1,17 @@
+---
+
+# default values
+defaults:
+  grating: '600ZD'
+  filter: 'GG400'
+  slit: 10 mm
+  binning: '1x1'
+
+# grating options
+gratings: ['600ZD', '830G', '900ZD', '1200G', '1200B']
+
+# filter options
+filters: ['GG400', 'GG455', 'OG550']
+
+# binning options
+binnings: ['1x1', '1x2', '2x1', '2x2']

@@ -29,6 +29,8 @@ class instrument:
         config_filepath = '/usr/local/home/kblair/Documents/ETC/prototype/instruments/'+name+'/instrument_config.yaml'
         self._mount_config(config_filepath)
 
+        self.name = name
+
 
     def get_throughput(self, wavelengths):
         # Content comes later
