@@ -1,11 +1,12 @@
 ---
 
 defaults:
-  type: point source
+  type: point_source
   brightness: 18 AB
   redshift: 0.0
 
 templates:
+  point_source: point_source_template.fits
   qso: qso_template.fits
   seyfert1: seyfert1_template.fits
   seyfert2: seyfert2_template.fits
