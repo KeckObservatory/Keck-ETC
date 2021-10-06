@@ -8,7 +8,8 @@ defaults:
   binning: '1x1'
 
 # grating options
-gratings: ['600ZD', '830G', '900ZD', '1200G', '1200B']
+gratings: ['600ZD', '830G', '900ZD', '1200G', '1200B']  # Imaging mode replaces grating w/ mirror, how does this affect throughput? Should I have grating: 'None' or mode: 'Image'?
+# Imaging mode ~ .4 throughput at 6000A...
 
 # filter options
 filters: ['GG400', 'GG455', 'OG550']
