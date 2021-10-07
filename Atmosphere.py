@@ -23,15 +23,7 @@ class atmosphere:
         # Open config file, convert & mount to self
         config = yaml.safe_load(open(config_path))
         config = _dict2obj(config)
-        self.__dict__.update({'config': config})
-        
-    def _parse_unit_string(x):
-        # If value isn't a string, treat it as a dimensionless unit --TODO: error handling if it's not a number
-        if not isinstance(x, str):
-            return x * u.dimensionless_unscaled
-        
-        # Otherwise, split the string along whitespace and parse quantity & unit with astropy --TODO: error handling for bad format strings
-        return u.Quantity(x.split(' ')[0], unit=x.split(' ')[-1])
+        self.config = config
 
 
     def __init__(self):
@@ -39,11 +31,11 @@ class atmosphere:
         config_filepath = '/usr/local/home/kblair/Documents/ETC/prototype/sky_background/atmosphere_config.yaml'
         self._mount_config(config_filepath)
 
-        self.seeing = [ atmosphere._parse_unit_string(self.config.defaults.seeing) ]
+        self.seeing = [ u.Quantity(self.config.defaults.seeing) ]
 
-        self.airmass = atmosphere._parse_unit_string(self.config.defaults.airmass)
+        self.airmass = u.Quantity(self.config.defaults.airmass)
 
-        self.water_vapor = atmosphere._parse_unit_string(self.config.defaults.water_vapor)
+        self.water_vapor = u.Quantity(self.config.defaults.water_vapor)
     
     def setSeeing(self, seeing, unit):
         # Input validation here...

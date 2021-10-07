@@ -6,9 +6,11 @@ defaults:
   filter: 'GG400'
   slit: 10 mm
   binning: '1x1'
+  amplifier: '1B'
+  mode: 'spectral'
 
 # grating options
-gratings: ['600ZD', '830G', '900ZD', '1200G', '1200B']  # Imaging mode replaces grating w/ mirror, how does this affect throughput? Should I have grating: 'None' or mode: 'Image'?
+gratings: ['600ZD', '830G', '900ZD', '1200G', '1200B']  # Imaging mode replaces grating w/ mirror, how does this affect throughput? Should I set grating: None for imaging?
 # Imaging mode ~ .4 throughput at 6000A...
 
 # filter options
@@ -16,3 +18,48 @@ filters: ['GG400', 'GG455', 'OG550']
 
 # binning options
 binnings: ['1x1', '1x2', '2x1', '2x2']
+
+# operation modes
+modes: ['spectral', 'direct']
+
+# available amplifiers
+amplifiers: [1A, 1B, 2A, 2B, 3A, 3B, 4A, 4B, 5B, 6B, 7B, 8B]
+
+read_noise:
+  direct:
+    1A: 2.582 electron
+    1B: 2.473 electron
+    2A: 1.782 electron
+    2B: 2.454 electron
+    3A: 2.445 electron
+    3B: 2.659 electron
+    4A: 3.905 electron
+    4B: 2.546 electron
+  spectral:
+    1B: 2.467 electron
+    2B: 2.456 electron
+    3B: 2.655 electron
+    4B: 2.536 electron
+    5B: 49.657 electron  # obviously wrong, how should I deal with this?
+    6B: 2.515 electron
+    7B: 2.503 electron
+    8B: 2.534 electron
+
+dark_current:
+  direct:
+    # No data for 1A, 2A, etc... what should I do?
+    1B: 4.19 electron / (pixel * hour)
+    2B: 3.46 electron / (pixel * hour)
+    3B: 4.03 electron / (pixel * hour)
+    4B: 3.80 electron / (pixel * hour)
+  spectral:
+    1B: 3.30 electron / (pixel * hour)
+    2B: 3.60 electron / (pixel * hour)
+    3B: 3.50 electron / (pixel * hour)
+    4B: 3.70 electron / (pixel * hour)
+    5B: 2.70 electron / (pixel * hour)
+    6B: 3.80 electron / (pixel * hour)
+    7B: 3.30 electron / (pixel * hour)
+    8B: 3.70 electron / (pixel * hour)
+
+# Slit options, could be any number... how to represent in config file?

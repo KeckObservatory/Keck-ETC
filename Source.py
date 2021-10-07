@@ -1,4 +1,5 @@
 import yaml
+from astropy.io import fits
 
 class source:
 
@@ -12,9 +13,9 @@ class source:
             if not isinstance(d, dict):
                 return d
             # Otherwise, create dummy object
-            class Foo:
+            class DummyObject:
                 pass
-            obj = Foo()
+            obj = DummyObject()
             # Loop over dictionary items and add to object
             for x in d:
                 obj.__dict__[x] = _dict2obj(d[x])
@@ -22,11 +23,12 @@ class source:
         # Open config file, convert & mount to self
         config = yaml.safe_load(open(config_path))
         config = _dict2obj(config)
-        self.__dict__.update({'config': config})
+        self.config = config
 
     def __init__(self):
         config_filepath = '/usr/local/home/kblair/Documents/ETC/prototype/source/source_config.yaml'
         self._mount_config(config_filepath)
+        self.__dict__.update(vars(self.config.defaults))
 
     
     def get_output(self, wavelengths):

@@ -3,20 +3,14 @@ from Atmosphere import atmosphere
 from Source import source
 
 
+if __name__ == '__main__':
+    foo = instrument('deimos')
+    print(foo.get_throughput([5000,6000,7000, 800, 9000, 4000.48]))
+    foo.amplifier = '3B'
+    print(foo.get_dark_current())
+    print(foo.get_read_noise())
 
-foo = instrument('test')
 
-print(foo)
-print(foo.config.who)
-print(foo.config.why)
-print(vars(foo.config.why)['when'])
-print(foo.config.why.how)
+    bar = atmosphere()
 
-bar = atmosphere()
-
-print(bar.config.defaults.seeing)
-print(bar.seeing)
-print(bar.airmass)
-print(vars(bar)['water_vapor'])
-
-yum = source()
+    yum = source()
