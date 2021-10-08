@@ -2,11 +2,11 @@
 ---
 
 # Available instruments in the ETC
-instruments: ['deimos', 'test']
+instruments: [nires]
 
 # Default values
 defaults:
-  instrument: 'deimos'
+  instrument: 'nires'
   exposure: 3600 s
   snr: None
   dither: 1
