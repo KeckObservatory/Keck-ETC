@@ -4,10 +4,11 @@
 
 
 defaults:
-  slit: 0.55 in by 18 in
+  slit_width: 0.55 in
+  slit_length: 18 in
   dark_current: 0.13 electron / (pixel s)
   read_noise: 15 sqrt(electron)  # Kind of a nonsense unit, but read noise is actually variance and needs to be squared later...
 
 throughput_path: throughput.txt  # Relative path to throughput file... does throughput include telescope? How about detector QE?
 
-slits: ['0.55 in by 18 in']  # Should we just do area of slit? But dropdown should probably list thickness for fixed-length slits, maybe store as tuple?
+slits: [ [0.55 in, 18 in] ]  # Should we just do area of slit? But dropdown should probably list thickness for fixed-length slits, maybe store as tuple?

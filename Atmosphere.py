@@ -1,4 +1,5 @@
 from astropy import units as u
+from astropy.table import Table
 import yaml
 
 class atmosphere:
@@ -26,6 +27,13 @@ class atmosphere:
         self.config = config
 
 
+    def _load_files(self):
+        # TODO
+        test = Table.read('sky_background/mk_skybg_zm_10_10_ph.dat', format='ascii.ecsv')
+        print(test)
+        print(test['wavelength'][1])
+
+
     def __init__(self):
         # Set default values based on config file
         config_filepath = '/usr/local/home/kblair/Documents/ETC/prototype/sky_background/atmosphere_config.yaml'
@@ -36,21 +44,10 @@ class atmosphere:
         self.airmass = u.Quantity(self.config.defaults.airmass)
 
         self.water_vapor = u.Quantity(self.config.defaults.water_vapor)
-    
-    def setSeeing(self, seeing, unit):
-        # Input validation here...
 
-        self.seeing = seeing * unit
+        self._load_files()
 
-    def setAirmass(self, airmass, unit):
-        # Input validation here...
 
-        self.airmass = airmass * unit
-
-    def setWaterVapor(self, water_vapor, unit):
-        # Input validation here...
-
-        self.water_vapor = water_vapor * unit
 
     def get_transmission(self, wavelengths):
         # TODO

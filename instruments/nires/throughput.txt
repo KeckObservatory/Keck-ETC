@@ -3,10 +3,6 @@
 # datatype:
 # - {name: wav, unit: um, datatype: float64}
 # - {name: eff, unit: dimensionless-unscaled, datatype: float64}
-# meta: !!omap
-# - {Filter: GG455}
-# - {cwav: '6500'}
-# - {Grating: 600ZD}
 # schema: astropy-2.0
 wav eff
 0.950423  0.000474894

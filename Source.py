@@ -1,5 +1,7 @@
 import yaml
-from astropy.io import fits
+from astropy.table import Table
+from numpy import interp as interpolate
+from numpy import NaN, isnan
 
 class source:
 
@@ -12,10 +14,10 @@ class source:
             # If not list or dictionary, return object
             if not isinstance(d, dict):
                 return d
-            # Otherwise, create dummy object
-            class DummyObject:
+            # Otherwise, create generic object
+            class GenericObject:
                 pass
-            obj = DummyObject()
+            obj = GenericObject()
             # Loop over dictionary items and add to object
             for x in d:
                 obj.__dict__[x] = _dict2obj(d[x])
@@ -31,6 +33,12 @@ class source:
         self.__dict__.update(vars(self.config.defaults))
 
     
-    def get_output(self, wavelengths):
-        # TODO
-        return []
+    def get_flux(self, wavelengths):
+        filepath = '/usr/local/home/kblair/Documents/ETC/prototype/source/' + vars(self.config.templates)[self.type]
+        spectra = Table.read(filepath, format='ascii.ecsv')
+        spectra['wavelength'] = spectra['wavelength'] * (1 + self.redshift)  # Apply redshift
+        flux = interpolate(wavelengths, spectra['wavelength'], spectra['flux'], left=NaN, right=NaN)
+        if isnan(flux).any():
+            print('WARNING: In source.get_flux() -- ' +
+            'some or all provided wavelengths are outside the current bounds of ['+str(min(spectra['wavelength']))+', '+str(max(spectra['wavelength']))+'] '+str(spectra['wavelength'].unit)+', returning NaN')
+        return flux

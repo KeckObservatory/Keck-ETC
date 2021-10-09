@@ -1,12 +1,15 @@
 ---
 
 defaults:
-  type: point_source
+  type: qso
   brightness: 18 AB
-  redshift: 0.0
+  redshift: 0.0  # negative for blueshift
 
 templates:
-  point_source: point_source_template.fits
-  qso: qso_template.fits
-  seyfert1: seyfert1_template.fits
-  seyfert2: seyfert2_template.fits
+  point_source: point_source_template.txt
+  qso: qso_template.txt
+  seyfert1: seyfert1_template.txt
+  seyfert2: seyfert2_template.txt
+  blackbody: blackbody_template.txt
+
+types: [point_source, qso, seyfert1, seyfert2, blackbody]
