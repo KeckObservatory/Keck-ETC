@@ -5,3 +5,15 @@ defaults:
     seeing: 0.8 arcsec
     airmass: 0.0
     water_vapor: 1.0 mm
+
+# Directory for atmosphere files, relative or absolute
+file_directory: sky_background
+
+# Pattern to match for transmission/emission files, program matches the start of the filenames against these strings
+emission_filepath: mk_skybg_zm_
+transmission_filepath: mktrans_zm_
+
+# Indices for transmission/emission files, must correspond to file contents!!
+airmass_index: [1.0, 1.5, 2.0]
+water_vapor_index: [1 mm, 1.6 mm, 3 mm, 5 mm]
+wavelength_index: [0.9 um, 5.6 um, 0.02 nm]  # min, max (exclusive), step size
