@@ -5,11 +5,47 @@ defaults:
   brightness: 18 AB
   redshift: 0.0  # negative for blueshift
 
-templates:
-  point_source: point_source_template.txt
-  qso: qso_template.txt
-  seyfert1: seyfert1_template.txt
-  seyfert2: seyfert2_template.txt
-  blackbody: blackbody_template.txt
+source_types:
 
-types: [point_source, qso, seyfert1, seyfert2, blackbody]
+  gaussian:
+    name: Gaussian
+    filename: None
+    parameters:
+      fwhm: 200 nm
+      wavelength: 2 micron
+
+  blackbody:
+    name: Blackbody
+    filename: None
+    parameters:
+      temperature: 5000 K
+
+  power:
+    name: Power Law
+    filname: None
+    parameters:
+      wavelength: 1 micron
+      index: -2
+
+  flat:
+    name: Flat
+    filename: None
+
+  vega:
+    name: Vega
+    filename: vega_template.txt
+
+  qso:
+    name: QSO
+    filename: qso_template.txt
+
+  seyfert1:
+    name: Seyfert 1
+    filename: seyfert1_template.txt
+
+  seyfert2:
+    name: Seyfert 2
+    filename: seyfert2_template.txt
+
+# Path (absolute or relative) to directory containing source template files
+template_filepath: /usr/local/home/kblair/Documents/ETC/prototype/source/

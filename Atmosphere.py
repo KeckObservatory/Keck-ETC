@@ -135,6 +135,7 @@ class atmosphere:
 
 
     def _trilinear_interpolation(self, values, wavelengths):
+        # Manual method, slower than RegularGridInterpolator, currently unused and probably will be deleted soon
         values = np.array([[np.interp(wavelengths, self.wavelength_index, x) for x in y] for y in values])
         am = [ self.airmass_index[self.airmass_index < self.airmass][-1].value, self.airmass_index[self.airmass_index > self.airmass][0].value ]
         wv = [ self.water_vapor_index[self.water_vapor_index < self.water_vapor][-1].value, self.water_vapor_index[self.water_vapor_index > self.water_vapor][0].value ]
@@ -152,7 +153,7 @@ class atmosphere:
         return result
 
 
-    def get_transmission(self, wavelengths):
+    def get_transmission(self, wavelengths):  # TODO -- replace out-of-bounds wavelengths with np.NaN instead of discarding
 
         # Check for and remove out-of-bounds wavelengths to avoid RegularGridInterpolator throwing errors
         wavelengths_trim = wavelengths[(self.wavelength_index[0] <= wavelengths) & (wavelengths <= self.wavelength_index[-1])]
@@ -165,7 +166,7 @@ class atmosphere:
         return interpolation([[self.airmass.value, self.water_vapor.value, λ] for λ in wavelengths_trim.to(u.angstrom).value]) * u.Unit('')
 
 
-    def get_emission(self, wavelengths):
+    def get_emission(self, wavelengths):  # TODO -- replace out-of-bounds wavelengths with np.NaN instead of discarding
         # Check for and remove out-of-bounds wavelengths to avoid RegularGridInterpolator throwing errors
         wavelengths_trim = wavelengths[(self.wavelength_index[0] <= wavelengths) & (wavelengths <= self.wavelength_index[-1])]
         if len(wavelengths_trim) != len(wavelengths):
