@@ -1,11 +1,13 @@
 import yaml
 from astropy.table import Table
 from numpy import interp as interpolate
-from numpy import NaN, isnan
+from numpy import NaN, isnan, exp
+from astropy.constants import c, h, k_B
+
 
 class source:
 
-    global _CONFIG_FILEPATH; _CONFIG_FILEPATH = '/usr/local/home/kblair/Documents/ETC/prototype/source/source_config.yaml'
+    global _CONFIG_FILEPATH; _CONFIG_FILEPATH = 'source/source_config.yaml'
 
     def _mount_config(self, config_path):
         # From https://www.geeksforgeeks.org/convert-nested-python-dictionary-to-object/
@@ -16,6 +18,7 @@ class source:
             # If not list or dictionary, return object
             if not isinstance(d, dict):
                 return d
+
             # Otherwise, create generic object
             class GenericObject:
                 pass
@@ -30,6 +33,14 @@ class source:
         self.config = config
 
 
+    def _load_files(self):
+        self.functions = {}
+        for name, source in vars(self.config.source_types):
+            if source.filename.lower() != 'none':
+                data = Table.read(self.config.template_filepath+source.filename)
+                # Figure out how to scale flux by the magnitude -- and units, see https://docs.astropy.org/en/stable/units/equivalencies.html for conversions!
+                self.functions[name] = lambda w: interpolate(w, data['wavelength'] * (1 + self.redshift), data['flux'], left=NaN, right=NaN)
+
     def _validate_config(self):
         pass  # TODO
 
@@ -41,13 +52,17 @@ class source:
 
         self.__dict__.update(vars(self.config.defaults))
 
+        self._load_files()
+
 
     def _gaussian(self, wavelengths):
         pass  # TODO
 
 
     def _blackbody(self, wavelengths):
-        pass  # TODO
+        # From https://pysynphot.readthedocs.io/en/latest/spectrum.html
+        flux = (2*h*c / wavelengths**5) / (exp(h*c/(wavelengths*self.temperature*k_B)) - 1)
+        return flux
 
 
     def _flat(self, wavelengths):
@@ -65,7 +80,7 @@ class source:
         flux = interpolate(wavelengths, spectra['wavelength'], spectra['flux'], left=NaN, right=NaN)
         if isnan(flux).any():
             print('WARNING: In source.get_flux() -- some or all provided wavelengths are outside the current bounds of [' +
-            str(min(spectra['wavelength']))+', '+str(max(spectra['wavelength']))+'] '+str(spectra['wavelength'].unit)+', returning NaN')
+                    str(min(spectra['wavelength']))+', '+str(max(spectra['wavelength']))+'] '+str(spectra['wavelength'].unit)+', returning NaN')
         return flux
 
     def add_template(self, template, name):

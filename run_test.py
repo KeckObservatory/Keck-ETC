@@ -13,12 +13,13 @@ if __name__ == '__main__':
     foo.get_read_noise()
 
 
-    bar = atmosphere()
-    bar.airmass=u.Quantity(1.3)
-    bar.water_vapor=u.Quantity('4.2 mm')
-    bar.get_transmission(u.Quantity(random(1000)*4, u.micron))
-    bar.get_emission(u.Quantity(random(1000)*4, u.micron))
+    # bar = atmosphere()
+    # bar.airmass=u.Quantity(1.3)
+    # bar.water_vapor=u.Quantity('4.2 mm')
+    # bar.get_transmission(u.Quantity(random(1000)*4, u.micron))
+    # bar.get_emission(u.Quantity(random(1000)*4, u.micron))
 
     yum = source()
     yum.redshift = 2
-    yum.get_flux(u.Quantity([0.3, 0.5, 0.8, 1, 1.5, 2, 2.5, 3], u.micron))
+    #yum.get_flux(u.Quantity([0.3, 0.5, 0.8, 1, 1.5, 2, 2.5, 3], u.micron))
+    print(yum._blackbody(u.Quantity([0.3, 0.5, 0.8, 1, 1.5, 2, 2.5, 3], u.micron)))

@@ -2,7 +2,7 @@
 # ---
 # datatype:
 # - {name: wavelength, unit: angstrom, datatype: float32}
-# - {name: flux, unit: flam, datatype: float32}
+# - {name: flux, unit: flm, datatype: float32}
 # schema: astropy-2.0
 wavelength flux
 1235.0 1.6444459e-14

@@ -36,7 +36,7 @@ class instrument:
         #         filepath = '/usr/local/home/kblair/Documents/ETC/prototype/instruments/'+self.name+'/'+f+'_'+g+'.txt'
         #         data = Table.read(filepath, format='ascii.ecsv')
         #         self._throughput[(g, f)] = data
-        filepath = '/usr/local/home/kblair/Documents/ETC/prototype/instruments/'+self.name+'/'+self.config.throughput_path
+        filepath = 'instruments/'+self.name+'/'+self.config.throughput_path
         self._throughput = Table.read(filepath, format='ascii.ecsv')
 
 
@@ -66,6 +66,6 @@ class instrument:
         return u.Quantity(self.read_noise)
 
     def set_name(self, name):
-        config_filepath = '/usr/local/home/kblair/Documents/ETC/prototype/instruments/'+name+'/instrument_config.yaml'
+        config_filepath = 'instruments/'+name+'/instrument_config.yaml'
         self._mount_config(config_filepath)
         self.name = name

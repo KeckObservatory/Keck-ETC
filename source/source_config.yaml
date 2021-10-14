@@ -48,4 +48,4 @@ source_types:
     filename: seyfert2_template.txt
 
 # Path (absolute or relative) to directory containing source template files
-template_filepath: /usr/local/home/kblair/Documents/ETC/prototype/source/
+template_filepath: source/
