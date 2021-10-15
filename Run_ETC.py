@@ -2,14 +2,7 @@ from astropy import units as u
 from Instrument import instrument
 from Source import source
 from Atmosphere import atmosphere
-
-def _parse_unit_string(x):
-    # If value isn't a string, treat it as a dimensionless unit --TODO: error handling if it's not a number
-    if not isinstance(x, str):
-        return x * u.dimensionless_unscaled
-    
-    # Otherwise, split the string along whitespace and parse quantity & unit with astropy --TODO: error handling for bad format strings
-    return u.Quantity(x.split(' ')[0], unit=x.split(' ')[-1])
+import yaml
 
 class run_etc:
 
@@ -36,10 +29,19 @@ class run_etc:
         self.__dict__.update({'config': config})
 
 
+    def _validate_config(self):
+        pass  # TODO
+
+
+    def _calculate(self):
+        pass  # TODO
+
+
     def __init__(self):
         # Set default values based on config file
         config_filepath = '/usr/local/home/kblair/Documents/ETC/prototype/config.yaml'
         self._mount_config(config_filepath)
+        self._validate_config()
 
         # Initialize objects
         self.instrument = instrument(self.config.defaults.instrument)
@@ -47,11 +49,11 @@ class run_etc:
         self.source = source()
 
         # Initialize values
-        self.exposure = parse_unit_string(self.config.defaults.exposure)
-        self.snr = parse_unit_string(self.config.defaults.snr)
-        self.dither = parse_unit_string(self.config.defaults.dither)
-        self.read = parse_unit_string(self.config.defaults.read)
-        self.repeat = parse_unit_string(self.config.defaults.repeat)
-        self.coadd = parse_unit_string(self.config.defaults.coadd)
+        self.exposure = u.Quantity(self.config.defaults.exposure)
+        self.snr = u.Quantity(self.config.defaults.snr)
+        self.dither = u.Quantity(self.config.defaults.dither)
+        self.read = u.Quantity(self.config.defaults.read)
+        self.repeat = u.Quantity(self.config.defaults.repeat)
+        self.coadd = u.Quantity(self.config.defaults.coadd)
 
         self._calculate()

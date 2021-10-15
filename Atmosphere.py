@@ -71,7 +71,21 @@ class atmosphere:
     def _validate_config(self):
         # Throw errors if config file doesn't conform to requirements
         print('ATMOSPHERE: Validating configuration file',_CONFIG_FILEPATH)
-        
+
+        # Check that all required fields exist and are spelled correctly
+        try:
+            _ = u.Quantity(self.config.defaults.seeing)
+            _ = u.Quantity(self.config.defaults.airmass)
+            _ = u.Quantity(self.config.defaults.water_vapor)
+            _ = self.config.file_directory
+            _ = self.config.emission_filepath
+            _ = self.config.transmission_filepath
+            _ = self.config.airmass_index
+            _ = self.config.water_vapor_index
+            _ = self.config.wavelength_index
+        except:
+            raise ValueError('ERROR: In atmosphere_config.yaml -- invalid configuration file, missing required value')
+
         # Check defaults.water_vapor and water_vapor_index
         test_wvi = [u.Quantity(x) for x in self.config.water_vapor_index]
         if not test_wvi == sorted(test_wvi):

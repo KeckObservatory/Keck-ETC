@@ -9,31 +9,27 @@ source_types:
 
   gaussian:
     name: Gaussian
-    filename: None
     parameters:
       fwhm: 200 nm
       wavelength: 2 micron
 
   blackbody:
     name: Blackbody
-    filename: None
     parameters:
       temperature: 5000 K
 
   power:
     name: Power Law
-    filname: None
     parameters:
       wavelength: 1 micron
       index: -2
 
   flat:
     name: Flat
-    filename: None
 
-  vega:
-    name: Vega
-    filename: vega_template.txt
+#  vega:
+#    name: Vega
+#    filename: vega_template.txt
 
   qso:
     name: QSO

@@ -21,5 +21,12 @@ if __name__ == '__main__':
 
     yum = source()
     yum.redshift = 2
-    #yum.get_flux(u.Quantity([0.3, 0.5, 0.8, 1, 1.5, 2, 2.5, 3], u.micron))
-    print(yum._blackbody(u.Quantity([0.3, 0.5, 0.8, 1, 1.5, 2, 2.5, 3], u.micron)))
+    print(yum.get_flux(u.Quantity([0.3, 0.5, 0.8, 1, 1.5, 2, 2.5, 3], u.micron)))
+    yum.set_type('blackbody')
+    print(yum.get_flux(u.Quantity([0.3, 0.5, 0.8, 1, 1.5, 2, 2.5, 3], u.micron)))
+    yum.set_type('flat')
+    print(yum.get_flux(u.Quantity([0.3, 0.5, 0.8, 1, 1.5, 2, 2.5, 3], u.micron)))
+    yum.set_type('power')
+    print(yum.get_flux(u.Quantity([0.3, 0.5, 0.8, 1, 1.5, 2, 2.5, 3], u.micron)))
+
+    #print(yum._blackbody(u.Quantity([0.3, 0.5, 0.8, 1, 1.5, 2, 2.5, 3], u.micron)))

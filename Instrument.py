@@ -40,9 +40,14 @@ class instrument:
         self._throughput = Table.read(filepath, format='ascii.ecsv')
 
 
+    def _validate_config(self):
+        pass  # TODO
+
+
 
     def __init__(self, name):
         self.set_name(name)
+        self._validate_config()
         self.__dict__.update(vars(self.config.defaults))
         self._read_throughput()
         
