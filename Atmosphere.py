@@ -139,7 +139,7 @@ class atmosphere:
 
         self._validate_config()
 
-        self.seeing = [ u.Quantity(self.config.defaults.seeing) ]
+        self.seeing = u.Quantity(self.config.defaults.seeing)  # TODO -- run range of seeings, maybe return a dictionary / 2d list for different seeing values?
 
         self.airmass = u.Quantity(self.config.defaults.airmass)
 

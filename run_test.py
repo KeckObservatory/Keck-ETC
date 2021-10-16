@@ -2,15 +2,15 @@ from Instrument import instrument
 from Atmosphere import atmosphere
 from Source import source
 import astropy.units as u
-import timeit
+from ETC import etc
 from numpy.random import random
 
 
 if __name__ == '__main__':
-    foo = instrument('nires')
-    foo.get_throughput(u.Quantity([5000, 8000, 10000, 11000], u.angstrom))
-    foo.get_dark_current()
-    foo.get_read_noise()
+    # foo = instrument('nires')
+    # foo.get_throughput(u.Quantity([5000, 8000, 10000, 11000], u.angstrom))
+    # foo.get_dark_current()
+    # foo.get_read_noise()
 
 
     # bar = atmosphere()
@@ -19,14 +19,24 @@ if __name__ == '__main__':
     # bar.get_transmission(u.Quantity(random(1000)*4, u.micron))
     # bar.get_emission(u.Quantity(random(1000)*4, u.micron))
 
-    yum = source()
-    yum.redshift = 2
-    print(yum.get_flux(u.Quantity([0.3, 0.5, 0.8, 1, 1.5, 2, 2.5, 3], u.micron)))
-    yum.set_type('blackbody')
-    print(yum.get_flux(u.Quantity([0.3, 0.5, 0.8, 1, 1.5, 2, 2.5, 3], u.micron)))
-    yum.set_type('flat')
-    print(yum.get_flux(u.Quantity([0.3, 0.5, 0.8, 1, 1.5, 2, 2.5, 3], u.micron)))
-    yum.set_type('power')
-    print(yum.get_flux(u.Quantity([0.3, 0.5, 0.8, 1, 1.5, 2, 2.5, 3], u.micron)))
+    # yum = source()
+    # yum.redshift = 2
+    # yum.get_flux(u.Quantity([0.3, 0.5, 0.8, 1, 1.5, 2, 2.5, 3], u.micron))
+    # yum.set_type('blackbody')
+    # yum.get_flux(u.Quantity([0.3, 0.5, 0.8, 1, 1.5, 2, 2.5, 3], u.micron))
+    # yum.set_type('flat')
+    # yum.get_flux(u.Quantity([0.3, 0.5, 0.8, 1, 1.5, 2, 2.5, 3], u.micron))
+    # yum.set_type('power')
+    # yum.get_flux(u.Quantity([0.3, 0.5, 0.8, 1, 1.5, 2, 2.5, 3], u.micron))
+    # yum.set_type('qso')
+    # yum.get_flux(u.Quantity([0.3, 0.5, 0.8, 1, 1.5, 2, 2.5, 3], u.micron))
+    # yum.set_type('seyfert1')
+    # yum.get_flux(u.Quantity([0.3, 0.5, 0.8, 1, 1.5, 2, 2.5, 3], u.micron))
+    # yum.set_type('seyfert2')
+    # yum.get_flux(u.Quantity([0.3, 0.5, 0.8, 1, 1.5, 2, 2.5, 3], u.micron))
+    # yum.set_type('vega')
+    # yum.get_flux(u.Quantity([0.3, 0.5, 0.8, 1, 1.5, 2, 2.5, 3], u.micron))
+    # yum.set_type('gaussian')
+    # yum.get_flux(u.Quantity([0.3, 0.5, 0.8, 1, 1.5, 2, 2.5, 3], u.micron))
 
-    #print(yum._blackbody(u.Quantity([0.3, 0.5, 0.8, 1, 1.5, 2, 2.5, 3], u.micron)))
+    test = etc()

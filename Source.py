@@ -41,8 +41,8 @@ class source:
             if 'filename' in vars(source_type).keys():
                 data = Table.read(self.config.template_filepath+source_type.filename, format='ascii.ecsv')
                 # TODO -- Figure out how to scale flux by the magnitude!
-                flux = data['flux'].to(u.photon / (u.cm**3 * u.s), equivalencies=u.spectral_density(data['wavelength'].to(u.angstrom)))
-                self.functions[name] = lambda w: interpolate(w, data['wavelength'] * (1 + self.redshift), flux, left=NaN, right=NaN)
+                flux = data['flux'].to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(data['wavelength'].to(u.angstrom)))
+                self.functions[name] = lambda w: interpolate(w, data['wavelength'] * (1 + self.redshift), flux, left=0, right=0)
             else:
                 if name == 'blackbody':
                     self.functions[name] = self._blackbody
@@ -107,20 +107,20 @@ class source:
 
         self._load_files()
 
-        print(vars(self))
         self.set_type(self.type)
 
 
     def _gaussian(self, wavelengths):
+        # TODO -- figure out units!
         sigma = self.fwhm / (2 * sqrt(2 * log(2) ))
         flux = self.brightness / (sqrt(2*pi) * sigma) / exp( (wavelengths - self.wavelength)**2/(2*sigma**2) )
-        return flux.to(u.photon / (u.cm**3 * u.s), equivalencies=u.spectral_density(wavelengths.to(u.angstrom)))
+        return flux
 
 
     def _blackbody(self, wavelengths):
         # From https://pysynphot.readthedocs.io/en/latest/spectrum.html
         flux = (2*h*c**2 / wavelengths**5) / (exp(h*c/(wavelengths*self.temperature*k_B)) - 1)
-        return flux.to(u.photon / (u.cm**3 * u.s), equivalencies=u.spectral_density(wavelengths.to(u.angstrom)))
+        return flux
 
 
     def _flat(self, wavelengths):
@@ -130,14 +130,15 @@ class source:
     def _power_law(self, wavelengths):
         # TODO -- figure out how to scale for given magnitude
         flux = self.brightness * (wavelengths / self.wavelength) ** self.index
-        return flux.to(u.photon / (u.cm**3 * u.s), equivalencies=u.spectral_density(wavelengths.to(u.angstrom)))
+        return flux
 
     
     def get_flux(self, wavelengths):
         flux = self.functions[self.type](wavelengths)
+        # Check below is currently unecessary, I changed boundary handling to 0 instead of NaN -- but check w/ Sherry before deleting
         if isnan(flux).any():
             print('WARNING: In source.get_flux() -- some or all provided wavelengths are outside the current bounds, returning NaN')
-        return flux
+        return flux.to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(wavelengths.to(u.angstrom)))
 
     def add_template(self, template, name):
         pass  # TODO -- allow users to specify their own source templates (i.e. upload file)

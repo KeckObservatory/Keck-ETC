@@ -8,11 +8,13 @@ instruments: [nires]
 defaults:
   instrument: 'nires'
   exposure: 3600 s
-  snr: None
+  #snr: None -- TODO: remove exposure, snr and calculate range, then return appropriate values
   dither: 1
   read: 2
   repeat: 0
   coadd: 0
+  
+telescope_area: 75.76 m^2
 
 # Options for dithering
 dithers: {min: 1, max: 100}
@@ -25,3 +27,6 @@ repeats: {min: 0, max: 50}
 
 # Options for coadds
 coadds: {min: 0, max: 50}
+
+# Number of wavelengths to calculate, more = finer resolution but slower
+num_points: 100

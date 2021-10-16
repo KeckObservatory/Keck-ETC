@@ -38,6 +38,8 @@ class instrument:
         #         self._throughput[(g, f)] = data
         filepath = 'instruments/'+self.name+'/'+self.config.throughput_path
         self._throughput = Table.read(filepath, format='ascii.ecsv')
+        self.min_wavelength = self._throughput['wav'][0] * self._throughput['wav'].unit
+        self.max_wavelength = self._throughput['wav'][-1] * self._throughput['wav'].unit
 
 
     def _validate_config(self):
@@ -49,19 +51,23 @@ class instrument:
         self.set_name(name)
         self._validate_config()
         self.__dict__.update(vars(self.config.defaults))
+
+        # Maybe move these, find the most appropriate place later...
+        self.slit_width = u.Quantity(self.slit_width)
+        self.slit_length = u.Quantity(self.slit_length)
+        self.pixel_size = u.Quantity(self.pixel_size)
+
         self._read_throughput()
         
 
 
     def get_throughput(self, wavelengths):
         data = self._throughput  # self._throughput[(self.grating, self.filter)] for deimos!!
-        wav = data['wav']
-        eff = data['eff']
-        throughput = interp(wavelengths, wav, eff, left=NaN, right=NaN)
+        throughput = interp(wavelengths, data['wav'], data['eff'], left=NaN, right=NaN)
         if isnan(throughput).any():
             print('WARNING: In instrument.get_throughput() -- ' +
-            'some or all provided wavelengths are outside the current bounds of ['+str(min(wav))+', '+str(max(wav))+'] '+str(wav.unit)+', returning NaN')
-        return throughput
+            'some or all provided wavelengths are outside the current bounds of ['+str(min(data['wav']))+', '+str(max(data['wav']))+'] '+str(data['wav'].unit)+', returning NaN')
+        return u.Quantity(throughput, data['eff'].unit)
 
     def get_dark_current(self):
         # should this be dependent on wavelength??

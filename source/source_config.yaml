@@ -1,7 +1,7 @@
 ---
 
 defaults:
-  type: qso
+  type: vega
   brightness: 18 AB
   redshift: 0.0  # negative for blueshift
 
@@ -27,9 +27,9 @@ source_types:
   flat:
     name: Flat
 
-#  vega:
-#    name: Vega
-#    filename: vega_template.txt
+  vega:
+    name: Vega
+    filename: vega_template.txt
 
   qso:
     name: QSO
