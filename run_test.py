@@ -40,3 +40,4 @@ if __name__ == '__main__':
     # yum.get_flux(u.Quantity([0.3, 0.5, 0.8, 1, 1.5, 2, 2.5, 3], u.micron))
 
     test = etc()
+    print(test.signal_noise_ratio)
