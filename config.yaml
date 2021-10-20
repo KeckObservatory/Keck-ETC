@@ -6,9 +6,10 @@ instruments: [nires]
 
 # Default values
 defaults:
-  instrument: 'nires'
+  instrument: nires
   exposure: [3600 s]
-  signal_noise_ratio: []  # Empty array means that quantity will be solved for, either SNR or exposure must be []
+  signal_noise_ratio: [10]
+  target: signal_noise_ratio
   default_wavelengths_number: 100  # If wavelengths aren't explicitly given, calculate array from min to max w/ default_wavelengths_number of points
   dither: 1
   read: 2

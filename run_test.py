@@ -40,4 +40,15 @@ if __name__ == '__main__':
     # yum.get_flux(u.Quantity([0.3, 0.5, 0.8, 1, 1.5, 2, 2.5, 3], u.micron))
 
     test = etc()
-    print(test.signal_noise_ratio)
+    test.set_source_parameter('type', 'flat')
+    test.set_parameter('exposure', [10] * u.s)
+    test.set_parameter('wavelengths', u.Quantity([20000], u.angstrom))
+    snr = test.signal_noise_ratio.flatten()
+    print(snr)
+    print(test.source_count)
+    print(test.background_count)
+    print(test.dark_current_count)
+    print(test.read_noise_count)
+    test.set_parameter('signal_noise_ratio', snr * u.dimensionless_unscaled)
+    print(test.exposure)
+    
