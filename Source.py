@@ -40,9 +40,14 @@ class source:
         for name, source_type in vars(self.config.source_types).items():
             if 'filename' in vars(source_type).keys():
                 data = Table.read(self.config.template_filepath+source_type.filename, format='ascii.ecsv')
-                # TODO -- Figure out how to scale flux by the magnitude!
-                flux = data['flux'].to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(data['wavelength'].to(u.angstrom)))
-                self.functions[name] = lambda w: interpolate(w, data['wavelength'] * (1 + self.redshift), flux, left=0, right=0)
+                def scale_and_interpolate(w):
+                    wavelengths = data['wavelength'].to(u.angstrom) * (1 + self.redshift)  # Apply redshift
+                    flux = data['flux'].to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(wavelengths))  # Convert to units of flux
+                    central_wavelength = u.Quantity(vars(self.config.wavelength_bands)[self.wavelength_band])  # Get central wavelength of passband
+                    wavelength_index = abs(wavelengths - central_wavelength) == min(abs(wavelengths - central_wavelength))  # Get index of closest value to central wavelength
+                    flux = flux / flux[wavelength_index] * self.brightness.to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(wavelengths[wavelength_index]))  # Scale source by given mag/flux
+                    return interpolate(w, wavelengths, flux, left=0, right=0)
+                self.functions[name] = scale_and_interpolate  # Save function corresponding to this source
             else:
                 if name == 'blackbody':
                     self.functions[name] = self._blackbody
@@ -66,6 +71,7 @@ class source:
             _ = self.config.defaults.type
             _ = u.Quantity(self.config.defaults.brightness)
             _ = u.Quantity(self.config.defaults.redshift)
+            # TODO -- validate wavelength_bands and default.wavelength_band
             # For each source type, check name (required), filename and parameters
             for source_type in vars(self.config.source_types).values():
                 _ = source_type.name
@@ -104,6 +110,7 @@ class source:
         self.type = self.config.defaults.type
         self.brightness = u.Quantity(self.config.defaults.brightness)
         self.redshift = u.Quantity(self.config.defaults.redshift)
+        self.wavelength_band = self.config.defaults.wavelength_band
 
         self._load_files()
 
@@ -111,20 +118,22 @@ class source:
 
 
     def _gaussian(self, wavelengths):
-        # TODO -- figure out units!
+        # TODO -- Is there any reason to keep self.wavelength and self.wavelength_band separate? Can we ditch self.wavelength?
+        # TODO -- Replace area / sqrt(2pi) σ w/ amplitude (brightness, unless we're keeping central wavelength and mag. band separate)
         sigma = self.fwhm / (2 * sqrt(2 * log(2) ))
         flux = self.brightness / (sqrt(2*pi) * sigma) / exp( (wavelengths - self.wavelength)**2/(2*sigma**2) )
         return flux
 
 
     def _blackbody(self, wavelengths):
+        # TODO -- Ask Sherry about whether users should specify temp, mag, or give the option of either?
         # From https://pysynphot.readthedocs.io/en/latest/spectrum.html
         flux = (2*h*c**2 / wavelengths**5) / (exp(h*c/(wavelengths*self.temperature*k_B)) - 1)
         return flux
 
 
     def _flat(self, wavelengths):
-        return ([self.brightness.value] * len(wavelengths) * self.brightness.unit).to(u.photon / (u.cm**3 * u.s), equivalencies=u.spectral_density(wavelengths.to(u.angstrom)))
+        return ([self.brightness] * len(wavelengths) * self.brightness.unit).to(u.photon / (u.cm**3 * u.s), equivalencies=u.spectral_density(wavelengths.to(u.angstrom)))
 
 
     def _power_law(self, wavelengths):

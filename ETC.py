@@ -5,7 +5,7 @@ from Atmosphere import atmosphere
 import yaml
 from numpy import pi, linspace, zeros
 
-class etc:
+class exposure_time_calculator:
 
     global _CONFIG_FILEPATH; _CONFIG_FILEPATH = 'config.yaml'
 

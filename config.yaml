@@ -2,7 +2,7 @@
 ---
 
 # Available instruments in the ETC
-instruments: [nires]
+instruments: [nires, test]
 
 # Default values
 defaults:

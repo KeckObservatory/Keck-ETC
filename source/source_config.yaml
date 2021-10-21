@@ -3,6 +3,7 @@
 defaults:
   type: qso
   brightness: 18 AB
+  wavelength_band: K
   redshift: 0.0  # negative for blueshift
 
 source_types:
@@ -45,3 +46,21 @@ source_types:
 
 # Path (absolute or relative) to directory containing source template files
 template_filepath: source/
+
+# List of wavelength bands and their central wavelength, edit to change available options
+wavelength_bands:
+  U: 365 nm
+  B: 445 nm
+  G: 464 nm
+  V: 551 nm
+  R: 658 nm
+  I: 806 nm
+  Z: 900 nm
+  Y: 1020 nm
+  J: 1220 nm
+  H: 1630 nm
+  K: 2190 nm
+  L: 3450 nm
+  M: 4750 nm
+  N: 10500 nm
+  Q: 21000 nm

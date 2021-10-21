@@ -2,7 +2,7 @@ from Instrument import instrument
 from Atmosphere import atmosphere
 from Source import source
 import astropy.units as u
-from ETC import etc
+from ETC import exposure_time_calculator
 from numpy.random import random
 
 
@@ -39,8 +39,8 @@ if __name__ == '__main__':
     # yum.set_type('gaussian')
     # yum.get_flux(u.Quantity([0.3, 0.5, 0.8, 1, 1.5, 2, 2.5, 3], u.micron))
 
-    test = etc()
-    test.set_source_parameter('type', 'flat')
+    test = exposure_time_calculator()
+    test.set_source_parameter('type', 'vega')
     test.set_parameter('exposure', [10] * u.s)
     test.set_parameter('wavelengths', u.Quantity([20000], u.angstrom))
     snr = test.signal_noise_ratio.flatten()
