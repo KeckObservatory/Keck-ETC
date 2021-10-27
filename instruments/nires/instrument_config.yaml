@@ -7,8 +7,11 @@ defaults:
   slit_width: 0.55 arcsec
   slit_length: 18 arcsec
   pixel_size: 0.0225 arcsec^2/pixel  # Check w/ Sherry, in her code this was s^2/px^2 but I think that's a typo... ?
-  dark_current: 0.13 electron / (pixel s)
-  read_noise: 15 sqrt(electron)  # Kind of a nonsense unit, but read noise is actually variance and needs to be squared later...
+
+  
+dark_current: 0.13 electron / (pixel s)
+
+read_noise: 15 sqrt(electron)  # Kind of a nonsense unit, but read noise is actually variance and needs to be squared later...
 
 throughput_path: throughput.txt  # Relative path to throughput file... does throughput include telescope? How about detector QE?
 

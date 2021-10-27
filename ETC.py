@@ -7,7 +7,7 @@ from numpy import pi, linspace, zeros
 
 class exposure_time_calculator:
 
-    global _CONFIG_FILEPATH; _CONFIG_FILEPATH = 'config.yaml'
+    global _CONFIG_FILEPATH; _CONFIG_FILEPATH = './config.yaml'
 
     def _mount_config(self, config_path):
         # From https://www.geeksforgeeks.org/convert-nested-python-dictionary-to-object/
@@ -117,8 +117,8 @@ class exposure_time_calculator:
         self.coadd = u.Quantity(self.config.defaults.coadd)
         self.target = self.config.defaults.target
         # Calculate default wavelengths array from min, max of instrument and atmosphere
-        min_wavelength = max(self.atmosphere.wavelength_index[0], self.instrument.min_wavelength)
-        max_wavelength = min(self.atmosphere.wavelength_index[-1], self.instrument.max_wavelength)
+        min_wavelength = max(self.atmosphere._wavelength_index[0], self.instrument.min_wavelength)
+        max_wavelength = min(self.atmosphere._wavelength_index[-1], self.instrument.max_wavelength)
         self.wavelengths = linspace(min_wavelength, max_wavelength, self.config.defaults.default_wavelengths_number)
 
         self._calculate()
@@ -146,5 +146,8 @@ class exposure_time_calculator:
     
     def set_instrument_parameter(self, name, value):
         # TODO -- input validation
-        vars(self.instrument)[name] = value
+        if name == 'name':
+            self.instrument.set_name(value)
+        else:
+            vars(self.instrument)[name] = value
         self._calculate()

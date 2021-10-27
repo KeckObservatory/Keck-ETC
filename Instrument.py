@@ -50,12 +50,14 @@ class instrument:
     def __init__(self, name):
         self.set_name(name)
         self._validate_config()
-        self.__dict__.update(vars(self.config.defaults))
 
         # Maybe move these, find the most appropriate place later...
-        self.slit_width = u.Quantity(self.slit_width)
-        self.slit_length = u.Quantity(self.slit_length)
-        self.pixel_size = u.Quantity(self.pixel_size)
+        self.slit_width = u.Quantity(self.config.defaults.slit_width)
+        self.slit_length = u.Quantity(self.config.defaults.slit_length)
+        self.pixel_size = u.Quantity(self.config.defaults.pixel_size)
+        self._dark_current = u.Quantity(self.config.dark_current)
+        self._read_noise = u.Quantity(self.config.read_noise)
+
 
         self._read_throughput()
         
@@ -71,10 +73,10 @@ class instrument:
 
     def get_dark_current(self):
         # should this be dependent on wavelength??
-        return u.Quantity(self.dark_current)
+        return self._dark_current
 
     def get_read_noise(self):
-        return u.Quantity(self.read_noise)
+        return self._read_noise
 
     def set_name(self, name):
         config_filepath = 'instruments/'+name+'/instrument_config.yaml'

@@ -35,32 +35,32 @@ class atmosphere:
 
 
     def _load_files(self):
-        self.water_vapor_index = [u.Quantity(x).to(u.mm).value for x in self.config.water_vapor_index] * u.mm
-        self.airmass_index = u.Quantity(self.config.airmass_index)
+        self._water_vapor_index = [u.Quantity(x).to(u.mm).value for x in self.config.water_vapor_index] * u.mm
+        self._airmass_index = u.Quantity(self.config.airmass_index)
         self.config.wavelength_index = [u.Quantity(x).to(u.angstrom) for x in self.config.wavelength_index]
-        self.wavelength_index = np.arange(
+        self._wavelength_index = np.arange(
             u.Quantity(self.config.wavelength_index[0]).value,
             u.Quantity(self.config.wavelength_index[1]).value,
             u.Quantity(self.config.wavelength_index[2]).value
         ) * u.angstrom  # np.arange doesn't support units, see https://github.com/astropy/astropy/issues/11582
-        self.transmission = np.zeros([len(self.airmass_index), len(self.water_vapor_index), len(self.wavelength_index)])
-        self.emission = np.zeros([len(self.airmass_index), len(self.water_vapor_index), len(self.wavelength_index)])
-        # Iterate through directory, filling in self.transmission and self.emission arrays
+        self._transmission = np.zeros([len(self._airmass_index), len(self._water_vapor_index), len(self._wavelength_index)])
+        self._emission = np.zeros([len(self._airmass_index), len(self._water_vapor_index), len(self._wavelength_index)])
+        # Iterate through directory, filling in self._transmission and self._emission arrays
         for i, filename in enumerate(listdir(self.config.file_directory)):
             print('\rATMOSPHERE: Reading file '+str(i+1)+'/'+str(len(listdir(self.config.file_directory))), end='')
             try:
                 if filename.startswith(self.config.transmission_filepath):
                     data = Table.read(self.config.file_directory+'/'+filename, format='ascii.ecsv')
-                    self.transmission[
-                        [x == u.Quantity(data.meta['airmass']) for x in self.airmass_index], 
-                        [x == u.Quantity(data.meta['water_vapor']) for x in self.water_vapor_index],
+                    self._transmission[
+                        [x == u.Quantity(data.meta['airmass']) for x in self._airmass_index], 
+                        [x == u.Quantity(data.meta['water_vapor']) for x in self._water_vapor_index],
                         :
                     ] = data['transmission'].to('')
                 if filename.startswith(self.config.emission_filepath):
                     data = Table.read(self.config.file_directory+'/'+filename, format='ascii.ecsv')
-                    self.emission[
-                        [x == u.Quantity(data.meta['airmass']) for x in self.airmass_index], 
-                        [x == u.Quantity(data.meta['water_vapor']) for x in self.water_vapor_index], 
+                    self._emission[
+                        [x == u.Quantity(data.meta['airmass']) for x in self._airmass_index], 
+                        [x == u.Quantity(data.meta['water_vapor']) for x in self._water_vapor_index], 
                         :
                     ] = data['flux'].to('photon/(s arcsec^2 nm m^2)')
             except ValueError:
@@ -150,43 +150,43 @@ class atmosphere:
 
     def _trilinear_interpolation(self, values, wavelengths):
         # Manual method, slower than RegularGridInterpolator, currently unused and probably will be deleted soon
-        values = np.array([[np.interp(wavelengths, self.wavelength_index, x) for x in y] for y in values])
-        am = [ self.airmass_index[self.airmass_index < self.airmass][-1].value, self.airmass_index[self.airmass_index > self.airmass][0].value ]
-        wv = [ self.water_vapor_index[self.water_vapor_index < self.water_vapor][-1].value, self.water_vapor_index[self.water_vapor_index > self.water_vapor][0].value ]
+        values = np.array([[np.interp(wavelengths, self._wavelength_index, x) for x in y] for y in values])
+        am = [ self._airmass_index[self._airmass_index < self.airmass][-1].value, self._airmass_index[self._airmass_index > self.airmass][0].value ]
+        wv = [ self._water_vapor_index[self._water_vapor_index < self.water_vapor][-1].value, self._water_vapor_index[self._water_vapor_index > self.water_vapor][0].value ]
         result = (1 / ( np.diff(am)*np.diff(wv) ))[0]
         result *= np.array([ [am[1]*wv[1], -am[1]*wv[0], -am[0]*wv[1], am[0]*wv[0]],
             [-wv[1], wv[0], wv[1], -wv[0]],
             [-am[1], am[1], am[0], -am[0]],
             [1, -1, -1, 1] ])
-        result = np.matmul(result, [values[self.airmass_index.value==am[0], self.water_vapor_index.value==wv[0], :][0],
-            values[self.airmass_index.value==am[0], self.water_vapor_index.value==wv[1], :][0],
-            values[self.airmass_index.value==am[1], self.water_vapor_index.value==wv[0], :][0],
-            values[self.airmass_index.value==am[1], self.water_vapor_index.value==wv[1], :][0]])
+        result = np.matmul(result, [values[self._airmass_index.value==am[0], self._water_vapor_index.value==wv[0], :][0],
+            values[self._airmass_index.value==am[0], self._water_vapor_index.value==wv[1], :][0],
+            values[self._airmass_index.value==am[1], self._water_vapor_index.value==wv[0], :][0],
+            values[self._airmass_index.value==am[1], self._water_vapor_index.value==wv[1], :][0]])
         result = np.matmul([1, self.airmass.value, self.water_vapor.value, self.airmass.value*self.water_vapor.value], result)
-        #return np.interp(wavelengths, self.wavelength_index, result)
+        #return np.interp(wavelengths, self._wavelength_index, result)
         return result
 
 
     def get_transmission(self, wavelengths):  # TODO -- replace out-of-bounds wavelengths with np.NaN instead of discarding
 
         # Check for and remove out-of-bounds wavelengths to avoid RegularGridInterpolator throwing errors
-        wavelengths_trim = wavelengths[(self.wavelength_index[0] <= wavelengths) & (wavelengths <= self.wavelength_index[-1])]
+        wavelengths_trim = wavelengths[(self._wavelength_index[0] <= wavelengths) & (wavelengths <= self._wavelength_index[-1])]
         if len(wavelengths_trim) != len(wavelengths):
             print('WARNING: In atmosphere.get_transmission() -- some or all provided wavelengths are outside the current bounds of [' +
-            str(self.wavelength_index[0])+', '+str(self.wavelength_index[-1])+'], discarding invalid values')
+            str(self._wavelength_index[0])+', '+str(self._wavelength_index[-1])+'], discarding invalid values')
 
         # Perform trilinear interpolation to find transmission values
-        interpolation = RegularGridInterpolator( (self.airmass_index, self.water_vapor_index, self.wavelength_index), self.transmission )
+        interpolation = RegularGridInterpolator( (self._airmass_index, self._water_vapor_index, self._wavelength_index), self._transmission )
         return interpolation([[self.airmass.value, self.water_vapor.value, λ] for λ in wavelengths_trim.to(u.angstrom).value]) * u.Unit('')
 
 
     def get_emission(self, wavelengths):  # TODO -- replace out-of-bounds wavelengths with np.NaN instead of discarding
         # Check for and remove out-of-bounds wavelengths to avoid RegularGridInterpolator throwing errors
-        wavelengths_trim = wavelengths[(self.wavelength_index[0] <= wavelengths) & (wavelengths <= self.wavelength_index[-1])]
+        wavelengths_trim = wavelengths[(self._wavelength_index[0] <= wavelengths) & (wavelengths <= self._wavelength_index[-1])]
         if len(wavelengths_trim) != len(wavelengths):
             print('WARNING: In atmosphere.get_emission() -- some or all provided wavelengths are outside the current bounds of [' +
-            str(self.wavelength_index[0])+', '+str(self.wavelength_index[-1])+'], discarding invalid values')
+            str(self._wavelength_index[0])+', '+str(self._wavelength_index[-1])+'], discarding invalid values')
 
         # Perform trilinear interpolation to find emission values
-        interpolation = RegularGridInterpolator( (self.airmass_index, self.water_vapor_index, self.wavelength_index), self.emission )
+        interpolation = RegularGridInterpolator( (self._airmass_index, self._water_vapor_index, self._wavelength_index), self._emission )
         return interpolation([[self.airmass.value, self.water_vapor.value, λ] for λ in wavelengths_trim.to(u.angstrom).value]) * u.Unit('photon/(s arcsec^2 nm m^2)')
