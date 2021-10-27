@@ -47,7 +47,7 @@ class exposure_time_calculator:
         self.source_flux = self.source.get_flux(self.wavelengths) * self.atmosphere.get_transmission(self.wavelengths)
         source_rate =  self.source_flux * self.instrument.get_throughput(self.wavelengths)
         source_rate *= self.telescope_area * source_slit_ratio * self.wavelengths  # Why is wavelength divided by 2700 in Sherry's code?
-        #Also, should we include diffraction and increase area slightly? Or is that negligible?
+        #Also, should we include diffraction and increase area slightly? Or is that negligible? --nope
         self.efficiency = (self.atmosphere.get_transmission(self.wavelengths) * self.instrument.get_throughput(self.wavelengths)).value  # Save efficiency as dimensionless, not e-/ph
 
         # Background -- why do we subtract the area of the source? Don't we still get photon hits from the background on those pixels? Since they're not saturated (presumably), isn't that noise?
