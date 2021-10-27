@@ -1,7 +1,8 @@
 
 from bokeh.io import curdoc
 from bokeh.plotting import figure
-from bokeh.models import ColumnDataSource, Panel, Select, Tabs, HoverTool, Spinner
+from bokeh.models import ColumnDataSource, Panel, Select, Tabs, HoverTool, Spinner, Div
+from bokeh.events import DocumentReady
 from bokeh.layouts import column, row
 
 # Import exposure time calculator
@@ -10,11 +11,11 @@ from ETC import exposure_time_calculator
 from astropy import units as u
 
 
-
 # Function definitions go here
 
 def switchInstrument(attr, old, new):
-    etc.instrument.set_name(available_instruments[new])
+    etc.set_instrument_parameter('name', available_instruments[new])
+    #etc.instrument.set_name(available_instruments[new])
 
 def set_quantity(id, value):
     print(f'Called to set element {id} to value {value}')
@@ -63,12 +64,25 @@ def create_dashboard(etc):
 
 # Main code goes here
 
-etc = exposure_time_calculator()
-available_instruments = etc.config.instruments
-instruments = Tabs(
-    tabs=[ Panel(child=column(), title=instrument) for instrument in available_instruments ]
-)
-dashboard = create_dashboard(etc)
-instruments.on_change('active', switchInstrument)
+def run_app(event):
+    global loaded
+    global etc
+    global available_instruments
 
-curdoc().add_root(column(instruments, dashboard))
+    if not 'etc' in globals():
+        
+        etc = exposure_time_calculator()
+        available_instruments = etc.config.instruments
+        instruments = Tabs(
+            tabs=[ Panel(child=column(), title=instrument.upper()) for instrument in available_instruments ]
+        )
+        dashboard = create_dashboard(etc)
+        instruments.on_change('active', switchInstrument)
+
+        curdoc().add_root(column(instruments, dashboard))
+
+
+
+curdoc().add_root(column())
+curdoc().on_event(DocumentReady, run_app)
+

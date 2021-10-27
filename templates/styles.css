@@ -1,0 +1,18 @@
+
+
+/* From https://www.w3schools.com/howto/howto_css_loader.asp */
+
+.loading-symbol {
+    border: 10px dotted #f3f3f3; /* Light grey */
+    border-right: 10px dotted #3498db; /* Blue */
+    border-radius: 50%;
+    width: 90px;
+    height: 90px;
+    margin: 50px;
+    animation: spin 1.5s ease-in-out infinite;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(360deg); }
+    100% { transform: rotate(0deg); }
+  }

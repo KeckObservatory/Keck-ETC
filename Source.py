@@ -35,7 +35,7 @@ class source:
 
 
     def _load_files(self):
-        self.functions = {}
+        self._functions = {}
 
         for name, source_type in vars(self.config.source_types).items():
             if 'filename' in vars(source_type).keys():
@@ -47,16 +47,16 @@ class source:
                     wavelength_index = abs(wavelengths - central_wavelength) == min(abs(wavelengths - central_wavelength))  # Get index of closest value to central wavelength
                     flux = flux / flux[wavelength_index] * self.brightness.to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(wavelengths[wavelength_index]))  # Scale source by given mag/flux
                     return interpolate(w, wavelengths, flux, left=0, right=0)
-                self.functions[name] = scale_and_interpolate  # Save function corresponding to this source
+                self._functions[name] = scale_and_interpolate  # Save function corresponding to this source
             else:
                 if name == 'blackbody':
-                    self.functions[name] = self._blackbody
+                    self._functions[name] = self._blackbody
                 elif name == 'gaussian':
-                    self.functions[name] = self._gaussian
+                    self._functions[name] = self._gaussian
                 elif name == 'power':
-                    self.functions[name] = self._power_law
+                    self._functions[name] = self._power_law
                 elif name == 'flat':
-                    self.functions[name] = self._flat
+                    self._functions[name] = self._flat
                 else:
                     raise ValueError('ERROR: In source_config.yaml -- source type '+name+' does not have either a defined template or function')
                 if 'parameters' in vars(source_type).keys():
@@ -143,7 +143,7 @@ class source:
 
     
     def get_flux(self, wavelengths):
-        flux = self.functions[self.type](wavelengths)
+        flux = self._functions[self.type](wavelengths)
         # Check below is currently unecessary, I changed boundary handling to 0 instead of NaN -- but check w/ Sherry before deleting
         if isnan(flux).any():
             print('WARNING: In source.get_flux() -- some or all provided wavelengths are outside the current bounds, returning NaN')
