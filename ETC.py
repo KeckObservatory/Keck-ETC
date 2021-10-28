@@ -126,28 +126,40 @@ class exposure_time_calculator:
 
     def set_parameter(self, name, value):
         # TODO -- validation
-        vars(self)[name] = value
-        if name == 'exposure':
-            self.target = 'signal_noise_ratio'
-        if name == 'signal_noise_ratio':
-            self.target = 'exposure'
+        if name.startswith('instrument.'):
+            self._set_instrument_parameter('.'.join(name.split('.')[1:]), value)
+        elif name.startswith('source.'):
+            self._set_source_parameter('.'.join(name.split('.')[1:]), value)
+        elif name.startswith('atmosphere.'):
+            self._set_atmosphere_parameter('.'.join(name.split('.')[1:]), value)
+        else:
+            vars(self)[name] = u.Quantity(value)
+            if name == 'exposure':
+                self.target = 'signal_noise_ratio'
+            if name == 'signal_noise_ratio':
+                self.target = 'exposure'
         self._calculate()
 
     
-    def set_source_parameter(self, name, value):
+    def _set_source_parameter(self, name, value):
         # TODO -- input validation
-        vars(self.source)[name] = value
-        self._calculate()
+        if name == 'type':
+            self.source.set_type(value)
+        elif name == 'wavelength_band':
+            self.source.wavelength_band = str(value)
+        else:
+            vars(self.source)[name] = u.Quantity(value)
+            self._calculate()
 
-    def set_atmosphere_parameter(self, name, value):
+    def _set_atmosphere_parameter(self, name, value):
         # TODO -- input validation
-        vars(self.atmosphere)[name] = value
+        vars(self.atmosphere)[name] = u.Quantity(value)
         self._calculate()
     
-    def set_instrument_parameter(self, name, value):
+    def _set_instrument_parameter(self, name, value):
         # TODO -- input validation
         if name == 'name':
             self.instrument.set_name(value)
         else:
-            vars(self.instrument)[name] = value
+            vars(self.instrument)[name] = u.Quantity(value)
         self._calculate()

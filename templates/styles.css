@@ -16,3 +16,9 @@
     0% { transform: rotate(360deg); }
     100% { transform: rotate(0deg); }
   }
+
+  /* Testing custom css classes in bokeh objects */
+  .section {
+    border-radius: 5px !important;
+    border: 1px solid #e6e6e6 !important;
+  }

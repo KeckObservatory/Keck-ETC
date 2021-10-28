@@ -177,7 +177,7 @@ class atmosphere:
 
         # Perform trilinear interpolation to find transmission values
         interpolation = RegularGridInterpolator( (self._airmass_index, self._water_vapor_index, self._wavelength_index), self._transmission )
-        return interpolation([[self.airmass.value, self.water_vapor.value, λ] for λ in wavelengths_trim.to(u.angstrom).value]) * u.Unit('')
+        return interpolation([[self.airmass.value, self.water_vapor.to(u.mm).value, λ] for λ in wavelengths_trim.to(u.angstrom).value]) * u.Unit('')
 
 
     def get_emission(self, wavelengths):  # TODO -- replace out-of-bounds wavelengths with np.NaN instead of discarding
@@ -189,4 +189,4 @@ class atmosphere:
 
         # Perform trilinear interpolation to find emission values
         interpolation = RegularGridInterpolator( (self._airmass_index, self._water_vapor_index, self._wavelength_index), self._emission )
-        return interpolation([[self.airmass.value, self.water_vapor.value, λ] for λ in wavelengths_trim.to(u.angstrom).value]) * u.Unit('photon/(s arcsec^2 nm m^2)')
+        return interpolation([[self.airmass.value, self.water_vapor.to(u.mm).value, λ] for λ in wavelengths_trim.to(u.angstrom).value]) * u.Unit('photon/(s arcsec^2 nm m^2)')
