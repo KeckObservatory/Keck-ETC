@@ -4,6 +4,7 @@ from numpy import interp as interpolate
 from numpy import NaN, isnan, exp, log, sqrt, pi
 from astropy.constants import c, h, k_B
 import astropy.units as u
+from base64 import b64decode
 
 
 class source:
@@ -40,14 +41,15 @@ class source:
         for name, source_type in vars(self.config.source_types).items():
             if 'filename' in vars(source_type).keys():
                 data = Table.read(self.config.template_filepath+source_type.filename, format='ascii.ecsv')
-                def scale_and_interpolate(w):  # TODO -- Fix output not changing when redshift changes... better function!
-                    wavelengths = data['wavelength'].to(u.angstrom) * (1 + self.redshift)  # Apply redshift
-                    flux = data['flux'].to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(wavelengths))  # Convert to units of flux
-                    central_wavelength = u.Quantity(vars(self.config.wavelength_bands)[self.wavelength_band])  # Get central wavelength of passband
-                    wavelength_index = abs(wavelengths - central_wavelength) == min(abs(wavelengths - central_wavelength))  # Get index of closest value to central wavelength
-                    flux = flux / flux[wavelength_index] * self.brightness.to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(wavelengths[wavelength_index]))  # Scale source by given mag/flux
-                    return interpolate(w, wavelengths, flux, left=0, right=0)
-                self._functions[name] = scale_and_interpolate  # Save function corresponding to this source
+                def define_data_scope(data):  # Wrapper function to narrow the scope of data and make sure each interpolation uses its own dataset
+                    def scale_and_interpolate(w):  # TODO -- Figure out why each function is returning the same results...
+                        wavelengths = data['wavelength'].to(u.angstrom) * (1 + self.redshift)  # Apply redshift
+                        flux = data['flux'].to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(wavelengths))  # Convert to units of flux
+                        central_wavelength = u.Quantity(vars(self.config.wavelength_bands)[self.wavelength_band])  # Get central wavelength of passband
+                        flux = flux / interpolate(central_wavelength, wavelengths, flux) * self.brightness.to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(central_wavelength))  # Scale source by given mag/flux
+                        return interpolate(w, wavelengths, flux, left=0, right=0)
+                    return scale_and_interpolate
+                self._functions[name] = define_data_scope(data)  # Save function corresponding to this source
             else:
                 if name == 'blackbody':
                     self._functions[name] = self._blackbody
@@ -69,7 +71,7 @@ class source:
         try:
             # Check that all required fields exist and are spelled correctly
             _ = self.config.defaults.type
-            _ = u.Quantity(self.config.defaults.brightness)
+            # TODO -- validation for self.config.defaults.brightness here, needs extra because u.Quantity() errors out
             _ = u.Quantity(self.config.defaults.redshift)
             # TODO -- validate wavelength_bands and default.wavelength_band
             # For each source type, check name (required), filename and parameters
@@ -97,7 +99,7 @@ class source:
     def set_type(self, new_type):
         self.type = new_type
         self.active_parameters = list(vars(self.config.defaults).keys())
-        if 'parameters' in vars(vars(self.config.source_types)[self.type]).keys():
+        if self.type in vars(self.config.source_types).keys() and 'parameters' in vars(vars(self.config.source_types)[self.type]).keys():
             self.__dict__.update({key: u.Quantity(val) for key, val in vars(vars(self.config.source_types)[self.type].parameters).items()})
             self.active_parameters += list(vars(vars(self.config.source_types)[self.type].parameters).keys())
 
@@ -108,7 +110,7 @@ class source:
         self._validate_config()
 
         self.type = self.config.defaults.type
-        self.brightness = u.Quantity(self.config.defaults.brightness)
+        self.set_brightness(self.config.defaults.brightness)
         self.redshift = u.Quantity(self.config.defaults.redshift)
         self.wavelength_band = self.config.defaults.wavelength_band
 
@@ -122,7 +124,7 @@ class source:
         # TODO -- Replace area / sqrt(2pi) σ w/ amplitude (brightness, unless we're keeping central wavelength and mag. band separate)
         central_wavelength = u.Quantity(vars(self.config.wavelength_bands)[self.wavelength_band])
         sigma = self.fwhm / (2 * sqrt(2 * log(2) ))
-        flux = self.brightness / exp( (wavelengths - central_wavelength)**2/(2*sigma**2) )
+        flux = self.brightness.to(u.photon / (u.cm**3 * u.s), equivalencies=u.spectral_density(wavelengths.to(u.angstrom))) / exp( (wavelengths - central_wavelength)**2/(2*sigma**2) )
         return flux
 
 
@@ -139,8 +141,8 @@ class source:
 
     def _power_law(self, wavelengths):
         central_wavelength = u.Quantity(vars(self.config.wavelength_bands)[self.wavelength_band])
-        flux = self.brightness * (wavelengths / central_wavelength) ** self.index
-        return flux.to(u.photon / (u.cm**3 * u.s), equivalencies=u.spectral_density(wavelengths.to(u.angstrom)))
+        flux = self.brightness.to(u.photon / (u.cm**3 * u.s), equivalencies=u.spectral_density(wavelengths.to(u.angstrom))) * (wavelengths / central_wavelength) ** self.index
+        return flux
 
     
     def get_flux(self, wavelengths):
@@ -151,5 +153,32 @@ class source:
         return flux.to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(wavelengths.to(u.angstrom)))
 
     def add_template(self, template, name):
+        # TODO -- input validation
+        template_string = b64decode(template).decode('utf-8').split('\n')
+        data = Table.read(template_string, format='ascii.ecsv')
+        # WARNING -- copying same broken code from above, fix later!
+        def scale_and_interpolate(w):
+            wavelengths = data['wavelength'].to(u.angstrom) * (1 + self.redshift)  # Apply redshift
+            flux = data['flux'].to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(wavelengths))  # Convert to units of flux
+            central_wavelength = u.Quantity(vars(self.config.wavelength_bands)[self.wavelength_band])  # Get central wavelength of passband
+            flux = flux / interpolate(central_wavelength, wavelengths, flux) * self.brightness.to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(central_wavelength))  # Scale source by given mag/flux
+            return interpolate(w, wavelengths, flux, left=0, right=0)
+        self._functions[name.split('.')[0]] = scale_and_interpolate  # Save function corresponding to this source
         pass  # TODO -- allow users to specify their own source templates (i.e. upload file)
                 # Need to figure out file formats w/ bokeh & api to know what I should require
+
+    def set_brightness(self, brightness):
+        if isinstance(brightness, u.Quantity):
+            self.brightness = brightness
+        elif isinstance(brightness, str):
+            conversion = [float(brightness.lower().replace(abmag,'')) * u.ABmag for abmag in ['magab', 'abmag', 'mag(ab)'] if brightness.lower().endswith(abmag)]
+            if len(conversion) == 0:
+                conversion = [float(brightness.lower().replace(stmag,'')) * u.STmag for stmag in ['magst', 'stmag', 'mag(st)'] if brightness.lower().endswith(stmag)]
+            if len(conversion) == 0:
+                conversion = [float(brightness.lower().replace(m_bol,'')) * u.m_bol for m_bol in ['magbol', 'bolmag', 'mag(bol)'] if brightness.lower().endswith(m_bol)]
+            if len(conversion) == 0:
+                self.brightness = u.Quantity(brightness)
+            else:
+                self.brightness = conversion[0]
+        else:
+            raise ValueError('ERROR: In source.set_brightness -- Brightness is not an astropy quantity or string')

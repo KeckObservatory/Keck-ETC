@@ -53,7 +53,7 @@ class exposure_time_calculator:
         # Background -- why do we subtract the area of the source? Don't we still get photon hits from the background on those pixels? Since they're not saturated (presumably), isn't that noise?
         # Also, why isn't the throughput included in Sherry's code?
         background_rate = self.atmosphere.get_emission(self.wavelengths) * u.electron / u.photon#* self.instrument.get_throughput(self.wavelengths)
-        background_rate *= self.telescope_area * (slit_size - source_size) * self.wavelengths
+        background_rate *= self.telescope_area * slit_size * self.wavelengths
 
         read_noise = self.instrument.get_read_noise()**2 * self.read
         dark_current_rate = self.instrument.get_dark_current() * slit_size_pixels
@@ -147,6 +147,8 @@ class exposure_time_calculator:
             self.source.set_type(value)
         elif name == 'wavelength_band':
             self.source.wavelength_band = str(value)
+        elif name == 'brightness':
+            self.source.set_brightness(value)
         else:
             vars(self.source)[name] = u.Quantity(value)
             self._calculate()
