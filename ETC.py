@@ -149,6 +149,8 @@ class exposure_time_calculator:
             self.source.wavelength_band = str(value)
         elif name == 'brightness':
             self.source.set_brightness(value)
+        elif name == 'temperature':
+            self.source.temperature = u.Quantity(value).to(u.K, equivalencies=u.temperature())
         else:
             vars(self.source)[name] = u.Quantity(value)
             self._calculate()
