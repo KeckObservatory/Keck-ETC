@@ -3,7 +3,7 @@ from Instrument import instrument
 from Source import source
 from Atmosphere import atmosphere
 import yaml
-from numpy import pi, linspace, zeros
+from numpy import pi, linspace, zeros, array
 
 class exposure_time_calculator:
 
@@ -67,8 +67,8 @@ class exposure_time_calculator:
             self.background_count = [background_rate * exp for exp in self.exposure] * u.electron
             self.dark_current_count = [dark_current_rate * exp for exp in self.exposure] * u.electron
             self.read_noise_count = ([read_noise] * len(self.exposure)) * u.electron
-            noise_count = self.source_count + self.background_count + self.dark_current_count + self.read_noise_count # Total count in e- for whole slit and exposure
-            self.signal_noise_ratio = (self.source_count * noise_count ** (-1/2) * self.dither ** (1/2)).value  # Remove the sqrt(e-) unit because it's nonphysical
+            noise_count = [self.source_count[exp] + self.background_count[exp] + self.dark_current_count[exp] + self.read_noise_count[exp] for exp in range(len(self.exposure))] # Total count in e- for whole slit and exposure
+            self.signal_noise_ratio = [(self.source_count[exp] * noise_count[exp] ** (-1/2) * self.dither ** (1/2)).value for exp in range(len(self.exposure))] * u.dimensionless_unscaled # Remove the sqrt(e-) unit because it's nonphysical
 
         elif self.target == 'exposure':
             if len(self.signal_noise_ratio) == 0:
@@ -133,11 +133,14 @@ class exposure_time_calculator:
         elif name.startswith('atmosphere.'):
             self._set_atmosphere_parameter('.'.join(name.split('.')[1:]), value)
         else:
-            vars(self)[name] = u.Quantity(value)
             if name == 'exposure':
                 self.target = 'signal_noise_ratio'
-            if name == 'signal_noise_ratio':
+                self.exposure = [u.Quantity(x).to(u.s) for x in value] * u.s
+            elif name == 'signal_noise_ratio':
                 self.target = 'exposure'
+                self.signal_noise_ratio = [u.Quantity(x) for x in value] * u.dimensionless_unscaled
+            else:
+                vars(self)[name] = u.Quantity(value)
         self._calculate()
 
     

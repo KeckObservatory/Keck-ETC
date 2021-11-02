@@ -17,8 +17,27 @@
                 document.getElementsByClassName('loading-symbol')[0].style.display = '';
             }
         });
+        darkModeSwitch = (darkMode) => {console.log(darkMode);};
     </script>
     <h2>W.M.K.O. Exposure Time Calculator</h2>
     <div class="loading-symbol"></div>
-    {{ super() }}
+    <div class="instrument-menu">
+        {{ embed(roots.instruments) }}
+    </div>
+    <div class="input_panels">
+        <span class="exposure_panel">
+            {{ embed(roots.exposure_panel) }}
+        </span>
+        <span class="source_panel">
+            {{ embed(roots.source_panel) }}
+        </span>
+        <span class="atmosphere_panel">
+            {{ embed(roots.atmosphere_panel) }}
+        </span>
+    </div>
+    <div class="output_panels">
+        <span class="target_wavelength_plot">
+            {{ embed(roots.results) }}
+        </span>
+    </div>
 {% endblock %}
