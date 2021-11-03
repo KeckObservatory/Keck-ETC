@@ -37,6 +37,7 @@ class source:
 
     def _load_files(self):
         self._functions = {}
+        self.available_types = list(vars(self.config.source_types).keys())
 
         for name, source_type in vars(self.config.source_types).items():
             if 'filename' in vars(source_type).keys():
@@ -49,6 +50,7 @@ class source:
                         flux = flux / interpolate(central_wavelength, wavelengths, flux) * self.brightness.to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(central_wavelength))  # Scale source by given mag/flux
                         return interpolate(w, wavelengths, flux, left=0, right=0)
                     return scale_and_interpolate
+
                 self._functions[name] = define_data_scope(data)  # Save function corresponding to this source
             else:
                 if name == 'blackbody':
@@ -74,26 +76,27 @@ class source:
             # TODO -- validation for self.config.defaults.brightness here, needs extra because u.Quantity() errors out
             _ = u.Quantity(self.config.defaults.redshift)
             # TODO -- validate wavelength_bands and default.wavelength_band
-            # For each source type, check name (required), filename and parameters
-            for source_type in vars(self.config.source_types).values():
-                _ = source_type.name
-                # Check for valid template filenames
-                if 'filename' in vars(source_type).keys():
-                    filepath = self.config.template_filepath + '/' + source_type.filename
-                    try:
-                        data = Table.read(filepath, format='ascii.ecsv', data_end=10)
-                        _ = data['wavelength'].unit
-                        _ = data['flux'].unit
-                    except:
-                        raise ValueError('ERROR: In source--config.yaml -- file '+filepath+' is not a valid ECSV file')
-                # Check parameters for valid astropy quantities
-                if 'parameters' in vars(source_type).keys():
-                    try:
-                        _ = [u.Quantity(z) for z in vars(source_type.parameters).values()]
-                    except:
-                        raise ValueError('ERROR: In source_config.yaml -- invalid parameter for source type '+source_type.name)
         except:
-            raise ValueError('ERROR: In source_config.yaml -- invalid configuration file')
+            raise ValueError('ERROR: In source_config.yaml -- invalid configuration file')  # TODO -- specific error msg
+        # For each source type, check name (required), filename and parameters
+        for source_type in vars(self.config.source_types).values():
+            _ = source_type.name
+            # Check for valid template filenames
+            if 'filename' in vars(source_type).keys():
+                filepath = self.config.template_filepath + '/' + source_type.filename
+                try:
+                    data = Table.read(filepath, format='ascii.ecsv', data_end=10)
+                    _ = data['wavelength'].unit
+                    _ = data['flux'].unit
+                except:
+                    raise ValueError('ERROR: In source--config.yaml -- file '+filepath+' is not a valid ECSV file')
+            # Check parameters for valid astropy quantities
+            if 'parameters' in vars(source_type).keys():
+                try:
+                    _ = [u.Quantity(z) for z in vars(source_type.parameters).values()]
+                except:
+                    raise ValueError('ERROR: In source_config.yaml -- invalid parameter for source type '+source_type.name)
+
 
 
     def set_type(self, new_type):
@@ -164,8 +167,7 @@ class source:
             flux = flux / interpolate(central_wavelength, wavelengths, flux) * self.brightness.to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(central_wavelength))  # Scale source by given mag/flux
             return interpolate(w, wavelengths, flux, left=0, right=0)
         self._functions[name.split('.')[0]] = scale_and_interpolate  # Save function corresponding to this source
-        pass  # TODO -- allow users to specify their own source templates (i.e. upload file)
-                # Need to figure out file formats w/ bokeh & api to know what I should require
+        self.available_types.append(name.split('.')[0])  # Add to list of types available to choose from
 
     def set_brightness(self, brightness):
         if isinstance(brightness, u.Quantity):

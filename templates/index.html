@@ -9,35 +9,24 @@
 {% endblock %}
 
 {% block contents %}
-    <script>
-        window.addEventListener('DOMNodeInserted', () => {
-            if (document.getElementsByClassName('bk-input-group').length > 0) {
-                document.getElementsByClassName('loading-symbol')[0].style.display = 'none';
-            } else {
-                document.getElementsByClassName('loading-symbol')[0].style.display = '';
-            }
-        });
-        darkModeSwitch = (darkMode) => {console.log(darkMode);};
-    </script>
     <h2>W.M.K.O. Exposure Time Calculator</h2>
-    <div class="loading-symbol"></div>
     <div class="instrument-menu">
         {{ embed(roots.instruments) }}
     </div>
     <div class="input_panels">
-        <span class="exposure_panel">
+        <div class="panel">
             {{ embed(roots.exposure_panel) }}
-        </span>
-        <span class="source_panel">
+        </div>
+        <div class="panel">
             {{ embed(roots.source_panel) }}
-        </span>
-        <span class="atmosphere_panel">
+        </div>
+        <div class="panel">
             {{ embed(roots.atmosphere_panel) }}
-        </span>
+        </div>
     </div>
     <div class="output_panels">
-        <span class="target_wavelength_plot">
+        <div class="panel plot">
             {{ embed(roots.results) }}
-        </span>
+        </div>
     </div>
 {% endblock %}
