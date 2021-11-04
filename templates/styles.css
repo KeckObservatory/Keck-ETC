@@ -1,46 +1,59 @@
 
 
 /* From https://www.w3schools.com/howto/howto_css_loader.asp */
-/*
+
 .loading-symbol {
-    border: 10px dotted #f3f3f3 !important;
-    border-right: 10px dotted #3498db !important;
+    border: 5px dotted #f3f3f3 !important;
+    border-top: 5px dotted #3498db !important;
     border-radius: 50% !important;
     aspect-ratio: 1 !important;
     margin: auto !important;
     width: 50px !important;
-    height: 0 !important;
-    padding-top: 25px !important;
+    height: 50px !important;
     position: relative !important;
     left: None !important;
     top: None !important;
     animation: spin 1.5s ease-in-out infinite;
-  }
-  */
-  @keyframes spin {
-    0% { transform: rotate(360deg); }
-    100% { transform: rotate(0deg); }
-  }
-
-  .loading-symbol{
-    background-color: #3498db !important;
-  }
-
-  /* Testing custom css classes in bokeh objects */
-  .panel {
-    border-radius: 10px;
-    border: 2px solid #e6e6e6;
-    margin: 10px;
-    padding: 5px;
-    display: inline-block;
-  }
-
-
-.input_panels div {
-  width: 25vw;
 }
 
+@keyframes spin {
+  0% { transform: rotate(360deg); }
+  100% { transform: rotate(0deg); }
+}
 
-.input_section {
-    width: 22vw !important;
+/* Testing custom css classes in bokeh objects */
+.panel {
+  border-radius: 10px;
+  border: 5px solid #e6e6e6;
+  padding: 1.5%;
+  min-width: 100px;
+  min-height: 100px;
+  display: table-cell;
+  vertical-align: top;
+  /* flex-grow: 1 & border-bounds~something for not table */
+}
+
+.panel div {
+  display: block;
+  border-spacing: 0;
+}
+
+section {
+  margin: 0 auto;
+  width: 95%;
+}
+
+.row {
+  width: 100%;
+  display: table;
+  border-collapse: separate;
+  border-spacing: 10px;
+}
+
+@media screen and (max-width: 900px) {
+  .panel, .input_panels .panel {
+    display: block;
+    width: 90%;
+    margin: 10px auto;
+  }
 }

@@ -9,24 +9,26 @@
 {% endblock %}
 
 {% block contents %}
-    <h2>W.M.K.O. Exposure Time Calculator</h2>
-    <div class="instrument-menu">
-        {{ embed(roots.instruments) }}
-    </div>
-    <div class="input_panels">
-        <div class="panel">
-            {{ embed(roots.exposure_panel) }}
+    <section>
+        <h2>W.M.K.O. Exposure Time Calculator</h2>
+        <div class="instrument-menu">
+            {{ embed(roots.instruments) }}
         </div>
-        <div class="panel">
-            {{ embed(roots.source_panel) }}
+        <div class="input row">
+            <div class="panel">
+                {{ embed(roots.exposure_panel) }}
+            </div>
+            <div class="panel">
+                {{ embed(roots.source_panel) }}
+            </div>
+            <div class="panel">
+                {{ embed(roots.atmosphere_panel) }}
+            </div>
         </div>
-        <div class="panel">
-            {{ embed(roots.atmosphere_panel) }}
+        <div class="output row">
+            <div class='panel'>
+                {{ embed(roots.results) }}
+            </div>
         </div>
-    </div>
-    <div class="output_panels">
-        <div class="panel plot">
-            {{ embed(roots.results) }}
-        </div>
-    </div>
+    </section>
 {% endblock %}
