@@ -1,7 +1,7 @@
 
 from bokeh.io import curdoc
 from bokeh.plotting import figure
-from bokeh.models import ColumnDataSource, Panel, Select, Tabs, Spinner, Div, FileInput, Paragraph, CustomJS, Slider, CDSView, GroupFilter
+from bokeh.models import ColumnDataSource, Panel, Select, Tabs, Spinner, Div, FileInput, Paragraph, CustomJS, Slider, CDSView, CustomJSFilter
 from bokeh.events import DocumentReady
 from bokeh.layouts import column, row
 
@@ -16,21 +16,17 @@ import pdb
 
 def update_results():
     # Since == fails due to rounding errors, find closest value, i.e. ~=
-    index = abs(etc.exposure.value - res.contents.children[0].children[-1].value) == min(abs(etc.exposure.value - res.contents.children[0].children[-1].value))
     if etc.target == 'signal_noise_ratio':
         results.data = {
-            'wavelengths': etc.wavelengths.to(u.nm).value * len(etc.exposure),
+            'wavelengths': list(etc.wavelengths.to(u.nm).value) * len(etc.exposure),
             'exposure': [x for exp in etc.exposure.to(u.s).value for x in [exp]*len(etc.wavelengths)],
             'source': etc.source_count.flatten().value,
             'background': etc.background_count.flatten().value,
-            'read_noise': etc.read_noise_count.flatten().value,
-            'dark_current': etc.dark_current_count.flatten().value,
+            'read_noise': [x for rnc in etc.read_noise_count.value for x in [rnc]*len(etc.wavelengths)],
+            'dark_current': [x for dcc in etc.dark_current_count.value for x in [dcc]*len(etc.wavelengths)],
             'snr': etc.signal_noise_ratio.flatten().value,
-            'exposure_slider': [False] * len(etc.exposure) * len(etc.wavelengths),
-            'wavelength_slider': [False] * len(etc.exposure) * len(etc.wavelengths),
+            'exposure_slider': [False] * len(etc.wavelengths) * len(etc.exposure)
         }
-
-    res.reload()
 
 
 
@@ -107,6 +103,7 @@ class exposure_panel:
             exposure_list = linspace(self._exposure_min.value, self._exposure_max.value, 100) if self._exposure_max.value > self._exposure_min.value else [self._exposure_min.value]# 100 is Hard-coded for now, change later!!
             etc.set_parameter('exposure', [str(exp)+self._units.value for exp in exposure_list])
             update_results()
+            res.reload()
 
     def unit_callback(self, attr, old, new):
         self.exposure_callback_active = False
@@ -222,24 +219,25 @@ class results_panel:
     def load(self):
         # Plot 1
         step_size = (etc.exposure[1] - etc.exposure[0]).value if len(etc.exposure) > 1 else 0
-        self._exposure_slider = Slider(start=etc.exposure[0].value, end=etc.exposure[-1].value, step=step_size, value=etc.exposure[0].value, title='Exposure ['+str(etc.exposure.unit)+']') if len(etc.exposure) > 1 else Slider(start=0, end=1, step=1, value=0, visible=False)
+        self._exposure_slider = Slider(start=etc.exposure[0].value, end=etc.exposure[-1].value, step=step_size, value=etc.exposure[0].value, title='Exposure ['+str(etc.exposure.unit)+']', syncable=False) if len(etc.exposure) > 1 else Slider(start=0, end=1, step=1, value=0, visible=False)
         #self._exposure_slider.on_change('value', lambda attr, old, new: update_results())
-        # IN PROGRESS, FIGURING OUT JAVASCRIPT TO DO THE MATH!
         js_code = """
-        abs(etc.exposure.value - res.contents.children[0].children[-1].value) == min(abs(etc.exposure.value - res.contents.children[0].children[-1].value))
-
-            const exp_value = results['exposure']
+            const exp_value = source.data['exposure'].reduce((prev, cur) => Math.abs(cur - slider.value) < Math.abs(prev - slider.value) ? cur : prev);
+            return source.data['exposure'].map(x => x == exp_value);
         """
-        self._exposure_slider.js_on_change('value', CustomJS(args=dict(results=results.data, value=self._exposure_slider.value), code=js_code))
+        self._exposure_view = CDSView(source=results, filters=[CustomJSFilter(args={'slider': self._exposure_slider}, code=js_code)])
+        # ABOVE works perfectly, but doesn't run unless source or filters change -- below is supposed to change them, but gives weird errors...
+        # HOW TO HANDLE THIS CLIENT_SIDE?????!?!?!?!?!?!?!!?!?
+        self._exposure_slider.js_on_change('value', CustomJS(args=dict(view=self._exposure_view), code='const filters=view.filters;console.log(view);view.filters=[];console.log(view);view.filters=filters;'))
         self._snr_plot = figure(title='SNR', tools='pan, wheel_zoom, hover, reset, save', active_scroll='wheel_zoom',
                tooltips=[('S/N', '$y{0}'), ('λ (μm)', '$x{0}')], width=400, height=300)
         self._snr_plot.xaxis.axis_label = 'wavelengths (nm)'
         self._snr_plot.yaxis.axis_label = 'signal to noise ratio'
-        self._snr_plot.line(x='wavelengths', y='snr', source=results, view=CDSView(source=results, filters=[GroupFilter(column_name='exposure_slider', group=True)]))
+        self._snr_plot.line(x='wavelengths', y='snr', source=results, view=self._exposure_view)
         self._snr_plot.output_backend = 'svg'
         # Plot 2
-        self._wavelength_slider = Slider(start=etc.wavelengths[0].value, end=etc.wavelengths[-1].value, step=(etc.wavelengths[1]-etc.wavelengths[0]).value, value=etc.wavelengths[0].value, title='Wavelength ['+str(etc.wavelengths.unit)+']')
-        self._wavelength_slider.on_change('value', lambda attr, old, new: update_results())
+        self._wavelength_slider = Slider(start=etc.wavelengths[0].value, end=etc.wavelengths[-1].value, step=(etc.wavelengths[1]-etc.wavelengths[0]).value, value=etc.wavelengths[0].value, title='Wavelength ['+str(etc.wavelengths.unit)+']', syncable=False)
+        #self._wavelength_slider.on_change('value', lambda attr, old, new: update_results())
 
 
         self.contents.children = [column(self._snr_plot, self._exposure_slider)]
@@ -280,7 +278,7 @@ class instrument_menu:
 # START INITIALIZATION HERE
 global etc
 etc = None
-results = ColumnDataSource()
+results = ColumnDataSource(syncable=False)
 instr = instrument_menu()
 exp = exposure_panel()
 atm = atmosphere_panel()
@@ -297,12 +295,12 @@ def load_contents(event):
     global etc
     if etc is None:
         etc = exposure_time_calculator()
+        update_results()
         instr.load()
+        res.load()
         exp.load()
         src.load()
         atm.load()
-        res.load()
-        update_results()
 
 curdoc().on_event(DocumentReady, load_contents)
 

@@ -112,10 +112,11 @@ class atmosphere:
         if not test_em:
             raise ValueError('ERROR: In atmosphere_config.yaml -- file_directory or emission_filepath is invalid, no matching files')
         try:
-            if not all([u.Quantity(Table.read(self.config.file_directory+'/'+x, format='ascii.ecsv', data_end=10).meta['water_vapor']) in test_wvi for x in test_em]):
-                raise ValueError('ERROR: In atmosphere_config.yaml -- File matching emission_filepath has water_vapor that does not match water_vapor_index')
-            if not all([u.Quantity(Table.read(self.config.file_directory+'/'+x, format='ascii.ecsv', data_end=10).meta['airmass']) in test_ami for x in test_em]):
-                raise ValueError('ERROR: In atmosphere_config.yaml -- File matching emission_filepath has airmass that does not match airmass_index')
+            pass  # Fix validation later -- too slow!
+            # if not all([u.Quantity(Table.read(self.config.file_directory+'/'+x, format='ascii.ecsv', data_end=10).meta['water_vapor']) in test_wvi for x in test_em]):
+            #     raise ValueError('ERROR: In atmosphere_config.yaml -- File matching emission_filepath has water_vapor that does not match water_vapor_index')
+            # if not all([u.Quantity(Table.read(self.config.file_directory+'/'+x, format='ascii.ecsv', data_end=10).meta['airmass']) in test_ami for x in test_em]):
+            #     raise ValueError('ERROR: In atmosphere_config.yaml -- File matching emission_filepath has airmass that does not match airmass_index')
         except:
             raise ValueError('ERROR: In atmosphere_config.yaml -- File matching emission_filepath does not have a valid ECSV file header, check metadata')
 
@@ -124,10 +125,11 @@ class atmosphere:
         if not test_tr:
             raise ValueError('ERROR: In atmosphere_config.yaml -- file_directory or transmission_filepath is invalid, no matching files')
         try:
-            if not all([u.Quantity(Table.read(self.config.file_directory+'/'+x, format='ascii.ecsv', data_end=10).meta['water_vapor']) in test_wvi for x in test_tr]):
-                raise ValueError('ERROR: In atmosphere_config.yaml -- File matching transmission_filepath has water_vapor that does not match water_vapor_index')
-            if not all([u.Quantity(Table.read(self.config.file_directory+'/'+x, format='ascii.ecsv', data_end=10).meta['airmass']) in test_ami for x in test_tr]):
-                raise ValueError('ERROR: In atmosphere_config.yaml -- File matching transmission_filepath has airmass that does not match airmass_index')
+            pass  # Fix validation later -- too slow!
+            # if not all([u.Quantity(Table.read(self.config.file_directory+'/'+x, format='ascii.ecsv', data_end=10).meta['water_vapor']) in test_wvi for x in test_tr]):
+            #     raise ValueError('ERROR: In atmosphere_config.yaml -- File matching transmission_filepath has water_vapor that does not match water_vapor_index')
+            # if not all([u.Quantity(Table.read(self.config.file_directory+'/'+x, format='ascii.ecsv', data_end=10).meta['airmass']) in test_ami for x in test_tr]):
+            #     raise ValueError('ERROR: In atmosphere_config.yaml -- File matching transmission_filepath has airmass that does not match airmass_index')
         except:
             raise ValueError('ERROR: In atmosphere_config.yaml -- File matching transmission_filepath does not have a valid ECSV file header, check metadata')
 

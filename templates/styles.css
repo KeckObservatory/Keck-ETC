@@ -24,7 +24,7 @@
 /* Testing custom css classes in bokeh objects */
 .panel {
   border-radius: 10px;
-  border: 5px solid #e6e6e6;
+  border: 2px solid #e6e6e6;
   padding: 1.5%;
   min-width: 100px;
   min-height: 100px;
