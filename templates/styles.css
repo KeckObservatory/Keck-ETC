@@ -21,21 +21,29 @@
   100% { transform: rotate(0deg); }
 }
 
+.bk.input_section {
+  width: 100% !important;
+}
+
 /* Testing custom css classes in bokeh objects */
 .panel {
   border-radius: 10px;
   border: 2px solid #e6e6e6;
-  padding: 1.5%;
+  padding: 0.5vw;
+  margin: 0 0.5vw 1vw 0.5vw;
   min-width: 100px;
   min-height: 100px;
-  display: table-cell;
-  vertical-align: top;
-  /* flex-grow: 1 & border-bounds~something for not table */
+  box-sizing: border-box;
+  flex-grow: 1;
+  display: block;
 }
 
-.panel div {
-  display: block;
-  border-spacing: 0;
+.panel.first {
+  margin-left: 0;
+}
+
+.panel.last {
+  margin-right: 0;
 }
 
 section {
@@ -45,15 +53,34 @@ section {
 
 .row {
   width: 100%;
+  display: flex;
+  align-items: stretch;
+  /*
   display: table;
   border-collapse: separate;
   border-spacing: 10px;
+  */
 }
 
-@media screen and (max-width: 900px) {
-  .panel, .input_panels .panel {
+.main {
+  flex-grow: 85;
+}
+
+.sidebar {
+  flex-grow: 15;
+  flex-direction: column;
+  align-items: stretch;
+  display: flex;
+}
+
+@media (max-width: 900px) {
+  .panel, .input_panels .panel, .panel.first, .panel.last, .instrument-menu, h2 {
     display: block;
     width: 90%;
     margin: 10px auto;
+  }
+
+  .row {
+    flex-direction: column;
   }
 }

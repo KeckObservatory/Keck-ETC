@@ -14,20 +14,28 @@
         <div class="instrument-menu">
             {{ embed(roots.instruments) }}
         </div>
-        <div class="input row">
-            <div class="panel">
-                {{ embed(roots.exposure_panel) }}
+        <div class='row'>
+            <div class='main'>
+                <div class="input row">
+                    <div class="panel first">
+                        {{ embed(roots.exposure_panel) }}
+                    </div>
+                    <div class="panel">
+                        {{ embed(roots.source_panel) }}
+                    </div>
+                    <div class="panel">
+                        {{ embed(roots.atmosphere_panel) }}
+                    </div>
+                </div>
+                <div class="output row">
+                    <div class='panel first'>
+                        {{ embed(roots.results) }}
+                    </div>
+                </div>
             </div>
-            <div class="panel">
-                {{ embed(roots.source_panel) }}
-            </div>
-            <div class="panel">
-                {{ embed(roots.atmosphere_panel) }}
-            </div>
-        </div>
-        <div class="output row">
-            <div class='panel'>
-                {{ embed(roots.results) }}
+            <div class='sidebar'>
+                <div class='panel last'>
+                </div>
             </div>
         </div>
     </section>

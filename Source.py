@@ -105,6 +105,10 @@ class source:
         if self.type in vars(self.config.source_types).keys() and 'parameters' in vars(vars(self.config.source_types)[self.type]).keys():
             self.__dict__.update({key: u.Quantity(val) for key, val in vars(vars(self.config.source_types)[self.type].parameters).items()})
             self.active_parameters += list(vars(vars(self.config.source_types)[self.type].parameters).keys())
+        if self.type == 'blackbody':
+            # Blackbody functions solely off of temperature!
+            self.active_parameters.remove('brightness')
+            self.active_parameters.remove('wavelength_band')
 
 
     def __init__(self):

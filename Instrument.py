@@ -57,6 +57,7 @@ class instrument:
         self.pixel_size = u.Quantity(self.config.defaults.pixel_size)
         self._dark_current = u.Quantity(self.config.dark_current)
         self._read_noise = u.Quantity(self.config.read_noise)
+        self.spectral_resolution = u.Quantity(self.config.spectral_resolution)
 
 
         self._read_throughput()

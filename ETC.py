@@ -3,7 +3,7 @@ from Instrument import instrument
 from Source import source
 from Atmosphere import atmosphere
 import yaml
-from numpy import pi, linspace, zeros, array
+from numpy import pi, linspace, zeros, array, arccos, sqrt
 
 class exposure_time_calculator:
 
@@ -40,13 +40,15 @@ class exposure_time_calculator:
 
         slit_size = self.instrument.slit_width * self.instrument.slit_length
         slit_size_pixels = slit_size / self.instrument.pixel_size
-        source_size = self.instrument.slit_width * self.atmosphere.seeing
+        # Area of gaussian distributed point source minus area of segments
+        area_occluded = (self.atmosphere.seeing**2 * arccos(self.instrument.slit_width / self.atmosphere.seeing)/u.rad - self.instrument.slit_width * sqrt(self.atmosphere.seeing**2 - self.instrument.slit_width**2))/2 if self.atmosphere.seeing > self.instrument.slit_width else 0
+        source_size = (pi * (self.atmosphere.seeing/2)**2) - area_occluded
         source_slit_ratio = source_size / (pi * (self.atmosphere.seeing/2)**2)
 
         # TODO -- coadds, reads, all the juicy details
         self.source_flux = self.source.get_flux(self.wavelengths) * self.atmosphere.get_transmission(self.wavelengths)
-        source_rate =  self.source_flux * self.instrument.get_throughput(self.wavelengths)
-        source_rate *= self.telescope_area * source_slit_ratio * self.wavelengths  # Why is wavelength divided by 2700 in Sherry's code?
+        source_rate =  self.source_flux * self.instrument.get_throughput(self.wavelengths) * self.binning[1]  # Binning in the spectral direction
+        source_rate *= self.telescope_area * source_slit_ratio * self.wavelengths / self.instrument.spectral_resolution
         #Also, should we include diffraction and increase area slightly? Or is that negligible? --nope
         self.efficiency = (self.atmosphere.get_transmission(self.wavelengths) * self.instrument.get_throughput(self.wavelengths)).value  # Save efficiency as dimensionless, not e-/ph
 
@@ -55,7 +57,7 @@ class exposure_time_calculator:
         background_rate = self.atmosphere.get_emission(self.wavelengths) * u.electron / u.photon#* self.instrument.get_throughput(self.wavelengths)
         background_rate *= self.telescope_area * slit_size * self.wavelengths
 
-        read_noise = self.instrument.get_read_noise()**2 * self.read
+        read_noise = self.instrument.get_read_noise()**2 * self.reads
         dark_current_rate = self.instrument.get_dark_current() * slit_size_pixels
         
         if self.target == 'signal_noise_ratio':
@@ -68,7 +70,7 @@ class exposure_time_calculator:
             self.dark_current_count = [dark_current_rate * exp for exp in self.exposure] * u.electron
             self.read_noise_count = ([read_noise] * len(self.exposure)) * u.electron
             noise_count = [self.source_count[exp] + self.background_count[exp] + self.dark_current_count[exp] + self.read_noise_count[exp] for exp in range(len(self.exposure))] # Total count in e- for whole slit and exposure
-            self.signal_noise_ratio = [(self.source_count[exp] * noise_count[exp] ** (-1/2) * self.dither ** (1/2)).value for exp in range(len(self.exposure))] * u.dimensionless_unscaled # Remove the sqrt(e-) unit because it's nonphysical
+            self.signal_noise_ratio = [(self.source_count[exp] * noise_count[exp] ** (-1/2) * self.dithers ** (1/2)).value for exp in range(len(self.exposure))] * u.dimensionless_unscaled # Remove the sqrt(e-) unit because it's nonphysical
 
         elif self.target == 'exposure':
             if len(self.signal_noise_ratio) == 0:
@@ -78,7 +80,7 @@ class exposure_time_calculator:
             self.exposure = zeros([len(self.signal_noise_ratio), len(self.wavelengths)])
             for idx, snr in enumerate(self.signal_noise_ratio.value * u.electron**(1/2)):
                 # Adding 0j to avoid generating RuntimeWarning for sqrt(-1)
-                a = self.dither * source_rate**2 + 0j
+                a = self.dithers * source_rate**2 + 0j
                 b = - snr**2 * (background_rate + dark_current_rate + source_rate) + 0j
                 c = [(read_noise * snr**2).to(u.electron**2).value] * len(self.wavelengths) * u.electron**2 + 0j
                 exposure = ( -b + (b**2 - 4*a*c)**(1/2) ) / (2 * a)
@@ -111,11 +113,12 @@ class exposure_time_calculator:
         self.telescope_area = u.Quantity(self.config.telescope_area)
         self.exposure = [u.Quantity(x) for x in self.config.defaults.exposure] * u.s
         self.signal_noise_ratio = [u.Quantity(x) for x in self.config.defaults.signal_noise_ratio] * u.dimensionless_unscaled
-        self.dither = u.Quantity(self.config.defaults.dither)
-        self.read = u.Quantity(self.config.defaults.read)
-        self.repeat = u.Quantity(self.config.defaults.repeat)
-        self.coadd = u.Quantity(self.config.defaults.coadd)
+        self.dithers = u.Quantity(self.config.defaults.dithers)
+        self.reads = u.Quantity(self.config.defaults.reads)
+        self.repeats = u.Quantity(self.config.defaults.repeats)
+        self.coadds = u.Quantity(self.config.defaults.coadds)
         self.target = self.config.defaults.target
+        self.binning = u.Quantity(self.config.defaults.binning)
         # Calculate default wavelengths array from min, max of instrument and atmosphere
         min_wavelength = max(self.atmosphere._wavelength_index[0], self.instrument.min_wavelength)
         max_wavelength = min(self.atmosphere._wavelength_index[-1], self.instrument.max_wavelength)
