@@ -2,7 +2,7 @@
 ---
 
 # Available instruments in the ETC
-instruments: [nires, test]
+instruments: [lris, nires, deimos, hires, test]
 
 # Default values
 defaults:

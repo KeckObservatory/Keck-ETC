@@ -45,22 +45,9 @@ class instrument:
     def _validate_config(self):
         pass  # TODO
 
-
-
     def __init__(self, name):
         self.set_name(name)
-        self._validate_config()
-
-        # Maybe move these, find the most appropriate place later...
-        self.slit_width = u.Quantity(self.config.defaults.slit_width)
-        self.slit_length = u.Quantity(self.config.defaults.slit_length)
-        self.pixel_size = u.Quantity(self.config.defaults.pixel_size)
-        self._dark_current = u.Quantity(self.config.dark_current)
-        self._read_noise = u.Quantity(self.config.read_noise)
-        self.spectral_resolution = u.Quantity(self.config.spectral_resolution)
-
-
-        self._read_throughput()
+        
         
 
 
@@ -80,6 +67,20 @@ class instrument:
         return self._read_noise
 
     def set_name(self, name):
+        self.__dict__ = {}  # clear parameters from previous instrument
         config_filepath = 'instruments/'+name+'/instrument_config.yaml'
         self._mount_config(config_filepath)
         self.name = name
+
+        self._validate_config()
+
+        # Maybe move these, find the most appropriate place later...
+        self.slit_width = u.Quantity(self.config.defaults.slit_width)
+        self.slit_length = u.Quantity(self.config.defaults.slit_length)
+        self.pixel_size = u.Quantity(self.config.defaults.pixel_size)
+        self._dark_current = u.Quantity(self.config.dark_current)
+        self._read_noise = u.Quantity(self.config.read_noise)
+        self.spectral_resolution = u.Quantity(self.config.spectral_resolution)
+
+
+        self._read_throughput()

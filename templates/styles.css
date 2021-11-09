@@ -28,7 +28,7 @@
 /* Testing custom css classes in bokeh objects */
 .panel {
   border-radius: 10px;
-  border: 2px solid #e6e6e6;
+  border: 1px solid #e6e6e6;
   padding: 0.5vw;
   margin: 0 0.5vw 1vw 0.5vw;
   min-width: 100px;
@@ -73,6 +73,54 @@ section {
   display: flex;
 }
 
+.hrule {
+  width: 95% !important;
+  height: 0 !important;
+  border-top: 1px solid #cccccc !important;
+}
+
+input[type='file'] {
+  width: 100% !important;
+}
+
+/* Text styling, fonts and font sizes for looking pretty */
+/* DO FONTS WITH bokeh model.text_font_size='10em'!!! */
+
+.bk.section-title, .bk.bk-tab {
+  font-size: 1.25vw !important;
+  font-weight: bold;
+}
+
+h2 {
+  font-size: 2vw !important;
+}
+
+body {
+    font-family: 'Helvetica', 'Arial', sans-serif;
+}
+
+.sidebar-big p {
+  font-size: 2.4vw !important;
+  font-weight: bold;
+}
+
+.sidebar-container {
+  display: flex !important;
+  width: 100% !important;
+  height: 100% !important;
+  flex-direction: column !important;
+  justify-content: space-around !important;
+}
+
+.center {
+  margin: auto !important;
+  position: relative !important;
+  top: 0 !important;
+  text-align: center !important;
+}
+
+
+/* Mobile / vertical tablet modes, stack sections */
 @media (max-width: 900px) {
   .panel, .input_panels .panel, .panel.first, .panel.last, .instrument-menu, h2 {
     display: block;

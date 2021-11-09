@@ -1,7 +1,7 @@
 ---
 
 defaults:
-  type: qso
+  type: vega
   brightness: 18 mag(AB)
   wavelength_band: K
   redshift: 2.0  # negative for blueshift

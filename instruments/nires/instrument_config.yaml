@@ -1,6 +1,6 @@
 ---
 # NIRES config file
-# Want overhead to calculate clock time, where should I get it?
+# Want overhead to calculate clock time, where should I get it? -- Sherry is on it, incorporate when available
 
 
 defaults:

@@ -47,25 +47,25 @@ class atmosphere:
         self._emission = np.zeros([len(self._airmass_index), len(self._water_vapor_index), len(self._wavelength_index)])
         # Iterate through directory, filling in self._transmission and self._emission arrays
         for i, filename in enumerate(listdir(self.config.file_directory)):
-            print('\rATMOSPHERE: Reading file '+str(i+1)+'/'+str(len(listdir(self.config.file_directory))), end='')
+            #print('\rATMOSPHERE: Reading file '+str(i+1)+'/'+str(len(listdir(self.config.file_directory))), end='')
             try:
                 if filename.startswith(self.config.transmission_filepath):
-                    data = Table.read(self.config.file_directory+'/'+filename, format='ascii.ecsv')
+                    data = Table.read(self.config.file_directory+'/'+filename, format='fits')
                     self._transmission[
-                        [x == u.Quantity(data.meta['airmass']) for x in self._airmass_index], 
-                        [x == u.Quantity(data.meta['water_vapor']) for x in self._water_vapor_index],
+                        [x == u.Quantity(data.meta['AIRMASS']) for x in self._airmass_index], 
+                        [x == u.Quantity(data.meta['VAPOR']) for x in self._water_vapor_index],
                         :
                     ] = data['transmission'].to('')
                 if filename.startswith(self.config.emission_filepath):
-                    data = Table.read(self.config.file_directory+'/'+filename, format='ascii.ecsv')
+                    data = Table.read(self.config.file_directory+'/'+filename, format='fits')
                     self._emission[
-                        [x == u.Quantity(data.meta['airmass']) for x in self._airmass_index], 
-                        [x == u.Quantity(data.meta['water_vapor']) for x in self._water_vapor_index], 
+                        [x == u.Quantity(data.meta['AIRMASS']) for x in self._airmass_index], 
+                        [x == u.Quantity(data.meta['VAPOR']) for x in self._water_vapor_index], 
                         :
                     ] = data['flux'].to('photon/(s arcsec^2 nm m^2)')
             except ValueError:
                 raise ValueError('ERROR: In atmosphere._load_files() -- invalid file contents')
-        print()  # newline for console output
+        #print()  # newline for console output
 
 
     def _validate_config(self):

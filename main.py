@@ -37,13 +37,16 @@ def update_results():
             'dark_current': [etc.dark_current_count.value] * len(etc.wavelengths),
             'snr': etc.signal_noise_ratio[0].value
         }
+        summary.load()
 
 
 
 class quantity_input:
 
     def value_callback(self, attr, old, new):
-        if self.value_callback_active:
+        if new is None:
+            self.contents.children[0].value = old
+        elif self.value_callback_active:
             try:
                 parameter = new if len(self.contents.children) < 2 else str(new) + self.contents.children[1].value
                 etc.set_parameter(self.key, parameter)
@@ -79,7 +82,7 @@ class quantity_input:
 
         # Define value (and optional unit) inputs, add to self.contents
         self.contents = row(Spinner(title=self.name, value=self.default, step=self.increment, low=self.low, high=self.high, width=width, sizing_mode='stretch_width'), sizing_mode='stretch_width')
-        self.contents.children[0].on_change('value', self.value_callback)
+        self.contents.children[0].on_change('value_throttled', self.value_callback)
         if js_callback is not None:
            self.contents.children[0].js_on_change('tags', js_callback)
         if unit_options is not None and unit_default is not None:
@@ -107,33 +110,45 @@ class dropdown_input:
 class exposure_panel:
 
     def callback(self, attr, old, new):
-        if self._exposure_max.value < self._exposure_min.value:  # Can't have a negative range
-            self._exposure_max.value = self._exposure_min.value
-        res.reload()
+        if self._exposure_min.value is None:
+            self._exposure_min.value = old
+        elif self._exposure_max.value is None:
+            self._exposure_max.value = old
+        elif self._exposure_active_flag:
+            if self._exposure_max.value < self._exposure_min.value:  # Can't have a negative range
+                self._exposure_max.value = self._exposure_min.value
+            res.reload()
 
     def unit_callback(self, attr, old, new):
+        self._exposure_active_flag = False
         self._exposure_min.value = (self._exposure_min.value * u.Unit(old)).to(new).value
         self._exposure_max.value = (self._exposure_max.value * u.Unit(old)).to(new).value
+        res._exposure_slider.value = (res._exposure_slider.value * u.Unit(old)).to(new).value
+        summary.load()
+        self._exposure_active_flag = True
 
     def __init__(self):
         self.contents = column(Div(css_classes=['loading-symbol']), name='exposure_panel', sizing_mode='stretch_width', css_classes=['input_section'])
 
     def load(self):
+        self._exposure_active_flag = True
+        self._title = section_title('Exposure')
         self._exposure_label = Paragraph(text='Exposure:', margin=(5, 5, 0, 5))
         self._exposure_min = Spinner(title='Min:', value=etc.exposure[0].value, low=0, width=100, sizing_mode='stretch_width')
         self._exposure_max = Spinner(title='Max:', value=etc.exposure[-1].value, low=0, width=100, sizing_mode='stretch_width')
         self._units = Select(title='\u00A0', value=str(etc.exposure.unit), options=['ms', 's', 'min', 'hr'], width=100, sizing_mode='stretch_width')
         self.exposure_callback_active = True
-        self._exposure_min.on_change('value', self.callback)
-        self._exposure_max.on_change('value', self.callback)
+        self._exposure_min.on_change('value_throttled', self.callback)
+        self._exposure_max.on_change('value_throttled', self.callback)
         self._units.on_change('value', self.unit_callback)
 
-        self.contents.children = [self._exposure_label, row(self._exposure_min, self._exposure_max, self._units, sizing_mode='stretch_width')]
+        self.contents.children = [self._title.contents, self._exposure_label, row(self._exposure_min, self._exposure_max, self._units, sizing_mode='stretch_width')]
 
 
 class source_panel:
 
     def file_callback(self, attr, old, new):
+        # TODO -- support for FITS file formats
         etc.source.add_template(self._upload.children[1].value, self._upload.children[1].filename)
         self.set_content_visibility()
 
@@ -141,6 +156,8 @@ class source_panel:
         self.contents = column(Div(css_classes=['loading-symbol'], sizing_mode='stretch_width'), name='source_panel', sizing_mode='stretch_width', css_classes=['input_section'])
 
     def load(self):
+        self._title = section_title('Source')
+
         self._types = dropdown_input('source.type', 'Source Type:', etc.source.type, etc.source.available_types)
         self._types.contents.children[0].on_change('value', lambda attr, old, new: self.set_content_visibility())  # Add callback to change inputs when source changes
         self._band = dropdown_input('source.wavelength_band', 'Band:', etc.source.wavelength_band,
@@ -170,6 +187,7 @@ class source_panel:
         self._upload.children[1].on_change('filename', self.file_callback)
         self._upload.children[1].js_on_change('value', CustomJS(args={}, code='console.log(cb_obj);'))
         self.contents.children = [
+            self._title.contents,
             self._types.contents,
             self._brightness.contents,
             self._redshift.contents,
@@ -190,7 +208,7 @@ class source_panel:
             'temperature': self._temperature.contents,
             'index': self._index.contents
         }
-        new_contents = [value for key, value in content_map.items() if key in etc.source.active_parameters] + [self._upload]
+        new_contents = [self._title.contents] + [value for key, value in content_map.items() if key in etc.source.active_parameters] + [self._upload]
         # In order to size properly, first set to []
         self.contents.children = [self._upload]
         self.contents.children = new_contents
@@ -202,6 +220,7 @@ class atmosphere_panel:
         self.contents = column(Div(css_classes=['loading-symbol'], sizing_mode='stretch_width'), name='atmosphere_panel', sizing_mode='stretch_width', css_classes=['input_section'])
 
     def load(self):
+        self._title = section_title('Atmosphere')
         js_callback_code = """alert(name+' requires a value between '+min+' and '+max+' '+units);"""
         self._airmass_callback = CustomJS(args=dict(name='Airmass', min=etc.atmosphere._airmass_index[0].value,
                                               max=etc.atmosphere._airmass_index[-1].value,
@@ -215,14 +234,53 @@ class atmosphere_panel:
         self._airmass = quantity_input('atmosphere.airmass', 'Airmass:', etc.atmosphere.airmass.value, js_callback=self._airmass_callback, increment=0.1)
         self._water_vapor = quantity_input('atmosphere.water_vapor', 'Water Vapor:', etc.atmosphere.water_vapor.value, ['um', 'mm', 'cm', 'm'], str(etc.atmosphere.water_vapor.unit), js_callback=self._water_vapor_callback, increment=0.5)
 
-        self.contents.children = [self._seeing.contents, self._airmass.contents, self._water_vapor.contents]
+        self.contents.children = [self._title.contents, self._seeing.contents, self._airmass.contents, self._water_vapor.contents]
+
+
+class section_title:
+
+    def __init__(self, text):
+        self.contents = column(Paragraph(text=text, margin=(5,5,0,5), sizing_mode='stretch_width', css_classes=['section-title']), Div(css_classes=['hrule'], sizing_mode='stretch_width'), sizing_mode='stretch_width', margin=(0,0,-10,0), css_classes=['input_section'])
+
+
+class big_number:
+
+    def __init__(self, big, small):
+        self.contents = column(Paragraph(text=big, css_classes=['sidebar-big', 'center']), Paragraph(text=small, css_classes=['sidebar-small', 'center']), Div(css_classes=['hrule', 'center'], sizing_mode='stretch_width'), css_classes=['center'], sizing_mode='stretch_width')
+
+
+
+class summary_panel:
+    # TODO -- Add everything, make it look good, etc.
+
+    def __init__(self):
+        self.contents = column(Div(css_classes=['loading-symbol']), sizing_mode='scale_both', name='sidebar', css_classes=['input_section'])
+
+    def load(self):
+        # Quick ~hacky check to make sure everything else is loaded first, switch to boolean flag for clarity later
+        if len(atm.contents.children) > 1:
+
+            central_wavelength = u.Quantity(vars(etc.source.config.wavelength_bands)[src.contents.children[2].children[-1].children[0].value])
+            wavelength_index = abs(etc.wavelengths - central_wavelength.to(etc.wavelengths.unit)) == min(abs(etc.wavelengths - central_wavelength.to(etc.wavelengths.unit)))
+
+            self._title = section_title(etc.instrument.name.upper())
+            self._exp_label = big_number(f'{float(res.contents.children[0].children[1].value):.3} {exp.contents.children[2].children[-1].value}', 'exposure')
+            self._flux_label = big_number(f'{etc.source_flux[wavelength_index][0].to("erg / (cm^2 s Angstrom)", equivalencies=u.spectral_density(central_wavelength)).value:.1} flam', 'source flux')
+            self._wav_label = big_number(f'{central_wavelength.to(u.um).value:4} μm', 'central wavelength')
+            self._snr_label = big_number(f'{etc.signal_noise_ratio[0][wavelength_index][0]:.4}', 'S/N')
+            self._clk_label = big_number('--- s', 'clock time')
+
+            self.contents.children = [self._title.contents, column(self._exp_label.contents, self._snr_label.contents, self._flux_label.contents, self._wav_label.contents, self._clk_label.contents, css_classes=['sidebar-container'])]
+
+
+
 
 
 class results_panel:
     # TODO -- Separate into individual graphs / sections!!
 
     def slider_callback(self, attr, old, new):
-        etc.set_parameter('exposure', [str(new)+exp.contents.children[1].children[-1].value])
+        etc.set_parameter('exposure', [str(new)+exp.contents.children[2].children[-1].value])
         update_results()
 
     def __init__(self):
@@ -231,7 +289,7 @@ class results_panel:
     def load(self):
         # Plot 1
         step_size = (etc.exposure[1] - etc.exposure[0]).value if len(etc.exposure) > 1 else 0
-        self._exposure_slider = Slider(start=etc.exposure[0].value, end=etc.exposure[-1].value, step=step_size, value=etc.exposure[0].value, title='Exposure ['+str(etc.exposure.unit)+']', syncable=False) if len(etc.exposure) > 1 else Slider(start=0, end=1, step=1, value=0, visible=False)
+        self._exposure_slider = Slider(start=etc.exposure[0].value, end=etc.exposure[-1].value, step=step_size, value=etc.exposure[0].value, title='Exposure ['+str(etc.exposure.unit)+']', syncable=False) if len(etc.exposure) > 1 else Slider(start=etc.exposure[0].value, end=etc.exposure[0].value+1, step=1, value=etc.exposure[0].value, visible=False)
         self._exposure_slider.on_change('value_throttled', self.slider_callback)
         """ FOR CLIENT-SIDE COMPUTATION
         js_code = \"""
@@ -249,12 +307,12 @@ class results_panel:
                tooltips=[('S/N', '$y{0}'), ('λ (μm)', '$x{0.000}')], width=400, height=300)
         self._snr_plot.xaxis.axis_label = 'wavelengths (nm)'
         self._snr_plot.yaxis.axis_label = 'signal to noise ratio'
-        self._snr_plot.scatter(x='wavelengths', y='snr', source=results, alpha=0.5, size=8)  # , view=self._exposure_view
+        self._snr_plot.scatter(x='wavelengths', y='snr', source=results, alpha=0.5, size=6)  # , view=self._exposure_view
         self._snr_plot.line(x='wavelengths', y='snr', source=results)
         self._snr_plot.output_backend = 'svg'
         # Plot 2
         self._wavelength_slider = Slider(start=etc.wavelengths[0].value, end=etc.wavelengths[-1].value, step=(etc.wavelengths[1]-etc.wavelengths[0]).value, value=etc.wavelengths[0].value, title='Wavelength ['+str(etc.wavelengths.unit)+']', syncable=False)
-        #self._wavelength_slider.on_change('value', lambda attr, old, new: update_results())
+        
 
         
         self._exposure_slider.value = self._exposure_slider.value
@@ -262,10 +320,10 @@ class results_panel:
 
     def reload(self):
 
-        if exp.contents.children[1].children[1].value > exp.contents.children[1].children[0].value:
-            self._exposure_slider.title = 'Exposure ['+exp.contents.children[1].children[-1].value+']'
-            self._exposure_slider.start = exp.contents.children[1].children[0].value
-            self._exposure_slider.end = exp.contents.children[1].children[1].value
+        if exp.contents.children[2].children[1].value > exp.contents.children[2].children[0].value:
+            self._exposure_slider.title = 'Exposure ['+exp.contents.children[2].children[-1].value+']'
+            self._exposure_slider.start = exp.contents.children[2].children[0].value
+            self._exposure_slider.end = exp.contents.children[2].children[1].value
             self._exposure_slider.step = (self._exposure_slider.end - self._exposure_slider.start) / 100  # HARD-CODED FOR NOW, CHANGE LATER??
             # Trim value to be within new boundaries
             if self._exposure_slider.value < self._exposure_slider.start:
@@ -279,12 +337,18 @@ class results_panel:
 
 class instrument_menu:
 
+    def callback(self, attr, old, new):
+        etc.set_parameter('instrument.name', etc.config.instruments[new])
+        update_results()
+
     def __init__(self):
-        self.contents = Tabs(tabs=[], name='instruments')
+        self.contents = Tabs(tabs=[], name='instruments', sizing_mode='stretch_width')
 
     def load(self):
-        self.contents.tabs = [ Panel(child=Div(), title=instrument.upper()) for instrument in etc.config.instruments ]
-        self.contents.on_change('active', lambda attr, old, new: etc.set_parameter('instrument.name', etc.config.instruments[new]))
+        # Set correct tab active, before defining tabs because it looks better as it loads
+        self.contents.active = [i for i, x in enumerate(etc.config.instruments) if x.lower() == etc.instrument.name.lower()][0]
+        self.contents.tabs = [ Panel(child=Div(sizing_mode='stretch_width'), title=instrument.upper()) for instrument in etc.config.instruments ]
+        self.contents.on_change('active', self.callback)
 
 
 
@@ -302,11 +366,13 @@ exp = exposure_panel()
 atm = atmosphere_panel()
 src = source_panel()  # TODO -- fix self-callback
 res = results_panel()  # TODO -- call results.reload(), does it work?
+summary = summary_panel()
 curdoc().add_root(res.contents)
 curdoc().add_root(instr.contents)
 curdoc().add_root(exp.contents)
 curdoc().add_root(atm.contents)
 curdoc().add_root(src.contents)
+curdoc().add_root(summary.contents)
 
 
 def load_contents(event):
@@ -319,6 +385,7 @@ def load_contents(event):
         exp.load()
         src.load()
         atm.load()
+        summary.load()
 
 curdoc().on_event(DocumentReady, load_contents)
 
