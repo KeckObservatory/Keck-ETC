@@ -4,6 +4,7 @@ from Source import source
 from Atmosphere import atmosphere
 import yaml
 from numpy import pi, linspace, zeros, array, arccos, sqrt, NaN
+from warnings import warn
 
 class exposure_time_calculator:
 
@@ -62,7 +63,7 @@ class exposure_time_calculator:
         if self.target == 'signal_noise_ratio':
             if len(self.exposure) == 0:
                 self.exposure = [u.Quantity(x) for x in self.config.defaults.exposure] * u.s
-                raise RuntimeWarning('WARNING: In ETC -- exposure is not defined, defaulting to '+str(self.exposure))
+                warn('In ETC -- exposure is not defined, defaulting to '+str(self.exposure), RuntimeWarning)
 
             self.source_count = [source_rate * exp for exp in self.exposure] * u.electron
             self.background_count = [background_rate * exp for exp in self.exposure] * u.electron
@@ -74,7 +75,7 @@ class exposure_time_calculator:
         elif self.target == 'exposure':
             if len(self.signal_noise_ratio) == 0:
                 self.signal_noise_ratio = [u.Quantity(x) for x in self.config.defaults.signal_noise_ratio] * u.dimensionless_unscaled
-                raise RuntimeWarning('WARNING: In ETC -- signal_noise_ratio is not defined, defaulting to '+str(self.signal_noise_ratio))
+                warn('In ETC -- signal_noise_ratio is not defined, defaulting to '+str(self.signal_noise_ratio), RuntimeWarning)
 
             self.exposure = zeros([len(self.signal_noise_ratio), len(self.wavelengths)])
             for idx, snr in enumerate(self.signal_noise_ratio.value * u.electron**(1/2)):
@@ -88,7 +89,7 @@ class exposure_time_calculator:
                 #exposure = [next(iter(exposure_pos)) if check else next(iter(exposure_neg)) for check in (exposure_pos.real >= 0) & (exposure_pos.imag == 0)] * u.s
                 if ((exposure.real < 0) | (exposure.imag != 0)).any():
                     exposure[(exposure.real < 0) | (exposure.imag != 0)] = NaN
-                    #raise RuntimeWarning('WARNING: In ETC -- No solutions found for S/N = '+str(snr.value)+', returning exposure = 0')
+                    warn('In ETC -- Some/all nonexistent solutions found for S/N = '+str(snr.value)+', returning exposure = NaN', RuntimeWarning)
                 self.exposure[idx, :] = exposure.real.to(u.s)
             self.exposure = u.Quantity(self.exposure, u.s)
 

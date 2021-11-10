@@ -59,9 +59,8 @@ class quantity_input:
                 parameter = new if len(self.contents.children) < 2 else str(new) + self.contents.children[1].value
                 etc.set_parameter(self.key, parameter)
             except ValueError:
-                if self.js_callback is not None:
-                    self.contents.children[0].tags = ['js_callback_tag_true'] if self.contents.children[0].tags == ['js_callback_tag_false'] else [
-                        'js_callback_tag_false']
+                if self.error_text is not None:
+                    show_alert(self.error_text)
                 self.contents.children[0].value = old
             update_results()
 
@@ -75,14 +74,14 @@ class quantity_input:
         self.contents.children[0].step = (self.contents.children[0].step * unit_old).to(unit_new, equivalencies=self.equivalency).value
         self.value_callback_active = True
 
-    def __init__(self, key, name, default, unit_options=None, unit_default=None, js_callback=None, increment=1.0, low=None, high=None, equivalency=None, width=300):
+    def __init__(self, key, name, default, unit_options=None, unit_default=None, error_text=None, increment=1.0, low=None, high=None, equivalency=None, width=300):
         self.value_callback_active = True
         self.key = key
         self.name = name
         self.default = default
         self.unit_options = unit_options
         self.unit_default = unit_default
-        self.js_callback = js_callback
+        self.error_text = error_text
         self.increment = increment
         self.low = low
         self.high = high
@@ -90,9 +89,7 @@ class quantity_input:
 
         # Define value (and optional unit) inputs, add to self.contents
         self.contents = row(Spinner(title=self.name, value=self.default, step=self.increment, low=self.low, high=self.high, width=width, sizing_mode='scale_width'), sizing_mode='scale_width')
-        self.contents.children[0].on_change('value_throttled', self.value_callback)
-        if js_callback is not None:
-           self.contents.children[0].js_on_change('tags', js_callback)
+        self.contents.children[0].on_change('value', self.value_callback)
         if unit_options is not None and unit_default is not None:
             self.contents.children[0].width = int(width/2)
             self.contents.children.append(Select(title='\u00A0', value=unit_default, options=unit_options, width=int(width/2), sizing_mode='scale_width'))
@@ -263,18 +260,12 @@ class atmosphere_panel:
 
     def load(self):
         self.title = section_title('Atmosphere')
-        js_callback_code = """alert(name+' requires a value between '+min+' and '+max+' '+units);"""
-        self.airmass_callback = CustomJS(args=dict(name='Airmass', min=etc.atmosphere._airmass_index[0].value,
-                                              max=etc.atmosphere._airmass_index[-1].value,
-                                              units=str(etc.atmosphere.airmass.unit)),
-                                    code=js_callback_code)
-        self.water_vapor_callback = CustomJS(args=dict(name='Water vapor', min=etc.atmosphere._water_vapor_index[0].value,
-                                                  max=etc.atmosphere._water_vapor_index[-1].value,
-                                                  units=str(etc.atmosphere.water_vapor.unit)), code=js_callback_code)
+        self.airmass_error_text = f'Airmass requires a value between {etc.atmosphere._airmass_index[0].value} and {etc.atmosphere._airmass_index[-1].value} {etc.atmosphere.airmass.unit}'
+        self.water_vapor_error_text = f'Water vapor requires a value between {etc.atmosphere._water_vapor_index[0].value} and {etc.atmosphere._water_vapor_index[-1].value} {etc.atmosphere.water_vapor.unit}'
 
         self.seeing = quantity_input('atmosphere.seeing', 'Seeing:', etc.atmosphere.seeing.value, ['arcsec'], str(etc.atmosphere.seeing.unit), increment=0.1, low=0)
-        self.airmass = quantity_input('atmosphere.airmass', 'Airmass:', etc.atmosphere.airmass.value, js_callback=self.airmass_callback, increment=0.1)
-        self.water_vapor = quantity_input('atmosphere.water_vapor', 'Water Vapor:', etc.atmosphere.water_vapor.value, ['mm', 'cm'], str(etc.atmosphere.water_vapor.unit), js_callback=self.water_vapor_callback, increment=0.5)
+        self.airmass = quantity_input('atmosphere.airmass', 'Airmass:', etc.atmosphere.airmass.value, error_text=self.airmass_error_text, increment=0.1)
+        self.water_vapor = quantity_input('atmosphere.water_vapor', 'Water Vapor:', etc.atmosphere.water_vapor.value, ['mm', 'cm'], str(etc.atmosphere.water_vapor.unit), error_text=self.water_vapor_error_text, increment=0.5)
 
         self.contents.children = [self.title.contents, self.seeing.contents, self.airmass.contents, self.water_vapor.contents]
 
@@ -321,7 +312,7 @@ class summary_panel:
                     self.exp_label = big_number(f'{etc.exposure[0][wavelength_index][0].to(u.min).value:.3} min', 'exposure')
                 else:
                     self.exp_label = big_number(f'{etc.exposure[0][wavelength_index][0].to(u.hr).value:.3} hr', 'exposure')
-                self.snr_label = big_number(f'{float(res.snr_slider.value):.4}', 'S/N')
+                self.snr_label = big_number(f'{float(etc.signal_noise_ratio[0].value):.4}', 'S/N')
             self.contents.children = [self.title.contents, column(self.exp_label.contents, self.snr_label.contents,
                                                                       self.wav_label.contents, self.flux_label.contents,
                                                                       self.clk_label.contents,
@@ -346,7 +337,7 @@ class results_panel:
         step_size = (etc.exposure[1] - etc.exposure[0]).value if len(etc.exposure) > 1 else 0
         self.exposure_slider = Slider(start=etc.exposure[0].value, end=etc.exposure[-1].value, step=step_size, value=etc.exposure[0].value, title='Exposure ['+str(etc.exposure.unit)+']', syncable=False) if len(etc.exposure) > 1 else Slider(start=etc.exposure[0].value, end=etc.exposure[0].value+1, step=1, value=etc.exposure[0].value, visible=False)
         self.exposure_slider.on_change('value_throttled', self.slider_callback)
-        self.snr_slider = Slider(start=0, end=1, value=0, step=1, title='Signal to Noise Ratio')
+        self.snr_slider = Slider(start=0, end=1, value=0, step=1, title='Signal to Noise Ratio', visible=False)
         self.snr_slider.on_change('value_throttled', self.slider_callback)
         """ FOR CLIENT-SIDE COMPUTATION
         js_code = \"""
@@ -371,7 +362,7 @@ class results_panel:
 
         # Plot exp vs. wavelength
         self.exp_plot = figure(title='Exposure Time', tools='pan, wheel_zoom, hover, reset, save', active_scroll='wheel_zoom',
-               tooltips=[('exp (s)', '$y{0}'), ('λ (μm)', '$x{0.000}')], width=400, height=300, y_range=(min(results.data['exposure'])*.8, nanpercentile(results.data['exposure'], 50)))
+               tooltips=[('exp (s)', '$y{0}'), ('λ (μm)', '$x{0.000}')], width=400, height=300, y_range=(min(results.data['exposure'])*.8, nanpercentile(results.data['exposure'], 50)), visible=False)
         self.exp_plot.xaxis.axis_label = 'wavelengths (nm)'
         self.exp_plot.yaxis.axis_label = 'exposure time (s)'
         self.exp_plot.scatter(x='wavelengths', y='exposure', source=results, alpha=0.5, size=6)  # , view=self.exposure_view
@@ -385,7 +376,7 @@ class results_panel:
 
         
         self.exposure_slider.value = self.exposure_slider.value
-        self.contents.children = [column(self.snr_plot, self.exposure_slider)]
+        self.contents.children = [column(self.snr_plot, self.exposure_slider), column(self.exp_plot, self.snr_slider)]
 
     def reload(self):
         if exp.target.value == 'signal to noise ratio':
@@ -402,8 +393,11 @@ class results_panel:
                 self.exposure_slider.visible = True
             else:
                 self.exposure_slider.visible = False
-            if self.exposure_slider not in self.contents.children[0].children:
-                self.contents.children = [column(self.snr_plot, self.exposure_slider)]
+            if not self.snr_plot.visible:
+                self.snr_plot.visible = True
+                self.exp_plot.visible = False
+                self.snr_slider.visible = False
+                #self.contents.children = [column(self.snr_plot, self.exposure_slider)]
         elif exp.target.value == 'exposure':
             if exp.snr_max.value > exp.snr_min.value:
                 self.snr_slider.start = exp.snr_min.value
@@ -417,8 +411,11 @@ class results_panel:
                 self.snr_slider.visible = True
             else:
                 self.snr_slider.visible = False
-            if self.snr_slider not in self.contents.children[0].children:
-                self.contents.children = [column(self.exp_plot, self.snr_slider)]
+            if not self.exp_plot.visible:
+                self.snr_plot.visible = False
+                self.exposure_slider.visible = False
+                self.exp_plot.visible = True
+                #self.contents.children = [column(self.exp_plot, self.snr_slider)]
                 self.exp_plot.y_range.start = min(results.data['exposure'])*.8
                 self.exp_plot.y_range.end = nanpercentile(results.data['exposure'], 50)
                 self.exp_plot.y_range = Range1d(min(results.data['exposure'])*.8, nanpercentile(results.data['exposure'], 50))
@@ -426,8 +423,12 @@ class results_panel:
 class instrument_menu:
 
     def callback(self, attr, old, new):
-        etc.set_parameter('instrument.name', etc.config.instruments[new])
-        update_results()
+        try:
+            etc.set_parameter('instrument.name', etc.config.instruments[new])
+            update_results()
+        except Exception as e:
+            show_alert('This instrument has not yet been added, and is simply present for demonstration purposes.')
+            self.contents.active = old
 
     def __init__(self):
         self.contents = Tabs(tabs=[], name='instruments', sizing_mode='scale_width')
@@ -440,9 +441,15 @@ class instrument_menu:
 
 
 
-# Main code goes here
 
 
+# Define error handling javascript
+alert_handler = CustomJS(args={}, code='if (cb_obj.tags.length > 0) { alert(cb_obj.tags[0]); cb_obj.tags=[]; }')
+alert_container = Div(name='alert_container', visible=False)
+curdoc().add_root(alert_container)
+alert_container.js_on_change('tags', alert_handler)
+def show_alert(msg):
+    alert_container.tags = [msg]
 
 
 # START INITIALIZATION HERE
@@ -461,7 +468,7 @@ curdoc().add_root(exp.contents)
 curdoc().add_root(atm.contents)
 curdoc().add_root(src.contents)
 curdoc().add_root(summary.contents)
-curdoc().title = 'ETC'
+curdoc().title = 'W.M.K.O. ETC'
 
 
 def load_contents(event):
