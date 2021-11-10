@@ -18,3 +18,5 @@ throughput_path: throughput.txt  # Relative path to throughput file... does thro
 slits: [ [0.55 arcsec, 18 arcsec] ]  # Should we just do area of slit? But dropdown should probably list thickness for fixed-length slits, maybe store as tuple?
 
 spectral_resolution: 2700  # Spectral resolving power of instrument, defined as λ / Δλ
+
+# Include saturation pixel value, then generate non-linearity warning for over-saturated pixels!!!

@@ -132,3 +132,4 @@ body {
     flex-direction: column;
   }
 }
+/* Source panel starts to break at ~1080px, consider adding separate @media ??? */

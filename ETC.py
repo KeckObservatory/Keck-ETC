@@ -3,7 +3,7 @@ from Instrument import instrument
 from Source import source
 from Atmosphere import atmosphere
 import yaml
-from numpy import pi, linspace, zeros, array, arccos, sqrt
+from numpy import pi, linspace, zeros, array, arccos, sqrt, NaN
 
 class exposure_time_calculator:
 
@@ -47,12 +47,11 @@ class exposure_time_calculator:
 
         # TODO -- coadds, reads, all the juicy details
         self.source_flux = self.source.get_flux(self.wavelengths) * self.atmosphere.get_transmission(self.wavelengths)
-        source_rate =  self.source_flux * self.instrument.get_throughput(self.wavelengths) * self.binning[1]  # Binning in the spectral direction
+        source_rate = self.source_flux * self.instrument.get_throughput(self.wavelengths) * self.binning[1]  # Binning in the spectral direction
         source_rate *= self.telescope_area * source_slit_ratio * self.wavelengths / self.instrument.spectral_resolution
-        #Also, should we include diffraction and increase area slightly? Or is that negligible? --nope
         self.efficiency = (self.atmosphere.get_transmission(self.wavelengths) * self.instrument.get_throughput(self.wavelengths)).value  # Save efficiency as dimensionless, not e-/ph
 
-        # Background -- why do we subtract the area of the source? Don't we still get photon hits from the background on those pixels? Since they're not saturated (presumably), isn't that noise?
+
         # Also, why isn't the throughput included in Sherry's code?
         background_rate = self.atmosphere.get_emission(self.wavelengths) * u.electron / u.photon#* self.instrument.get_throughput(self.wavelengths)
         background_rate *= self.telescope_area * slit_size * self.wavelengths
@@ -88,9 +87,10 @@ class exposure_time_calculator:
                 # This statement is broken, iter() needs to be moved outside because it reinitializes every time
                 #exposure = [next(iter(exposure_pos)) if check else next(iter(exposure_neg)) for check in (exposure_pos.real >= 0) & (exposure_pos.imag == 0)] * u.s
                 if ((exposure.real < 0) | (exposure.imag != 0)).any():
-                    exposure[(exposure.real < 0) | (exposure.imag != 0)] = 0
-                    raise RuntimeWarning('WARNING: In ETC -- No solutions found for S/N = '+str(snr.value)+', returning exposure = 0')
+                    exposure[(exposure.real < 0) | (exposure.imag != 0)] = NaN
+                    #raise RuntimeWarning('WARNING: In ETC -- No solutions found for S/N = '+str(snr.value)+', returning exposure = 0')
                 self.exposure[idx, :] = exposure.real.to(u.s)
+            self.exposure = u.Quantity(self.exposure, u.s)
 
         else:
             # Check that exposure and S/N have not both been provided
