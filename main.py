@@ -179,8 +179,8 @@ class exposure_panel:
         self.target.on_change('value', self.target_callback)
         # Create elements to calculate snr
         self.snr_label = Paragraph(text='Signal to Noise Ratio:', margin=(5, 5, 0, 5))
-        self.snr_min = Spinner(title='Min:', value=0, low=0, width=100, sizing_mode='scale_width')  # Default to 0 because exp is initially active
-        self.snr_max = Spinner(title='Max:', value=0, low=0, width=100, sizing_mode='scale_width')
+        self.snr_min = Spinner(title='Min:', value=0, low=0, width=100, sizing_mode='scale_width', step=5)  # Default to 0 because exp is initially active
+        self.snr_max = Spinner(title='Max:', value=0, low=0, width=100, sizing_mode='scale_width', step=5)
         self.snr_min.on_change('value_throttled', self.exposure_callback)
         self.snr_max.on_change('value_throttled', self.exposure_callback)
 
@@ -315,7 +315,12 @@ class summary_panel:
                 self.exp_label = big_number(f'{float(res.exposure_slider.value):.3} {exp.units.value}', 'exposure')
                 self.snr_label = big_number(f'{etc.signal_noise_ratio[0][wavelength_index][0]:.4}', 'S/N')
             elif etc.target == 'exposure':
-                self.exp_label = big_number(f'{etc.exposure[0][wavelength_index][0].value:.3} {etc.exposure[0][wavelength_index][0].unit}', 'exposure')
+                if etc.exposure[0][wavelength_index][0].to(u.s).value < 60:
+                    self.exp_label = big_number(f'{etc.exposure[0][wavelength_index][0].to(u.s).value:.3} s', 'exposure')
+                elif etc.exposure[0][wavelength_index][0].to(u.min).value < 60:
+                    self.exp_label = big_number(f'{etc.exposure[0][wavelength_index][0].to(u.min).value:.3} min', 'exposure')
+                else:
+                    self.exp_label = big_number(f'{etc.exposure[0][wavelength_index][0].to(u.hr).value:.3} hr', 'exposure')
                 self.snr_label = big_number(f'{float(res.snr_slider.value):.4}', 'S/N')
             self.contents.children = [self.title.contents, column(self.exp_label.contents, self.snr_label.contents,
                                                                       self.wav_label.contents, self.flux_label.contents,
@@ -366,7 +371,7 @@ class results_panel:
 
         # Plot exp vs. wavelength
         self.exp_plot = figure(title='Exposure Time', tools='pan, wheel_zoom, hover, reset, save', active_scroll='wheel_zoom',
-               tooltips=[('exp (s)', '$y{0}'), ('λ (μm)', '$x{0.000}')], width=400, height=300)
+               tooltips=[('exp (s)', '$y{0}'), ('λ (μm)', '$x{0.000}')], width=400, height=300, y_range=(min(results.data['exposure'])*.8, nanpercentile(results.data['exposure'], 50)))
         self.exp_plot.xaxis.axis_label = 'wavelengths (nm)'
         self.exp_plot.yaxis.axis_label = 'exposure time (s)'
         self.exp_plot.scatter(x='wavelengths', y='exposure', source=results, alpha=0.5, size=6)  # , view=self.exposure_view
@@ -414,9 +419,9 @@ class results_panel:
                 self.snr_slider.visible = False
             if self.snr_slider not in self.contents.children[0].children:
                 self.contents.children = [column(self.exp_plot, self.snr_slider)]
-                # Set y axis range to be more helpful than default
                 self.exp_plot.y_range.start = min(results.data['exposure'])*.8
                 self.exp_plot.y_range.end = nanpercentile(results.data['exposure'], 50)
+                self.exp_plot.y_range = Range1d(min(results.data['exposure'])*.8, nanpercentile(results.data['exposure'], 50))
 
 class instrument_menu:
 
@@ -456,6 +461,7 @@ curdoc().add_root(exp.contents)
 curdoc().add_root(atm.contents)
 curdoc().add_root(src.contents)
 curdoc().add_root(summary.contents)
+curdoc().title = 'ETC'
 
 
 def load_contents(event):
@@ -471,4 +477,3 @@ def load_contents(event):
         summary.load()
 
 curdoc().on_event(DocumentReady, load_contents)
-
