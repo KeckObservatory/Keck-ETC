@@ -147,12 +147,13 @@ class exposure_panel:
             etc.set_parameter('signal_noise_ratio', etc.config.defaults.signal_noise_ratio)
             self.snr_min.value = etc.signal_noise_ratio[0].value
             self.snr_max.value = etc.signal_noise_ratio[-1].value
-            self.contents.children = [self.title.contents, self.target, self.snr_label, row(self.snr_min, self.snr_max, sizing_mode='scale_width')]
+            self.contents.children = [self.snr if item==self.exposure else item for item in self.contents.children]
+
         if new == 'signal to noise ratio':
             etc.set_parameter('exposure', etc.config.defaults.exposure)
             self.exposure_min.value = etc.exposure[0].value
             self.exposure_max.value = etc.exposure[-1].value
-            self.contents.children = [self.title.contents, self.target, self.exposure_label, row(self.exposure_min, self.exposure_max, self.units, sizing_mode='scale_width')]
+            self.contents.children = [self.exposure if item==self.snr else item for item in self.contents.children]
         update_results()
         res.reload()
 
@@ -167,9 +168,10 @@ class exposure_panel:
         self.exposure_min = Spinner(title='Min:', value=etc.exposure[0].value, low=0, width=100, sizing_mode='scale_width')
         self.exposure_max = Spinner(title='Max:', value=etc.exposure[-1].value, low=0, width=100, sizing_mode='scale_width')
         self.units = Select(title='\u00A0', value=str(etc.exposure.unit), options=['ms', 's', 'min', 'hr'], width=100, sizing_mode='scale_width')
-        self.exposure_min.on_change('value_throttled', self.exposure_callback)
-        self.exposure_max.on_change('value_throttled', self.exposure_callback)
+        self.exposure_min.on_change('value', self.exposure_callback)
+        self.exposure_max.on_change('value', self.exposure_callback)
         self.units.on_change('value', self.unit_callback)
+        self.exposure = column(self.exposure_label, row(self.exposure_min, self.exposure_max, self.units, sizing_mode='scale_width'), sizing_mode='scale_width')
 
         # Create dropdown for selecting whether to calculate snr or exp
         self.target = Select(title='Calculation Target:', value='signal to noise ratio', options=['signal to noise ratio', 'exposure'], width=300, sizing_mode='scale_width')
@@ -178,10 +180,25 @@ class exposure_panel:
         self.snr_label = Paragraph(text='Signal to Noise Ratio:', margin=(5, 5, 0, 5))
         self.snr_min = Spinner(title='Min:', value=0, low=0, width=100, sizing_mode='scale_width', step=5)  # Default to 0 because exp is initially active
         self.snr_max = Spinner(title='Max:', value=0, low=0, width=100, sizing_mode='scale_width', step=5)
-        self.snr_min.on_change('value_throttled', self.exposure_callback)
-        self.snr_max.on_change('value_throttled', self.exposure_callback)
+        self.snr_min.on_change('value', self.exposure_callback)
+        self.snr_max.on_change('value', self.exposure_callback)
+        self.snr = column(self.snr_label, row(self.snr_min, self.snr_max, sizing_mode='scale_width'), sizing_mode = 'scale_width')
 
-        self.contents.children = [self.title.contents, self.target, self.exposure_label, row(self.exposure_min, self.exposure_max, self.units, sizing_mode='scale_width')]
+        # Dithers
+        self.dithers = quantity_input('dithers', 'Dithers:', etc.dithers.value, low=1, width=150)
+        self.repeats = quantity_input('repeats', 'Repeats:', etc.repeats.value, low=0, width=150)
+        self.coadds = quantity_input('coadds', 'Coadds:', etc.coadds.value, low=0, width=150)
+        self.reads = dropdown_input('reads', 'Reads:', str(etc.reads.value), [str(x) for x in etc.config.reads_options], width=150)
+        
+
+
+        self.contents.children = [
+            self.title.contents, 
+            self.target,
+            self.exposure,
+            row(self.dithers.contents, self.repeats.contents, sizing_mode='scale_width'),
+            row(self.coadds.contents, self.reads.contents, sizing_mode = 'scale_width')
+        ]
 
 
 class source_panel:
@@ -203,7 +220,7 @@ class source_panel:
                               list(vars(etc.source.config.wavelength_bands).keys()), width=100)
         self.brightness = quantity_input(
             key='source.brightness',
-            name='Brightness:',
+            name='Flux:',
             default=etc.source.brightness.value,
             unit_options=['mag(AB)', 'mag(ST)', 'Jy', 'erg / (Angstrom cm2 s)'],
             unit_default=str(etc.source.brightness.unit),
@@ -212,6 +229,7 @@ class source_panel:
         )
         # Add wavelength_band to brightness_row for sizing purposes
         self.brightness.contents.children.append(self.band.contents)
+
         # Define other inputs...
         self.redshift = quantity_input('source.redshift', 'Redshift:', etc.source.redshift.value)
         self.fwhm = quantity_input('source.fwhm', 'FWHM:', etc.source.fwhm.value, ['Angstrom', 'nm', 'um', 'mm'], str(etc.source.fwhm.unit), low=0)
@@ -225,16 +243,6 @@ class source_panel:
         )
         self.upload.children[1].on_change('filename', self.file_callback)
         self.upload.children[1].js_on_change('value', CustomJS(args={}, code='console.log(cb_obj);'))
-        self.contents.children = [
-            self.title.contents,
-            self.types.contents,
-            self.brightness.contents,
-            self.redshift.contents,
-            self.fwhm.contents,
-            self.temperature.contents,
-            self.index.contents,
-            self.upload
-        ]
         self.set_content_visibility()
 
     def set_content_visibility(self):
@@ -270,6 +278,27 @@ class atmosphere_panel:
         self.contents.children = [self.title.contents, self.seeing.contents, self.airmass.contents, self.water_vapor.contents]
 
 
+class instrument_panel:
+
+    def binning_callback(self, attr, old, new):
+        etc.set_parameter('binning', [int(new[0]), int(new[-1])])
+        update_results()
+
+    def __init__(self):
+        self.contents = column(Div(css_classes=['loading-symbol'], sizing_mode='scale_width'), name='instrument_panel', sizing_mode='scale_width', css_classes=['input_section'])
+
+    def load(self):
+        self.title = section_title('Instrument')
+        current_slit = f'{etc.instrument.slit_width.to(u.arcsec).value}" x {etc.instrument.slit_length.to(u.arcsec).value}"'
+        slit_list = [f'{u.Quantity(x[0]).to(u.arcsec).value}" x {u.Quantity(x[1]).to(u.arcsec).value}"' for x in etc.instrument.config.slits]
+        self.slit = Select(title='Slit:', value=current_slit, options=slit_list, width=300, sizing_mode='scale_width')
+        # TODO -- add slit functionality, including "custom" option in dropdown (for appropriate instruments), which opens up a input row with "width" "length" and "unit"
+        self.mode = dropdown_input('mode', 'Mode:', etc.instrument.mode, etc.instrument.config.modes)
+        # TODO -- add grating, grism, and filter dependent on etc.instrument!
+        self.binning = Select(title='CCD Binning:', value=f'{etc.binning[0].value}x{etc.binning[1].value}', options=[f'{b[0]}x{b[1]}' for b in etc.config.binning_options], width=300, sizing_mode='scale_width')
+        self.binning.on_change('value', self.binning_callback)
+        self.contents.children = [self.title.contents, self.mode.contents, self.slit, self.binning]
+
 class section_title:
 
     def __init__(self, text):
@@ -300,7 +329,7 @@ class summary_panel:
             self.flux_label = big_number(
                 f'{etc.source_flux[wavelength_index][0].to("erg / (cm^2 s Angstrom)", equivalencies=u.spectral_density(central_wavelength)).value:.1} flam',
                 'source flux')
-            self.wav_label = big_number(f'{central_wavelength.to(u.um).value:.4} μm', 'central wavelength')
+            self.wav_label = big_number(f'{central_wavelength.to(u.um).value:.4} μm', 'wavelength')
             self.clk_label = big_number('--- s', 'clock time')
             if etc.target == 'signal_noise_ratio':
                 self.exp_label = big_number(f'{float(res.exposure_slider.value):.3} {exp.units.value}', 'exposure')
@@ -416,9 +445,10 @@ class results_panel:
                 self.exposure_slider.visible = False
                 self.exp_plot.visible = True
                 #self.contents.children = [column(self.exp_plot, self.snr_slider)]
-                self.exp_plot.y_range.start = min(results.data['exposure'])*.8
-                self.exp_plot.y_range.end = nanpercentile(results.data['exposure'], 50)
-                self.exp_plot.y_range = Range1d(min(results.data['exposure'])*.8, nanpercentile(results.data['exposure'], 50))
+                self.exp_plot.y_range.start = min(etc.exposure[0].value)*.8
+                self.exp_plot.y_range.end = nanpercentile(etc.exposure[0].value, 50)
+                # TODO -- change behavior of reset button!
+                self.exp_plot.y_range = Range1d(min(etc.exposure[0].value)*.8, nanpercentile(etc.exposure[0].value, 50))
 
 class instrument_menu:
 
@@ -427,7 +457,7 @@ class instrument_menu:
             etc.set_parameter('instrument.name', etc.config.instruments[new])
             update_results()
         except Exception as e:
-            show_alert('This instrument has not yet been added, and is simply present for demonstration purposes.')
+            show_alert('This instrument has not yet been added, and is only here because it looks good :)')
             self.contents.active = old
 
     def __init__(self):
@@ -456,31 +486,43 @@ def show_alert(msg):
 global etc
 etc = None
 results = ColumnDataSource(syncable=False)
-instr = instrument_menu()
+menu = instrument_menu()
 exp = exposure_panel()
 atm = atmosphere_panel()
 src = source_panel()  # TODO -- fix self-callback
 res = results_panel()  # TODO -- call results.reload(), does it work?
 summary = summary_panel()
+instr = instrument_panel()
 curdoc().add_root(res.contents)
-curdoc().add_root(instr.contents)
+curdoc().add_root(menu.contents)
 curdoc().add_root(exp.contents)
 curdoc().add_root(atm.contents)
 curdoc().add_root(src.contents)
 curdoc().add_root(summary.contents)
+curdoc().add_root(instr.contents)
 curdoc().title = 'W.M.K.O. ETC'
 
 
 def load_contents(event):
     global etc
-    if etc is None:
-        etc = exposure_time_calculator()
-        update_results()
-        instr.load()
-        res.load()
-        exp.load()
-        src.load()
-        atm.load()
-        summary.load()
+    #if etc is None:
+    etc = exposure_time_calculator()
+    update_results()
+    menu.load()
+    res.load()
+    exp.load()
+    src.load()
+    atm.load()
+    instr.load()
+    summary.load()
 
 curdoc().on_event(DocumentReady, load_contents)
+
+# Hacky thing I'm testing... /:
+# It works, but it's veeeerrrrry dumb. Is there a better way? -- yes, at the very least attach to invisible div and call at end of load_contents()
+load_js_code = """
+window.dispatchEvent(new Event('resize'));
+"""
+load_js = CustomJS(args={}, code=load_js_code)
+
+summary.contents.js_on_change('children', load_js)

@@ -63,11 +63,11 @@ section {
 }
 
 .main {
-  flex-grow: 85;
+  flex-grow: 90;
 }
 
 .sidebar {
-  flex-grow: 15;
+  flex-grow: 10;
   flex-direction: column;
   align-items: stretch;
   display: flex;
@@ -84,7 +84,7 @@ input[type='file'] {
 }
 
 /* Text styling, fonts and font sizes for looking pretty */
-/* DO FONTS WITH bokeh model.text_font_size='10em'!!! */
+/* TODO -- SET FONTS WITH bokeh model.text_font_size='10em'!!! */
 
 .bk.section-title, .bk.bk-tab {
   font-size: 1.25vw !important;
@@ -100,7 +100,7 @@ body {
 }
 
 .sidebar-big p {
-  font-size: 2.4vw !important;
+  font-size: 1.8vw !important;
   font-weight: bold;
 }
 

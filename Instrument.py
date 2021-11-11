@@ -81,6 +81,7 @@ class instrument:
         self._dark_current = u.Quantity(self.config.dark_current)
         self._read_noise = u.Quantity(self.config.read_noise)
         self.spectral_resolution = u.Quantity(self.config.spectral_resolution)
+        self.mode = self.config.defaults.mode  # Currently does nothing, TODO -- support for different modes
 
 
         self._read_throughput()

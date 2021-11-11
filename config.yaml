@@ -20,7 +20,7 @@ defaults:
 telescope_area: 75.76 m^2
 
 # Options for number of reads
-reads_options: [2, 4, 8, 16, 32, 64]
+reads_options: [2, 4, 8, 16, 32, 64, 128]
 
 # Options for ccd binning [spatial, spectral]
 binning_options: [ [1,1], [1,2], [2,1], [2,2] ]

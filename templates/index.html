@@ -7,6 +7,7 @@
     <style>
         {% include 'styles.css' %}
     </style>
+    <meta name="viewport" content="width=device-width,initial-scale=1" id="viewport-meta" />
 {% endblock %}
 
 {% block contents %}
@@ -23,6 +24,9 @@
                     </div>
                     <div class="panel">
                         {{ embed(roots.source_panel) }}
+                    </div>
+                    <div class='panel'>
+                        {{ embed(roots.instrument_panel) }}
                     </div>
                     <div class="panel">
                         {{ embed(roots.atmosphere_panel) }}

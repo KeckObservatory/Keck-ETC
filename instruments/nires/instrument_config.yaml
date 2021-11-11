@@ -7,16 +7,19 @@ defaults:
   slit_width: 0.55 arcsec
   slit_length: 18 arcsec
   pixel_size: 0.0225 arcsec^2/pixel  # Check w/ Sherry, in her code this was s^2/px^2 but I think that's a typo... ?
+  mode: spectroscopic
 
   
 dark_current: 0.13 electron / (pixel s)
 
 read_noise: 15 sqrt(electron)  # Kind of a nonsense unit, but read noise is actually variance and needs to be squared later...
 
-throughput_path: throughput.txt  # Relative path to throughput file... does throughput include telescope? How about detector QE?
+throughput_path: throughput.txt  # Relative path to throughput file
 
-slits: [ [0.55 arcsec, 18 arcsec] ]  # Should we just do area of slit? But dropdown should probably list thickness for fixed-length slits, maybe store as tuple?
+slits: [ [0.55 arcsec, 18 arcsec] ]
 
 spectral_resolution: 2700  # Spectral resolving power of instrument, defined as λ / Δλ
+
+modes: [spectroscopic]
 
 # Include saturation pixel value, then generate non-linearity warning for over-saturated pixels!!!

@@ -138,7 +138,9 @@ class source:
     def _blackbody(self, wavelengths):
         # TODO -- Ask Sherry about whether users should specify temp, mag, or give the option of either?
         # From https://pysynphot.readthedocs.io/en/latest/spectrum.html
-        flux = (2*h*c**2 / wavelengths**5) / (exp(h*c/(wavelengths*self.temperature*k_B)) - 1)
+        flux = (2*h*c**2 / wavelengths**5) / (exp(h*c/(wavelengths*self.temperature*k_B)) - 1) #/ u.steradian
+        # Multiply by proper angle in order to remove the per steradian, hooowww?? Check with Sherry, easiest just to scale to given mag/flux, but is that what users will assume?
+
         return flux.to(u.photon / (u.cm**3 * u.s), equivalencies=u.spectral_density(wavelengths.to(u.angstrom)))
 
 
