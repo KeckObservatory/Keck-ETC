@@ -3,7 +3,7 @@
 # Default values
 defaults:
     seeing: 0.8 arcsec
-    airmass: 1.0
+    airmass: 1.2
     water_vapor: 1.0 mm
 
 # Directory for atmosphere files, relative or absolute

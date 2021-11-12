@@ -1,13 +1,13 @@
 
 from bokeh.io import curdoc
 from bokeh.plotting import figure
-from bokeh.models import ColumnDataSource, Panel, Select, Tabs, Spinner, Div, FileInput, Paragraph, CustomJS, Slider, Range1d
+from bokeh.models import ColumnDataSource, Panel, Select, Tabs, Spinner, Div, FileInput, Paragraph, CustomJS, Slider, Range1d, Button
 from bokeh.events import DocumentReady
 from bokeh.layouts import column, row
 
 # Import exposure time calculator
 from ETC import exposure_time_calculator
-from numpy import nanpercentile
+from numpy import nanpercentile, linspace
 from astropy import units as u
 import pdb
 
@@ -31,10 +31,10 @@ def update_results():
         results.data = {
             'wavelengths': etc.wavelengths.to(u.nm).value,
             'exposure': [etc.exposure[0].to(u.s).value] * len(etc.wavelengths),
-            'source': etc.source_count[0].value,
-            'background': etc.background_count[0].value,
-            'read_noise': [etc.read_noise_count.value] * len(etc.wavelengths),
-            'dark_current': [etc.dark_current_count.value] * len(etc.wavelengths),
+            'source': [x if x > 1 else 1 for x in etc.source_count[0].value],  # Log plot, so remove the zeros!
+            'background': [x if x > 1 else 1 for x in etc.background_count[0].value],  # Log plot, so remove the zeros!
+            'read_noise': list(etc.read_noise_count.value) * len(etc.wavelengths),
+            'dark_current': list(etc.dark_current_count.value) * len(etc.wavelengths),
             'snr': etc.signal_noise_ratio[0].value
         }
 
@@ -43,7 +43,11 @@ def update_results():
         results.data = {
             'wavelengths': etc.wavelengths.to(u.nm).value,
             'snr': [etc.signal_noise_ratio[0].value] * len(etc.wavelengths),
-            'exposure': etc.exposure[0].to(u.s).value
+            'exposure': etc.exposure[0].to(u.s).value,
+            'source': [x if x > 1 else 1 for x in etc.source_count[0].value],  # Log plot, so remove the zeros!
+            'background': [x if x > 1 else 1 for x in etc.background_count[0].value],  # Log plot, so remove the zeros!
+            'read_noise': etc.read_noise_count[0].value,
+            'dark_current': etc.dark_current_count[0].value,
         }
     summary.load()
 
@@ -140,20 +144,25 @@ class exposure_panel:
         self.exposure_max.value = (self.exposure_max.value * u.Unit(old)).to(new).value
         res.exposure_slider.value = (res.exposure_slider.value * u.Unit(old)).to(new).value
         summary.load()
+        res.reload()
         self.exposure_active_flag = True
 
     def target_callback(self, attr, old, new):
         if new == 'exposure':
             etc.set_parameter('signal_noise_ratio', etc.config.defaults.signal_noise_ratio)
-            self.snr_min.value = etc.signal_noise_ratio[0].value
-            self.snr_max.value = etc.signal_noise_ratio[-1].value
-            self.contents.children = [self.snr if item==self.exposure else item for item in self.contents.children]
+            self.snr_min.value = 5#etc.signal_noise_ratio[0].value
+            self.snr_max.value = 15#etc.signal_noise_ratio[-1].value
+            new_contents = [self.snr if item==self.exposure else item for item in self.contents.children]
+            self.contents.children = []  # For resizing, need to set to nothing first
+            self.contents.children = new_contents
 
         if new == 'signal to noise ratio':
             etc.set_parameter('exposure', etc.config.defaults.exposure)
-            self.exposure_min.value = etc.exposure[0].value
-            self.exposure_max.value = etc.exposure[-1].value
-            self.contents.children = [self.exposure if item==self.snr else item for item in self.contents.children]
+            self.exposure_min.value = 0#etc.exposure[0].value
+            self.exposure_max.value = (2*u.hr).to(self.units.value).value#etc.exposure[-1].value
+            new_contents = [self.exposure if item==self.snr else item for item in self.contents.children]
+            self.contents.children = []
+            self.contents.children = new_contents
         update_results()
         res.reload()
 
@@ -165,8 +174,8 @@ class exposure_panel:
         self.exposure_active_flag = True
         self.title = section_title('Exposure')
         self.exposure_label = Paragraph(text='Exposure:', margin=(5, 5, 0, 5))
-        self.exposure_min = Spinner(title='Min:', value=etc.exposure[0].value, low=0, width=100, sizing_mode='scale_width')
-        self.exposure_max = Spinner(title='Max:', value=etc.exposure[-1].value, low=0, width=100, sizing_mode='scale_width')
+        self.exposure_min = Spinner(title='Min:', value=0, low=0, width=100, sizing_mode='scale_width')  # value=etc.exposure[0].value
+        self.exposure_max = Spinner(title='Max:', value=7200, low=0, width=100, sizing_mode='scale_width')  # value=etc.exposure[-1].value
         self.units = Select(title='\u00A0', value=str(etc.exposure.unit), options=['ms', 's', 'min', 'hr'], width=100, sizing_mode='scale_width')
         self.exposure_min.on_change('value', self.exposure_callback)
         self.exposure_max.on_change('value', self.exposure_callback)
@@ -176,6 +185,7 @@ class exposure_panel:
         # Create dropdown for selecting whether to calculate snr or exp
         self.target = Select(title='Calculation Target:', value='signal to noise ratio', options=['signal to noise ratio', 'exposure'], width=300, sizing_mode='scale_width')
         self.target.on_change('value', self.target_callback)
+
         # Create elements to calculate snr
         self.snr_label = Paragraph(text='Signal to Noise Ratio:', margin=(5, 5, 0, 5))
         self.snr_min = Spinner(title='Min:', value=0, low=0, width=100, sizing_mode='scale_width', step=5)  # Default to 0 because exp is initially active
@@ -321,8 +331,9 @@ class summary_panel:
     def load(self):
         # Quick ~hacky check to make sure everything else is loaded first, switch to boolean flag for clarity later
         if len(atm.contents.children) > 1:
-            central_wavelength = u.Quantity(
-                vars(etc.source.config.wavelength_bands)[src.band.contents.children[0].value])
+            # central_wavelength = u.Quantity(
+            #     vars(etc.source.config.wavelength_bands)[src.band.contents.children[0].value])
+            central_wavelength = res.wavelength_slider.value * u.um
             wavelength_index = abs(etc.wavelengths - central_wavelength.to(etc.wavelengths.unit)) == min(
                 abs(etc.wavelengths - central_wavelength.to(etc.wavelengths.unit)))
             self.title = section_title(etc.instrument.name.upper())
@@ -330,6 +341,7 @@ class summary_panel:
                 f'{etc.source_flux[wavelength_index][0].to("erg / (cm^2 s Angstrom)", equivalencies=u.spectral_density(central_wavelength)).value:.1} flam',
                 'source flux')
             self.wav_label = big_number(f'{central_wavelength.to(u.um).value:.4} μm', 'wavelength')
+            self.efficiency = big_number(f'{etc.efficiency[wavelength_index][0]:.4}', 'efficiency')
             self.clk_label = big_number('--- s', 'clock time')
             if etc.target == 'signal_noise_ratio':
                 self.exp_label = big_number(f'{float(res.exposure_slider.value):.3} {exp.units.value}', 'exposure')
@@ -342,8 +354,9 @@ class summary_panel:
                 else:
                     self.exp_label = big_number(f'{etc.exposure[0][wavelength_index][0].to(u.hr).value:.3} hr', 'exposure')
                 self.snr_label = big_number(f'{float(etc.signal_noise_ratio[0].value):.4}', 'S/N')
+            
             self.contents.children = [self.title.contents, column(self.exp_label.contents, self.snr_label.contents,
-                                                                      self.wav_label.contents, self.flux_label.contents,
+                                                                      self.wav_label.contents, self.efficiency.contents, self.flux_label.contents,
                                                                       self.clk_label.contents,
                                                                       css_classes=['sidebar-container'])]
 
@@ -358,15 +371,33 @@ class results_panel:
             etc.set_parameter('signal_noise_ratio', [new])
         update_results()
 
+    # Highly experimental code for using a second source to display snr vs. exp --!
+    def create_data(self, attr, old, new):
+            wavelengths = etc.wavelengths.copy()
+            etc.set_parameter('wavelengths', [new * wavelengths.unit])
+            if etc.target == 'signal_noise_ratio':
+                exposure = etc.exposure.copy()
+                etc.set_parameter('exposure', [str(item)+exp.units.value for item in self.new_source.data['x']])
+                y = etc.signal_noise_ratio.flatten().value
+                self.new_source.data['y'] = y
+                etc.exposure = exposure
+            elif etc.target == 'exposure':
+                snr = etc.signal_noise_ratio.copy()
+                etc.set_parameter('signal_noise_ratio', self.new_source.data['x'])
+                y = etc.exposure.to(u.s).flatten().value
+                self.new_source.data['y'] = y
+                etc.signal_noise_ratio = snr
+            etc.set_parameter('wavelengths', wavelengths)
+            summary.load()
+
     def __init__(self):
-        self.contents = row(Div(css_classes=['loading-symbol']), sizing_mode='scale_width', name='results', css_classes=['input_section'])
+        self.contents = row(Div(css_classes=['loading-symbol']), name='results', css_classes=['input_section'])
 
     def load(self):
         # Plot 1
-        step_size = (etc.exposure[1] - etc.exposure[0]).value if len(etc.exposure) > 1 else 0
-        self.exposure_slider = Slider(start=etc.exposure[0].value, end=etc.exposure[-1].value, step=step_size, value=etc.exposure[0].value, title='Exposure ['+str(etc.exposure.unit)+']', syncable=False) if len(etc.exposure) > 1 else Slider(start=etc.exposure[0].value, end=etc.exposure[0].value+1, step=1, value=etc.exposure[0].value, visible=False)
+        self.exposure_slider = Slider(start=exp.exposure_min.value, end=exp.exposure_max.value, step=(exp.exposure_max.value - exp.exposure_min.value)/100, value=etc.exposure[0].value, title='Exposure ['+str(etc.exposure.unit)+']', width=100, sizing_mode='scale_width') if exp.exposure_max.value > exp.exposure_min.value else Slider(start=etc.exposure[0].value, end=etc.exposure[0].value+1, step=1, value=etc.exposure[0].value, visible=False)
         self.exposure_slider.on_change('value_throttled', self.slider_callback)
-        self.snr_slider = Slider(start=0, end=1, value=0, step=1, title='Signal to Noise Ratio', visible=False)
+        self.snr_slider = Slider(start=0, end=1, value=0, step=1, title='Signal to Noise Ratio', visible=False, width=100, sizing_mode='scale_width')
         self.snr_slider.on_change('value_throttled', self.slider_callback)
         """ FOR CLIENT-SIDE COMPUTATION
         js_code = \"""
@@ -382,7 +413,7 @@ class results_panel:
 
         # Plot snr vs. wavelength
         self.snr_plot = figure(title='Signal to Noise Ratio', tools='pan, wheel_zoom, hover, reset, save', active_scroll='wheel_zoom',
-               tooltips=[('S/N', '$y{0}'), ('λ (μm)', '$x{0.000}')], width=400, height=300)
+               tooltips=[('S/N', '$y{0}'), ('λ (μm)', '$x{0.000}')], width=250, height=200, sizing_mode='scale_width')
         self.snr_plot.xaxis.axis_label = 'wavelengths (nm)'
         self.snr_plot.yaxis.axis_label = 'signal to noise ratio'
         self.snr_plot.scatter(x='wavelengths', y='snr', source=results, alpha=0.5, size=6)  # , view=self.exposure_view
@@ -390,8 +421,8 @@ class results_panel:
         self.snr_plot.output_backend = 'svg'
 
         # Plot exp vs. wavelength
-        self.exp_plot = figure(title='Exposure Time', tools='pan, wheel_zoom, hover, reset, save', active_scroll='wheel_zoom',
-               tooltips=[('exp (s)', '$y{0}'), ('λ (μm)', '$x{0.000}')], width=400, height=300, y_range=(min(results.data['exposure'])*.8, nanpercentile(results.data['exposure'], 50)), visible=False)
+        self.exp_plot = figure(title='Exposure Time', tools='pan, wheel_zoom, hover, reset, save', active_scroll='wheel_zoom', sizing_mode='scale_width',
+               tooltips=[('exp (s)', '$y{0}'), ('λ (μm)', '$x{0.000}')], width=250, height=200, y_range=(min(results.data['exposure'])*.8, nanpercentile(results.data['exposure'], 50)))
         self.exp_plot.xaxis.axis_label = 'wavelengths (nm)'
         self.exp_plot.yaxis.axis_label = 'exposure time (s)'
         self.exp_plot.scatter(x='wavelengths', y='exposure', source=results, alpha=0.5, size=6)  # , view=self.exposure_view
@@ -400,15 +431,87 @@ class results_panel:
 
 
         # Plot 2
-        self.wavelength_slider = Slider(start=etc.wavelengths[0].value, end=etc.wavelengths[-1].value, step=(etc.wavelengths[1]-etc.wavelengths[0]).value, value=etc.wavelengths[0].value, title='Wavelength ['+str(etc.wavelengths.unit)+']', syncable=False)
+        self.counts_plot = figure(title='CCD Counts', tools='pan, wheel_zoom, hover, reset, save', active_scroll='wheel_zoom', tooltips=[('count (e-)', '$y{0}'), ('λ (μm)', '$x{0.000}')], y_axis_type='log', width=250, height=200, sizing_mode='scale_width')
+        self.counts_plot.xaxis.axis_label = 'wavelengths (nm)'
+        self.counts_plot.yaxis.axis_label = 'CCD counts (e-)'
+
+        self.counts_plot.line(x='wavelengths', y='source', source=results, legend_label='Source', line_color='#D55E00')
+        self.counts_plot.line(x='wavelengths', y='background', source=results, legend_label='Background', line_color='#0072B2')
+        self.counts_plot.line(x='wavelengths', y='read_noise', source=results, legend_label='Read Noise', line_color='#009E73')
+        self.counts_plot.line(x='wavelengths', y='dark_current', source=results, legend_label='Dark Current', line_color='#000000')
+        #self.counts_plot.add_layout(self.counts_plot.legend[0], 'right')
+        self.counts_plot.legend.label_height=10
+        self.counts_plot.legend.label_width=10
+        self.counts_plot.legend.label_text_font_size = '10px'
+        self.counts_plot.legend.click_policy = 'hide'
         
 
+        # Download button
+        self.download_button = Button(label="Download Data", button_type="default", width=100, sizing_mode='scale_width')
+        download_js_code="""
+        function table_to_csv(source) {
+            const columns = Object.keys(source.data)
+            const nrows = source.get_length()
+            const lines = [columns.join(',')]
+
+            for (let i = 0; i < nrows; i++) {
+                let row = [];
+                for (let j = 0; j < columns.length; j++) {
+                    const column = columns[j]
+                    row.push(source.data[column][i].toString())
+                }
+                lines.push(row.join(','))
+            }
+            return lines.join('\\n').concat('\\n')
+        }
+
+
+        const filename = 'etc_results.csv'
+        var filetext = table_to_csv(source)
+        const blob = new Blob([filetext], { type: 'text/csv;charset=utf-8;' })
+
+        //addresses IE
+        if (navigator.msSaveBlob) {
+            navigator.msSaveBlob(blob, filename)
+        } else {
+            const link = document.createElement('a')
+            link.href = URL.createObjectURL(blob)
+            link.download = filename
+            link.target = '_blank'
+            link.style.visibility = 'hidden'
+            link.dispatchEvent(new MouseEvent('click'))
+        }
+        """
+        self.download_button.js_on_click(CustomJS(args=dict(source=results),code=download_js_code))
+
+
+        # EXPERIMENTAL CODE !!! --- creating second data source with snr vs. exp
+        self.new_source = ColumnDataSource({'x':linspace(0, 7200, 100), 'y':[0]*100})
+        self.wavelength_slider = Slider(start=etc.wavelengths[0].value, end=etc.wavelengths[-1].value, step=(etc.wavelengths[1]-etc.wavelengths[0]).value, value=etc.wavelengths[0].value, title='Wavelength ['+str(etc.wavelengths.unit)+']', width=100, sizing_mode='scale_width')
+        self.wavelength_slider.on_change('value_throttled', self.create_data)
+        self.create_data('none', self.wavelength_slider.value, self.wavelength_slider.value)
+        self.vs_plot = figure(title='Exposure vs. SNR', tools='pan, wheel_zoom, hover, reset, save', active_scroll='wheel_zoom', tooltips=[('y', '$y{0.00}'), ('x', '$x{0.00}')], width=250, height=200, sizing_mode='scale_width')
+        self.vs_plot.xaxis.axis_label = 'exposure (s)'
+        self.vs_plot.yaxis.axis_label = 'Signal to Noise Ratio'
+        self.vs_plot.line(x='x', y='y', source=self.new_source)
+
         
+
+
+
+        self.snr_col = column(self.snr_plot, self.exposure_slider, sizing_mode='scale_width')
+        self.exp_col = column(self.exp_plot, self.snr_slider, sizing_mode='scale_width', visible=False)
+        self.ccd_col = column(self.counts_plot, self.download_button, sizing_mode='scale_width')
+        self.vs_col = column(self.vs_plot, self.wavelength_slider, sizing_mode='scale_width')
         self.exposure_slider.value = self.exposure_slider.value
-        self.contents.children = [column(self.snr_plot, self.exposure_slider), column(self.exp_plot, self.snr_slider)]
+        self.contents.children = [self.snr_col, self.exp_col, self.vs_col, self.ccd_col]
 
     def reload(self):
         if exp.target.value == 'signal to noise ratio':
+            self.new_source.data['x'] = linspace(exp.exposure_min.value, exp.exposure_max.value, 100) if exp.exposure_max.value > exp.exposure_min.value else linspace(0, 7200, 100)
+            self.create_data('none', self.wavelength_slider.value, self.wavelength_slider.value)
+            self.vs_plot.xaxis.axis_label = 'exposure (s)'
+            self.vs_plot.yaxis.axis_label = 'Signal to Noise Ratio'
             if exp.exposure_max.value > exp.exposure_min.value:
                 self.exposure_slider.title = 'Exposure ['+exp.units.value+']'
                 self.exposure_slider.start = exp.exposure_min.value
@@ -422,12 +525,17 @@ class results_panel:
                 self.exposure_slider.visible = True
             else:
                 self.exposure_slider.visible = False
-            if not self.snr_plot.visible:
-                self.snr_plot.visible = True
-                self.exp_plot.visible = False
+            if not self.snr_col.visible:
+                self.exp_col.visible = False
+                self.snr_col.visible = True
+                # self.snr_plot.visible = True
+                # self.exp_plot.visible = False
                 self.snr_slider.visible = False
-                #self.contents.children = [column(self.snr_plot, self.exposure_slider)]
         elif exp.target.value == 'exposure':
+            self.new_source.data['x'] = linspace(exp.snr_min.value, exp.snr_max.value, 100)if exp.snr_max.value > exp.snr_min.value else linspace(0, 20, 100)
+            self.create_data('none', self.wavelength_slider.value, self.wavelength_slider.value)
+            self.vs_plot.xaxis.axis_label = 'Signal to Noise Ratio'
+            self.vs_plot.yaxis.axis_label = 'exposure (s)'
             if exp.snr_max.value > exp.snr_min.value:
                 self.snr_slider.start = exp.snr_min.value
                 self.snr_slider.end = exp.snr_max.value
@@ -440,11 +548,12 @@ class results_panel:
                 self.snr_slider.visible = True
             else:
                 self.snr_slider.visible = False
-            if not self.exp_plot.visible:
-                self.snr_plot.visible = False
+            if not self.exp_col.visible:
+                self.snr_col.visible = False
+                self.exp_col.visible = True
+                # self.snr_plot.visible = False
                 self.exposure_slider.visible = False
-                self.exp_plot.visible = True
-                #self.contents.children = [column(self.exp_plot, self.snr_slider)]
+                # self.exp_plot.visible = True
                 self.exp_plot.y_range.start = min(etc.exposure[0].value)*.8
                 self.exp_plot.y_range.end = nanpercentile(etc.exposure[0].value, 50)
                 # TODO -- change behavior of reset button!
@@ -500,7 +609,7 @@ curdoc().add_root(atm.contents)
 curdoc().add_root(src.contents)
 curdoc().add_root(summary.contents)
 curdoc().add_root(instr.contents)
-curdoc().title = 'W.M.K.O. ETC'
+curdoc().title = 'WMKO ETC'
 
 
 def load_contents(event):
@@ -509,8 +618,8 @@ def load_contents(event):
     etc = exposure_time_calculator()
     update_results()
     menu.load()
-    res.load()
     exp.load()
+    res.load()
     src.load()
     atm.load()
     instr.load()

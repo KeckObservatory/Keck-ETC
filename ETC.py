@@ -49,15 +49,16 @@ class exposure_time_calculator:
         # TODO -- coadds, reads, all the juicy details
         self.source_flux = self.source.get_flux(self.wavelengths) * self.atmosphere.get_transmission(self.wavelengths)
         source_rate = self.source_flux * self.instrument.get_throughput(self.wavelengths) * self.binning[1]  # Binning in the spectral direction
-        source_rate *= self.telescope_area * source_slit_ratio * self.wavelengths / self.instrument.spectral_resolution
+        source_rate *= self.telescope_area * source_slit_ratio * self.wavelengths / self.instrument.spectral_resolution * self.reads
         self.efficiency = (self.atmosphere.get_transmission(self.wavelengths) * self.instrument.get_throughput(self.wavelengths)).value  # Save efficiency as dimensionless, not e-/ph
 
 
         # Also, why isn't the throughput included in Sherry's code?
-        background_rate = self.atmosphere.get_emission(self.wavelengths) * u.electron / u.photon#* self.instrument.get_throughput(self.wavelengths)
-        background_rate *= self.telescope_area * slit_size * self.wavelengths
+        background_rate = self.atmosphere.get_emission(self.wavelengths) * self.instrument.get_throughput(self.wavelengths)
+        background_rate *= self.telescope_area * slit_size * self.wavelengths * self.reads
 
-        read_noise = self.instrument.get_read_noise()**2 * self.reads
+        # Divide reads by 2 because read noise is per CDS (2 reads)
+        read_noise = self.instrument.get_read_noise()**2 * self.reads/2 * slit_size_pixels / self.binning[0]  # Binning in the spatial direction
         dark_current_rate = self.instrument.get_dark_current() * slit_size_pixels
         
         if self.target == 'signal_noise_ratio':
@@ -92,7 +93,12 @@ class exposure_time_calculator:
                     warn('In ETC -- Some/all nonexistent solutions found for S/N = '+str(snr.value)+', returning exposure = NaN', RuntimeWarning)
                 self.exposure[idx, :] = exposure.real.to(u.s)
             self.exposure = u.Quantity(self.exposure, u.s)
-
+            # Calculate and save counts
+            self.source_count = [source_rate * exp for exp in self.exposure] * u.electron
+            self.background_count = [background_rate * exp for exp in self.exposure] * u.electron
+            self.dark_current_count = [dark_current_rate * exp for exp in self.exposure] * u.electron
+            self.read_noise_count = ([[read_noise.to(u.electron).value] * len(self.wavelengths)] * len(self.exposure)) * u.electron
+            
         else:
             # Check that exposure and S/N have not both been provided
             raise ValueError('ERROR: In ETC -- target must be set to "exposure" or "signal_noise_ratio"')

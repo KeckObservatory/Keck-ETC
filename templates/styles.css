@@ -87,12 +87,14 @@ input[type='file'] {
 /* TODO -- SET FONTS WITH bokeh model.text_font_size='10em'!!! */
 
 .bk.section-title, .bk.bk-tab {
-  font-size: 1.25vw !important;
+  font-size: 1.1vw !important;
   font-weight: bold;
 }
 
 h2 {
-  font-size: 2vw !important;
+  font-size: 1.8vw;
+  margin-block-end: 0.5em;
+  margin-block-start: 0.5em;
 }
 
 body {

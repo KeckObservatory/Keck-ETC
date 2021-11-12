@@ -12,7 +12,8 @@ defaults:
   
 dark_current: 0.13 electron / (pixel s)
 
-read_noise: 15 sqrt(electron)  # Kind of a nonsense unit, but read noise is actually variance and needs to be squared later...
+read_noise: 15 sqrt(electron/pixel)  # Kind of a nonsense unit, but read noise is actually variance and needs to be squared later...
+# Is this per pixel?? Check w/ Sherry and make sure!
 
 throughput_path: throughput.txt  # Relative path to throughput file
 
