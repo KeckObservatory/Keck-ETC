@@ -105,8 +105,6 @@ class exposure_time_calculator:
 
 
     def __init__(self):
-        print("\033[H\033[J", end='')
-        print('ETC: Initializing exposure time calculator')
         # Set default values based on config file
         self._mount_config(_CONFIG_FILEPATH)
         self._validate_config()

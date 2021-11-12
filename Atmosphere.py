@@ -4,6 +4,7 @@ import yaml
 from os import listdir
 import numpy as np
 from scipy.interpolate import RegularGridInterpolator
+from warnings import warn
 
 
 
@@ -70,7 +71,7 @@ class atmosphere:
 
     def _validate_config(self):
         # Throw errors if config file doesn't conform to requirements
-        print('ATMOSPHERE: Validating configuration file',_CONFIG_FILEPATH)
+
 
         # Check that all required fields exist and are spelled correctly
         try:
@@ -174,8 +175,8 @@ class atmosphere:
         # Check for and remove out-of-bounds wavelengths to avoid RegularGridInterpolator throwing errors
         wavelengths_trim = wavelengths[(self._wavelength_index[0] <= wavelengths) & (wavelengths <= self._wavelength_index[-1])]
         if len(wavelengths_trim) != len(wavelengths):
-            print('WARNING: In atmosphere.get_transmission() -- some or all provided wavelengths are outside the current bounds of [' +
-            str(self._wavelength_index[0])+', '+str(self._wavelength_index[-1])+'], discarding invalid values')
+            warn('In atmosphere.get_transmission() -- some or all provided wavelengths are outside the current bounds of [' +
+            str(self._wavelength_index[0])+', '+str(self._wavelength_index[-1])+'], discarding invalid values', RuntimeWarning)
 
         # Perform trilinear interpolation to find transmission values
         interpolation = RegularGridInterpolator( (self._airmass_index, self._water_vapor_index, self._wavelength_index), self._transmission )
@@ -186,8 +187,8 @@ class atmosphere:
         # Check for and remove out-of-bounds wavelengths to avoid RegularGridInterpolator throwing errors
         wavelengths_trim = wavelengths[(self._wavelength_index[0] <= wavelengths) & (wavelengths <= self._wavelength_index[-1])]
         if len(wavelengths_trim) != len(wavelengths):
-            print('WARNING: In atmosphere.get_emission() -- some or all provided wavelengths are outside the current bounds of [' +
-            str(self._wavelength_index[0])+', '+str(self._wavelength_index[-1])+'], discarding invalid values')
+            warn('WARNING: In atmosphere.get_emission() -- some or all provided wavelengths are outside the current bounds of [' +
+            str(self._wavelength_index[0])+', '+str(self._wavelength_index[-1])+'], discarding invalid values', RuntimeWarning)
 
         # Perform trilinear interpolation to find emission values
         interpolation = RegularGridInterpolator( (self._airmass_index, self._water_vapor_index, self._wavelength_index), self._emission )

@@ -2,6 +2,7 @@ import yaml
 from astropy.table import Table
 import astropy.units as u
 from numpy import interp, NaN, isnan
+from warnings import warn
 
 class instrument:
 
@@ -55,8 +56,8 @@ class instrument:
         data = self._throughput  # self._throughput[(self.grating, self.filter)] for deimos!!
         throughput = interp(wavelengths, data['wav'], data['eff'], left=NaN, right=NaN)
         if isnan(throughput).any():
-            print('WARNING: In instrument.get_throughput() -- ' +
-            'some or all provided wavelengths are outside the current bounds of ['+str(min(data['wav']))+', '+str(max(data['wav']))+'] '+str(data['wav'].unit)+', returning NaN')
+            warn('In instrument.get_throughput() -- ' +
+            'some or all provided wavelengths are outside the current bounds of ['+str(min(data['wav']))+', '+str(max(data['wav']))+'] '+str(data['wav'].unit)+', returning NaN', RuntimeWarning)
         return u.Quantity(throughput, data['eff'].unit)
 
     def get_dark_current(self):

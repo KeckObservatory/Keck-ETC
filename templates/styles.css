@@ -38,6 +38,10 @@
   display: block;
 }
 
+.output .panel {
+  padding-right: 1.25vw;
+}
+
 .panel.first {
   margin-left: 0;
 }
@@ -109,7 +113,7 @@ body {
 .sidebar-container {
   display: flex !important;
   width: 100% !important;
-  height: 100% !important;
+  flex-grow: 1;  /* figure out how to have height be 100% */
   flex-direction: column !important;
   justify-content: space-around !important;
 }
@@ -123,6 +127,7 @@ body {
 
 
 /* Mobile / vertical tablet modes, stack sections */
+/* TODO -- Stack plots for maximum size, figure out something to do with sidebar! */
 @media (max-width: 900px) {
   .panel, .input_panels .panel, .panel.first, .panel.last, .instrument-menu, h2 {
     display: block;
@@ -134,4 +139,4 @@ body {
     flex-direction: column;
   }
 }
-/* Source panel starts to break at ~1080px, consider adding separate @media ??? */
+

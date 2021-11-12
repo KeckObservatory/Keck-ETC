@@ -333,6 +333,8 @@ class summary_panel:
         if len(atm.contents.children) > 1:
             # central_wavelength = u.Quantity(
             #     vars(etc.source.config.wavelength_bands)[src.band.contents.children[0].value])
+
+
             central_wavelength = res.wavelength_slider.value * u.um
             wavelength_index = abs(etc.wavelengths - central_wavelength.to(etc.wavelengths.unit)) == min(
                 abs(etc.wavelengths - central_wavelength.to(etc.wavelengths.unit)))
@@ -354,11 +356,12 @@ class summary_panel:
                 else:
                     self.exp_label = big_number(f'{etc.exposure[0][wavelength_index][0].to(u.hr).value:.3} hr', 'exposure')
                 self.snr_label = big_number(f'{float(etc.signal_noise_ratio[0].value):.4}', 'S/N')
-            
+
+            self.contents.children = [self.title.contents]
             self.contents.children = [self.title.contents, column(self.exp_label.contents, self.snr_label.contents,
-                                                                      self.wav_label.contents, self.efficiency.contents, self.flux_label.contents,
-                                                                      self.clk_label.contents,
-                                                                      css_classes=['sidebar-container'])]
+                                                                        self.wav_label.contents, self.efficiency.contents, self.flux_label.contents,
+                                                                        self.clk_label.contents,
+                                                                        css_classes=['sidebar-container'])]
 
 
 class results_panel:
@@ -446,7 +449,7 @@ class results_panel:
         self.counts_plot.legend.click_policy = 'hide'
         
 
-        # Download button
+        # Download button, code from https://stackoverflow.com/questions/49388511/send-file-from-server-to-client-on-bokeh
         self.download_button = Button(label="Download Data", button_type="default", width=100, sizing_mode='scale_width')
         download_js_code="""
         function table_to_csv(source) {
@@ -508,7 +511,7 @@ class results_panel:
 
     def reload(self):
         if exp.target.value == 'signal to noise ratio':
-            self.new_source.data['x'] = linspace(exp.exposure_min.value, exp.exposure_max.value, 100) if exp.exposure_max.value > exp.exposure_min.value else linspace(0, 7200, 100)
+            self.new_source.data = {'x': linspace(exp.exposure_min.value, exp.exposure_max.value, 100) if exp.exposure_max.value > exp.exposure_min.value else linspace(0, 7200, 100), 'y':[0]*100}
             self.create_data('none', self.wavelength_slider.value, self.wavelength_slider.value)
             self.vs_plot.xaxis.axis_label = 'exposure (s)'
             self.vs_plot.yaxis.axis_label = 'Signal to Noise Ratio'
@@ -532,7 +535,7 @@ class results_panel:
                 # self.exp_plot.visible = False
                 self.snr_slider.visible = False
         elif exp.target.value == 'exposure':
-            self.new_source.data['x'] = linspace(exp.snr_min.value, exp.snr_max.value, 100)if exp.snr_max.value > exp.snr_min.value else linspace(0, 20, 100)
+            self.new_source.data = {'x': linspace(exp.snr_min.value, exp.snr_max.value, 25) if exp.snr_max.value > exp.snr_min.value else linspace(0, 20, 25), 'y': [0]*25}
             self.create_data('none', self.wavelength_slider.value, self.wavelength_slider.value)
             self.vs_plot.xaxis.axis_label = 'Signal to Noise Ratio'
             self.vs_plot.yaxis.axis_label = 'exposure (s)'
@@ -570,7 +573,8 @@ class instrument_menu:
             self.contents.active = old
 
     def __init__(self):
-        self.contents = Tabs(tabs=[], name='instruments', sizing_mode='scale_width')
+        # Initialize a bunch of empty tabs to avoid js error msg when setting tabs.active to a tab that doesn't exist
+        self.contents = Tabs(tabs=[Panel(child=Div(text='<div style="width: 90vw;"></div>'), title='\u00A0'*10) for i in range(10)], name='instruments', sizing_mode='scale_width')
 
     def load(self):
         # Set correct tab active, before defining tabs because it looks better as it loads
@@ -582,13 +586,20 @@ class instrument_menu:
 
 
 
-# Define error handling javascript
+# Define DOM object to call js alerts from python (for errors & out of bounds info)
 alert_handler = CustomJS(args={}, code='if (cb_obj.tags.length > 0) { alert(cb_obj.tags[0]); cb_obj.tags=[]; }')
 alert_container = Div(name='alert_container', visible=False)
 curdoc().add_root(alert_container)
 alert_container.js_on_change('tags', alert_handler)
 def show_alert(msg):
     alert_container.tags = [msg]
+# Define DOM object to trigger resize event after contents have been loaded, because otherwise responsive elements won't size properly
+page_loaded = CustomJS(args={}, code='window.dispatchEvent(new Event("resize"));')
+page_loaded_container = Div(name='page_loaded_container', visible=False)
+curdoc().add_root(page_loaded_container)
+page_loaded_container.js_on_change('tags', page_loaded)
+def page_loaded():
+    page_loaded_container.tags = [True] if page_loaded_container.tags != [True] else [False]
 
 
 # START INITIALIZATION HERE
@@ -598,8 +609,8 @@ results = ColumnDataSource(syncable=False)
 menu = instrument_menu()
 exp = exposure_panel()
 atm = atmosphere_panel()
-src = source_panel()  # TODO -- fix self-callback
-res = results_panel()  # TODO -- call results.reload(), does it work?
+src = source_panel()
+res = results_panel()
 summary = summary_panel()
 instr = instrument_panel()
 curdoc().add_root(res.contents)
@@ -614,7 +625,6 @@ curdoc().title = 'WMKO ETC'
 
 def load_contents(event):
     global etc
-    #if etc is None:
     etc = exposure_time_calculator()
     update_results()
     menu.load()
@@ -624,14 +634,6 @@ def load_contents(event):
     atm.load()
     instr.load()
     summary.load()
+    page_loaded()
 
 curdoc().on_event(DocumentReady, load_contents)
-
-# Hacky thing I'm testing... /:
-# It works, but it's veeeerrrrry dumb. Is there a better way? -- yes, at the very least attach to invisible div and call at end of load_contents()
-load_js_code = """
-window.dispatchEvent(new Event('resize'));
-"""
-load_js = CustomJS(args={}, code=load_js_code)
-
-summary.contents.js_on_change('children', load_js)

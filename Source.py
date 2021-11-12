@@ -5,6 +5,7 @@ from numpy import NaN, isnan, exp, log, sqrt, pi
 from astropy.constants import c, h, k_B
 import astropy.units as u
 from base64 import b64decode
+from warnings import warn
 
 
 class source:
@@ -69,7 +70,6 @@ class source:
 
     def _validate_config(self):
         # Throw errors if config file doesn't conform to requirements
-        print('SOURCE: Validating configuration file', _CONFIG_FILEPATH)
         try:
             # Check that all required fields exist and are spelled correctly
             _ = self.config.defaults.type
@@ -158,7 +158,7 @@ class source:
         flux = self._functions[self.type](wavelengths)
         # Check below is currently unecessary, I changed boundary handling to 0 instead of NaN -- but check w/ Sherry before deleting
         if isnan(flux).any():
-            print('WARNING: In source.get_flux() -- some or all provided wavelengths are outside the current bounds, returning NaN')
+            warn('In source.get_flux() -- some or all provided wavelengths are outside the current bounds, returning NaN', RuntimeWarning)
         return flux.to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(wavelengths.to(u.angstrom)))
 
     def add_template(self, template, name):
