@@ -41,49 +41,66 @@ class exposure_time_calculator:
 
         slit_size = self.instrument.slit_width * self.instrument.slit_length
         slit_size_pixels = slit_size / self.instrument.pixel_size
-        # Area of gaussian distributed point source minus area of segments
+        # Area of circular point source minus area of segments
         area_occluded = (self.atmosphere.seeing**2 * arccos(self.instrument.slit_width / self.atmosphere.seeing)/u.rad - self.instrument.slit_width * sqrt(self.atmosphere.seeing**2 - self.instrument.slit_width**2))/2 if self.atmosphere.seeing > self.instrument.slit_width else 0
         source_size = (pi * (self.atmosphere.seeing/2)**2) - area_occluded
+        # Percentage of source inside slit
         source_slit_ratio = source_size / (pi * (self.atmosphere.seeing/2)**2)
 
-        # TODO -- coadds, reads, all the juicy details
+        # TODO -- Account for coadds, reads, etc.
         self.source_flux = self.source.get_flux(self.wavelengths) * self.atmosphere.get_transmission(self.wavelengths)
+
         source_rate = self.source_flux * self.instrument.get_throughput(self.wavelengths) * self.binning[1]  # Binning in the spectral direction
         source_rate *= self.telescope_area * source_slit_ratio * self.wavelengths / self.instrument.spectral_resolution * self.reads
+
         self.efficiency = (self.atmosphere.get_transmission(self.wavelengths) * self.instrument.get_throughput(self.wavelengths)).value  # Save efficiency as dimensionless, not e-/ph
 
 
-        # Also, why isn't the throughput included in Sherry's code?
+        # Q: why isn't the throughput included in Sherry's code?
         background_rate = self.atmosphere.get_emission(self.wavelengths) * self.instrument.get_throughput(self.wavelengths)
         background_rate *= self.telescope_area * slit_size * self.wavelengths * self.reads
 
         # Divide reads by 2 because read noise is per CDS (2 reads)
         read_noise = self.instrument.get_read_noise()**2 * self.reads/2 * slit_size_pixels / self.binning[0]  # Binning in the spatial direction
+
         dark_current_rate = self.instrument.get_dark_current() * slit_size_pixels
         
         if self.target == 'signal_noise_ratio':
+
             if len(self.exposure) == 0:
                 self.exposure = [u.Quantity(x) for x in self.config.defaults.exposure] * u.s
                 warn('In ETC -- exposure is not defined, defaulting to '+str(self.exposure), RuntimeWarning)
 
+            # Get counts in e- over entire slit during exposure
             self.source_count = [source_rate * exp for exp in self.exposure] * u.electron
             self.background_count = [background_rate * exp for exp in self.exposure] * u.electron
             self.dark_current_count = [dark_current_rate * exp for exp in self.exposure] * u.electron
             self.read_noise_count = ([read_noise] * len(self.exposure)) * u.electron
+            
+            # Sum counts to get total noise
             noise_count = [self.source_count[exp] + self.background_count[exp] + self.dark_current_count[exp] + self.read_noise_count[exp] for exp in range(len(self.exposure))] # Total count in e- for whole slit and exposure
+            
+            # Signal to noise ratio = signal / sqrt(noise)
             self.signal_noise_ratio = [(self.source_count[exp] * noise_count[exp] ** (-1/2) * self.dithers ** (1/2)).value for exp in range(len(self.exposure))] * u.dimensionless_unscaled # Remove the sqrt(e-) unit because it's nonphysical
 
         elif self.target == 'exposure':
+
             if len(self.signal_noise_ratio) == 0:
                 self.signal_noise_ratio = [u.Quantity(x) for x in self.config.defaults.signal_noise_ratio] * u.dimensionless_unscaled
                 warn('In ETC -- signal_noise_ratio is not defined, defaulting to '+str(self.signal_noise_ratio), RuntimeWarning)
 
+            # Initialize exposure array for output
             self.exposure = zeros([len(self.signal_noise_ratio), len(self.wavelengths)])
+
             for idx, snr in enumerate(self.signal_noise_ratio.value * u.electron**(1/2)):
+
+                # Define a, b, c for quadratic formula
                 # Adding 0j to avoid generating RuntimeWarning for sqrt(-1)
                 a = self.dithers * source_rate**2 + 0j
                 b = - snr**2 * (background_rate + dark_current_rate + source_rate) + 0j
                 c = [(read_noise * snr**2).to(u.electron**2).value] * len(self.wavelengths) * u.electron**2 + 0j
+
+                # Quadratic formula
                 exposure = ( -b + (b**2 - 4*a*c)**(1/2) ) / (2 * a)
                 #exposure_neg = ( -b - (b**2 - 4*a*c)**(1/2) ) / (2 * a)
                 # This statement is broken, iter() needs to be moved outside because it reinitializes every time
@@ -92,8 +109,10 @@ class exposure_time_calculator:
                     exposure[(exposure.real < 0) | (exposure.imag != 0)] = NaN
                     warn('In ETC -- Some/all nonexistent solutions found for S/N = '+str(snr.value)+', returning exposure = NaN', RuntimeWarning)
                 self.exposure[idx, :] = exposure.real.to(u.s)
-            self.exposure = u.Quantity(self.exposure, u.s)
-            # Calculate and save counts
+
+            self.exposure = u.Quantity(self.exposure, u.s)  # Convert ndarray to quantity
+
+            # Calculate and save counts based on calculatred exposure = f(λ)
             self.source_count = [source_rate * exp for exp in self.exposure] * u.electron
             self.background_count = [background_rate * exp for exp in self.exposure] * u.electron
             self.dark_current_count = [dark_current_rate * exp for exp in self.exposure] * u.electron
