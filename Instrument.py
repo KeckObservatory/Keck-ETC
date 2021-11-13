@@ -76,6 +76,7 @@ class instrument:
         self._validate_config()
 
         # Maybe move these, find the most appropriate place later...
+        self.gain = u.Quantity(self.config.gain)
         self.slit_width = u.Quantity(self.config.defaults.slit_width)
         self.slit_length = u.Quantity(self.config.defaults.slit_length)
         self.pixel_size = u.Quantity(self.config.defaults.pixel_size)

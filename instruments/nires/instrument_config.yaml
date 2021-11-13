@@ -23,4 +23,8 @@ spectral_resolution: 2700  # Spectral resolving power of instrument, defined as 
 
 modes: [spectroscopic]
 
+gain: 3.8 electron / adu
+
+nonlinear_depth: 30000 adu  # Get actual number from Sherry
+
 # Include saturation pixel value, then generate non-linearity warning for over-saturated pixels!!!

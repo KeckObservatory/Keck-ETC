@@ -47,21 +47,20 @@ class exposure_time_calculator:
         # Percentage of source inside slit
         source_slit_ratio = source_size / (pi * (self.atmosphere.seeing/2)**2)
 
-        # TODO -- Account for coadds, reads, etc.
+        # Total number of subexposures, to be multiplied by exposure time
+        number_exposures = self.dithers * (1 + self.repeats) * (1 + self.coadds)
+
         self.source_flux = self.source.get_flux(self.wavelengths) * self.atmosphere.get_transmission(self.wavelengths)
 
-        source_rate = self.source_flux * self.instrument.get_throughput(self.wavelengths) * self.binning[1]  # Binning in the spectral direction
-        source_rate *= self.telescope_area * source_slit_ratio * self.wavelengths / self.instrument.spectral_resolution * self.reads
-
-        self.efficiency = (self.atmosphere.get_transmission(self.wavelengths) * self.instrument.get_throughput(self.wavelengths)).value  # Save efficiency as dimensionless, not e-/ph
+        source_rate = self.source_flux * self.instrument.get_throughput(self.wavelengths) * self.binning[0] * self.binning[1]  # Binning in the spectral direction
+        source_rate *= self.telescope_area * source_slit_ratio * (self.wavelengths / self.instrument.spectral_resolution) * self.reads
 
 
-        # Q: why isn't the throughput included in Sherry's code?
-        background_rate = self.atmosphere.get_emission(self.wavelengths) * self.instrument.get_throughput(self.wavelengths)
-        background_rate *= self.telescope_area * slit_size * self.wavelengths * self.reads
+        background_rate = self.atmosphere.get_emission(self.wavelengths) * self.instrument.get_throughput(self.wavelengths) * self.binning[0] * self.binning[1]
+        background_rate *= self.telescope_area * slit_size * (self.wavelengths / self.instrument.spectral_resolution) * self.reads
 
         # Divide reads by 2 because read noise is per CDS (2 reads)
-        read_noise = self.instrument.get_read_noise()**2 * self.reads/2 * slit_size_pixels / self.binning[0]  # Binning in the spatial direction
+        read_noise = self.instrument.get_read_noise()**2 * (self.reads/2) * slit_size_pixels / self.binning[0]  # Binning in the spatial direction
 
         dark_current_rate = self.instrument.get_dark_current() * slit_size_pixels
         
@@ -71,17 +70,23 @@ class exposure_time_calculator:
                 self.exposure = [u.Quantity(x) for x in self.config.defaults.exposure] * u.s
                 warn('In ETC -- exposure is not defined, defaulting to '+str(self.exposure), RuntimeWarning)
 
+            # Compute and save counts in ADU/pixel
+            self.source_count_adu = [source_rate * self.instrument.pixel_size / source_size * exp * number_exposures / self.instrument.gain for exp in self.exposure] * (u.adu/u.pixel)
+            self.background_count_adu = [background_rate / slit_size * self.instrument.pixel_size * exp * number_exposures / self.instrument.gain for exp in self.exposure] * (u.adu/u.pixel)
+            self.dark_current_count_adu = [dark_current_rate / slit_size_pixels * exp * number_exposures / self.instrument.gain for exp in self.exposure] * (u.adu/u.pixel)
+            self.read_noise_count_adu = ([read_noise / slit_size_pixels * number_exposures / self.instrument.gain] * len(self.exposure)) * (u.adu/u.pixel)
+
             # Get counts in e- over entire slit during exposure
-            self.source_count = [source_rate * exp for exp in self.exposure] * u.electron
-            self.background_count = [background_rate * exp for exp in self.exposure] * u.electron
-            self.dark_current_count = [dark_current_rate * exp for exp in self.exposure] * u.electron
-            self.read_noise_count = ([read_noise] * len(self.exposure)) * u.electron
+            source_count_e = [source_rate * exp * number_exposures for exp in self.exposure] * u.electron
+            background_count_e = [background_rate * exp * number_exposures for exp in self.exposure] * u.electron
+            dark_current_count_e = [dark_current_rate * exp * number_exposures for exp in self.exposure] * u.electron
+            read_noise_count_e = ([read_noise * number_exposures] * len(self.exposure)) * u.electron
             
             # Sum counts to get total noise
-            noise_count = [self.source_count[exp] + self.background_count[exp] + self.dark_current_count[exp] + self.read_noise_count[exp] for exp in range(len(self.exposure))] # Total count in e- for whole slit and exposure
+            noise_count = [source_count_e[exp] + background_count_e[exp] + dark_current_count_e[exp] + read_noise_count_e[exp] for exp in range(len(self.exposure))]  # Total count in e- for whole slit and exposure
             
             # Signal to noise ratio = signal / sqrt(noise)
-            self.signal_noise_ratio = [(self.source_count[exp] * noise_count[exp] ** (-1/2) * self.dithers ** (1/2)).value for exp in range(len(self.exposure))] * u.dimensionless_unscaled # Remove the sqrt(e-) unit because it's nonphysical
+            self.signal_noise_ratio = [(source_count_e[exp] * noise_count[exp] ** (-1/2)).value for exp in range(len(self.exposure))] * u.dimensionless_unscaled # Remove the sqrt(e-) unit because it's nonphysical
 
         elif self.target == 'exposure':
 
@@ -113,11 +118,11 @@ class exposure_time_calculator:
             self.exposure = u.Quantity(self.exposure, u.s)  # Convert ndarray to quantity
 
             # Calculate and save counts based on calculatred exposure = f(λ)
-            self.source_count = [source_rate * exp for exp in self.exposure] * u.electron
-            self.background_count = [background_rate * exp for exp in self.exposure] * u.electron
-            self.dark_current_count = [dark_current_rate * exp for exp in self.exposure] * u.electron
-            self.read_noise_count = ([[read_noise.to(u.electron).value] * len(self.wavelengths)] * len(self.exposure)) * u.electron
-            
+            self.source_count_adu = [source_rate * self.instrument.pixel_size / source_size * exp * number_exposures / self.instrument.gain for exp in self.exposure] * (u.adu/u.pixel)
+            self.background_count_adu = [background_rate / slit_size * self.instrument.pixel_size * exp * number_exposures for exp in self.exposure] * (u.adu/u.pixel)
+            self.dark_current_count_adu = [dark_current_rate / slit_size_pixels * exp * number_exposures / self.instrument.gain for exp in self.exposure] * (u.adu/u.pixel)
+            self.read_noise_count_adu = ([[(read_noise / slit_size_pixels * number_exposures / self.instrument.gain).to(u.adu/u.pixel).value] * len(self.wavelengths)] * len(self.exposure)) * (u.adu/u.pixel)
+
         else:
             # Check that exposure and S/N have not both been provided
             raise ValueError('ERROR: In ETC -- target must be set to "exposure" or "signal_noise_ratio"')
