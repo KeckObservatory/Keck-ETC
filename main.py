@@ -31,11 +31,12 @@ def update_results():
         results.data = {
             'wavelengths': etc.wavelengths.to(u.nm).value,
             'exposure': [etc.exposure[0].to(u.s).value] * len(etc.wavelengths),
-            'source': [x if x > 1 else 1 for x in etc.source_count[0].value],  # Log plot, so remove the zeros!
-            'background': [x if x > 1 else 1 for x in etc.background_count[0].value],  # Log plot, so remove the zeros!
-            'read_noise': list(etc.read_noise_count.value) * len(etc.wavelengths),
-            'dark_current': list(etc.dark_current_count.value) * len(etc.wavelengths),
-            'snr': etc.signal_noise_ratio[0].value
+            'source': [x if x > 1 else 1 for x in etc.source_count_adu[0].value],  # Log plot, so remove the zeros!
+            'background': [x if x > 1 else 1 for x in etc.background_count_adu[0].value],  # Log plot, so remove the zeros!
+            'read_noise': list(etc.read_noise_count_adu.value) * len(etc.wavelengths),
+            'dark_current': list(etc.dark_current_count_adu.value) * len(etc.wavelengths),
+            'snr': etc.signal_noise_ratio[0].value,
+            'nonlinear':[etc.instrument.nonlinear_depth.value] * len(etc.wavelengths)
         }
 
 
@@ -44,10 +45,11 @@ def update_results():
             'wavelengths': etc.wavelengths.to(u.nm).value,
             'snr': [etc.signal_noise_ratio[0].value] * len(etc.wavelengths),
             'exposure': etc.exposure[0].to(u.s).value,
-            'source': [x if x > 1 else 1 for x in etc.source_count[0].value],  # Log plot, so remove the zeros!
-            'background': [x if x > 1 else 1 for x in etc.background_count[0].value],  # Log plot, so remove the zeros!
-            'read_noise': etc.read_noise_count[0].value,
-            'dark_current': etc.dark_current_count[0].value,
+            'source': [x if x > 1 else 1 for x in etc.source_count_adu[0].value],  # Log plot, so remove the zeros!
+            'background': [x if x > 1 else 1 for x in etc.background_count_adu[0].value],  # Log plot, so remove the zeros!
+            'read_noise': etc.read_noise_count_adu[0].value,
+            'dark_current': etc.dark_current_count_adu[0].value,
+            'nonlinear': [etc.instrument.nonlinear_depth.value] * len(etc.wavelengths)
         }
     summary.load()
 
@@ -343,7 +345,7 @@ class summary_panel:
                 f'{etc.source_flux[wavelength_index][0].to("erg / (cm^2 s Angstrom)", equivalencies=u.spectral_density(central_wavelength)).value:.1} flam',
                 'source flux')
             self.wav_label = big_number(f'{central_wavelength.to(u.um).value:.4} μm', 'wavelength')
-            self.efficiency = big_number(f'{etc.efficiency[wavelength_index][0]:.4}', 'efficiency')
+            self.time_label = big_number(f'{etc.total_exposure_time[0].value:.4} {etc.total_exposure_time.unit}', 'integration time')
             self.clk_label = big_number('--- s', 'clock time')
             if etc.target == 'signal_noise_ratio':
                 self.exp_label = big_number(f'{float(res.exposure_slider.value):.3} {exp.units.value}', 'exposure')
@@ -359,8 +361,8 @@ class summary_panel:
 
             self.contents.children = [self.title.contents]
             self.contents.children = [self.title.contents, column(self.exp_label.contents, self.snr_label.contents,
-                                                                        self.wav_label.contents, self.efficiency.contents, self.flux_label.contents,
-                                                                        self.clk_label.contents,
+                                                                        self.wav_label.contents, self.flux_label.contents,
+                                                                        self.time_label.contents, self.clk_label.contents,
                                                                         css_classes=['sidebar-container'])]
 
 
@@ -434,14 +436,15 @@ class results_panel:
 
 
         # Plot 2
-        self.counts_plot = figure(title='CCD Counts', tools='pan, wheel_zoom, hover, reset, save', active_scroll='wheel_zoom', tooltips=[('count (e-)', '$y{0}'), ('λ (μm)', '$x{0.000}')], y_axis_type='log', width=250, height=200, sizing_mode='scale_width')
+        self.counts_plot = figure(title='CCD Counts', tools='pan, wheel_zoom, hover, reset, save', active_scroll='wheel_zoom', tooltips=[('count (ADU/px)', '$y{0}'), ('λ (μm)', '$x{0.000}')], y_axis_type='log', width=250, height=200, sizing_mode='scale_width')
         self.counts_plot.xaxis.axis_label = 'wavelengths (nm)'
-        self.counts_plot.yaxis.axis_label = 'CCD counts (e-)'
+        self.counts_plot.yaxis.axis_label = 'CCD counts (ADU/px)'
 
         self.counts_plot.line(x='wavelengths', y='source', source=results, legend_label='Source', line_color='#D55E00')
         self.counts_plot.line(x='wavelengths', y='background', source=results, legend_label='Background', line_color='#0072B2')
         self.counts_plot.line(x='wavelengths', y='read_noise', source=results, legend_label='Read Noise', line_color='#009E73')
         self.counts_plot.line(x='wavelengths', y='dark_current', source=results, legend_label='Dark Current', line_color='#000000')
+        self.counts_plot.line(x='wavelengths', y='nonlinear', source=results, legend_label='Non-linearity', line_color='#D55E00', line_dash='dashed')
         #self.counts_plot.add_layout(self.counts_plot.legend[0], 'right')
         self.counts_plot.legend.label_height=10
         self.counts_plot.legend.label_width=10

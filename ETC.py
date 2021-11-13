@@ -76,6 +76,9 @@ class exposure_time_calculator:
             self.dark_current_count_adu = [dark_current_rate / slit_size_pixels * exp * number_exposures / self.instrument.gain for exp in self.exposure] * (u.adu/u.pixel)
             self.read_noise_count_adu = ([read_noise / slit_size_pixels * number_exposures / self.instrument.gain] * len(self.exposure)) * (u.adu/u.pixel)
 
+            # Save total integration time
+            self.total_exposure_time = [(number_exposures * exp) for exp in self.exposure] * u.s
+
             # Get counts in e- over entire slit during exposure
             source_count_e = [source_rate * exp * number_exposures for exp in self.exposure] * u.electron
             background_count_e = [background_rate * exp * number_exposures for exp in self.exposure] * u.electron
@@ -118,10 +121,14 @@ class exposure_time_calculator:
             self.exposure = u.Quantity(self.exposure, u.s)  # Convert ndarray to quantity
 
             # Calculate and save counts based on calculatred exposure = f(λ)
+            # TODO -- convert to list of lists instead of list, this will break for multiple snr!!!
             self.source_count_adu = [source_rate * self.instrument.pixel_size / source_size * exp * number_exposures / self.instrument.gain for exp in self.exposure] * (u.adu/u.pixel)
-            self.background_count_adu = [background_rate / slit_size * self.instrument.pixel_size * exp * number_exposures for exp in self.exposure] * (u.adu/u.pixel)
+            self.background_count_adu = [background_rate / slit_size * self.instrument.pixel_size * exp * number_exposures / self.instrument.gain for exp in self.exposure] * (u.adu/u.pixel)
             self.dark_current_count_adu = [dark_current_rate / slit_size_pixels * exp * number_exposures / self.instrument.gain for exp in self.exposure] * (u.adu/u.pixel)
             self.read_noise_count_adu = ([[(read_noise / slit_size_pixels * number_exposures / self.instrument.gain).to(u.adu/u.pixel).value] * len(self.wavelengths)] * len(self.exposure)) * (u.adu/u.pixel)
+            # Save total integration time
+            self.total_exposure_time = [(number_exposures * exp) for exp in self.exposure] * u.s
+
 
         else:
             # Check that exposure and S/N have not both been provided
