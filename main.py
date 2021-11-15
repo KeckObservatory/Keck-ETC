@@ -346,13 +346,16 @@ class summary_panel:
                 'source flux')
             self.wav_label = big_number(f'{central_wavelength.to(u.um).value:.4} μm', 'wavelength')
             if etc.target == 'signal_noise_ratio':
-                self.time_label = big_number(f'{etc.total_exposure_time[0].value:.4} {etc.total_exposure_time.unit}', 'integration time')
+                self.time_label = big_number(f'{int(etc.total_exposure_time[0].value)} {etc.total_exposure_time.unit}', 'integration time')
             elif etc.target == 'exposure':
-                self.time_label = big_number(f'{etc.total_exposure_time[0][wavelength_index][0].value:.4} {etc.total_exposure_time.unit}', 'integration time')
+                self.time_label = big_number(f'{int(etc.total_exposure_time[0][wavelength_index][0].value)} {etc.total_exposure_time.unit}', 'integration time')
             
             self.clk_label = big_number('--- s', 'clock time')
             if etc.target == 'signal_noise_ratio':
-                self.exp_label = big_number(f'{float(res.exposure_slider.value):.3} {exp.units.value}', 'exposure')
+                if exp.units.value == 's':
+                    self.exp_label = big_number(f'{int(res.exposure_slider.value)} {exp.units.value}', 'exposure')
+                else:
+                    self.exp_label = big_number(f'{float(res.exposure_slider.value):.3} {exp.units.value}', 'exposure')
                 self.snr_label = big_number(f'{etc.signal_noise_ratio[0][wavelength_index][0]:.4}', 'S/N')
             elif etc.target == 'exposure':
                 if etc.exposure[0][wavelength_index][0].to(u.s).value < 60:
@@ -574,7 +577,7 @@ class results_panel:
                 self.exp_plot.y_range.start = min(etc.exposure[0].value)*.8
                 self.exp_plot.y_range.end = nanpercentile(etc.exposure[0].value, 50)
                 # TODO -- change behavior of reset button!
-                self.exp_plot.y_range = Range1d(min(etc.exposure[0].value)*.8, nanpercentile(etc.exposure[0].value, 50))
+                #self.exp_plot.y_range = Range1d(min(etc.exposure[0].value)*.8, nanpercentile(etc.exposure[0].value, 50))
 
 class instrument_menu:
 
