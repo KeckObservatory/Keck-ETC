@@ -2,7 +2,7 @@
 from bokeh.io import curdoc
 from bokeh.plotting import figure
 from bokeh.models import ColumnDataSource, Panel, Select, Tabs, Spinner, Div, FileInput, Paragraph, CustomJS, Slider, Range1d, Button
-from bokeh.events import DocumentReady
+from bokeh.events import DocumentReady, Reset
 from bokeh.layouts import column, row
 
 # Import exposure time calculator
@@ -151,19 +151,19 @@ class exposure_panel:
 
     def target_callback(self, attr, old, new):
         if new == 'exposure':
+            new_contents = [self.snr if item==self.exposure else item for item in self.contents.children]
+            self.contents.children = [Div(css_classes=['loading-symbol'])]
             etc.set_parameter('signal_noise_ratio', etc.config.defaults.signal_noise_ratio)
             self.snr_min.value = 5#etc.signal_noise_ratio[0].value
             self.snr_max.value = 15#etc.signal_noise_ratio[-1].value
-            new_contents = [self.snr if item==self.exposure else item for item in self.contents.children]
-            self.contents.children = []  # For resizing, need to set to nothing first
             self.contents.children = new_contents
 
         if new == 'signal to noise ratio':
+            new_contents = [self.exposure if item==self.snr else item for item in self.contents.children]
+            self.contents.children = [Div(css_classes=['loading-symbol'])]
             etc.set_parameter('exposure', etc.config.defaults.exposure)
             self.exposure_min.value = 0#etc.exposure[0].value
             self.exposure_max.value = (2*u.hr).to(self.units.value).value#etc.exposure[-1].value
-            new_contents = [self.exposure if item==self.snr else item for item in self.contents.children]
-            self.contents.children = []
             self.contents.children = new_contents
         update_results()
         res.reload()
@@ -345,7 +345,11 @@ class summary_panel:
                 f'{etc.source_flux[wavelength_index][0].to("erg / (cm^2 s Angstrom)", equivalencies=u.spectral_density(central_wavelength)).value:.1} flam',
                 'source flux')
             self.wav_label = big_number(f'{central_wavelength.to(u.um).value:.4} μm', 'wavelength')
-            self.time_label = big_number(f'{etc.total_exposure_time[0].value:.4} {etc.total_exposure_time.unit}', 'integration time')
+            if etc.target == 'signal_noise_ratio':
+                self.time_label = big_number(f'{etc.total_exposure_time[0].value:.4} {etc.total_exposure_time.unit}', 'integration time')
+            elif etc.target == 'exposure':
+                self.time_label = big_number(f'{etc.total_exposure_time[0][wavelength_index][0].value:.4} {etc.total_exposure_time.unit}', 'integration time')
+            
             self.clk_label = big_number('--- s', 'clock time')
             if etc.target == 'signal_noise_ratio':
                 self.exp_label = big_number(f'{float(res.exposure_slider.value):.3} {exp.units.value}', 'exposure')
@@ -433,6 +437,13 @@ class results_panel:
         self.exp_plot.scatter(x='wavelengths', y='exposure', source=results, alpha=0.5, size=6)  # , view=self.exposure_view
         self.exp_plot.line(x='wavelengths', y='exposure', source=results)
         self.exp_plot.output_backend = 'svg'
+        # Custom JS callback for the plot reset button to ensure proper y_range handling
+        js_reset_callback = '''
+        const exp = src.data['exposure'].filter( value => !Number.isNaN(value) );
+        ax.start = Math.min(...exp) * 0.8;
+        ax.end = exp.sort((a, b) => a - b)[Math.floor(exp.length / 2)];
+        '''
+        self.exp_plot.js_on_event(Reset, CustomJS(args={'src':results, 'ax':self.exp_plot.y_range}, code=js_reset_callback))
 
 
         # Plot 2
@@ -493,7 +504,7 @@ class results_panel:
 
         # EXPERIMENTAL CODE !!! --- creating second data source with snr vs. exp
         self.new_source = ColumnDataSource({'x':linspace(0, 7200, 100), 'y':[0]*100})
-        self.wavelength_slider = Slider(start=etc.wavelengths[0].value, end=etc.wavelengths[-1].value, step=(etc.wavelengths[1]-etc.wavelengths[0]).value, value=etc.wavelengths[0].value, title='Wavelength ['+str(etc.wavelengths.unit)+']', width=100, sizing_mode='scale_width')
+        self.wavelength_slider = Slider(start=etc.wavelengths[0].value, end=etc.wavelengths[-1].value, step=(etc.wavelengths[1]-etc.wavelengths[0]).value, value=(etc.wavelengths[-1]+etc.wavelengths[0]).value/2, title='Wavelength ['+str(etc.wavelengths.unit)+']', width=100, sizing_mode='scale_width')
         self.wavelength_slider.on_change('value_throttled', self.create_data)
         self.create_data('none', self.wavelength_slider.value, self.wavelength_slider.value)
         self.vs_plot = figure(title='Exposure vs. SNR', tools='pan, wheel_zoom, hover, reset, save', active_scroll='wheel_zoom', tooltips=[('y', '$y{0.00}'), ('x', '$x{0.00}')], width=250, height=200, sizing_mode='scale_width')
