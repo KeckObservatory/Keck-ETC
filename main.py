@@ -7,7 +7,7 @@ from bokeh.layouts import column, row
 
 # Import exposure time calculator
 from ETC import exposure_time_calculator
-from numpy import nanpercentile, linspace
+from numpy import nanpercentile, linspace, round
 from astropy import units as u
 import pdb
 
@@ -323,6 +323,15 @@ class big_number:
         self.contents = column(Paragraph(text=big, css_classes=['sidebar-big', 'center']), Paragraph(text=small, css_classes=['sidebar-small', 'center']), Div(css_classes=['hrule', 'center'], sizing_mode='scale_width'), css_classes=['center'], sizing_mode='scale_width')
 
 
+class instruction_text:
+
+    def __init__(self):
+        self.contents = column(name='instructions', sizing_mode='scale_width')
+        with open('static/etc_instructions.txt') as file:
+            for line in file:
+                if len(line.strip()) > 0:
+                    self.contents.children.append(Paragraph(text=line, sizing_mode='scale_width'))
+
 
 class summary_panel:
     # TODO -- Add everything, make it look good, etc.
@@ -346,14 +355,14 @@ class summary_panel:
                 'source flux')
             self.wav_label = big_number(f'{central_wavelength.to(u.um).value:.4} μm', 'wavelength')
             if etc.target == 'signal_noise_ratio':
-                self.time_label = big_number(f'{int(etc.total_exposure_time[0].value)} {etc.total_exposure_time.unit}', 'integration time')
+                self.time_label = big_number(f'{round(etc.total_exposure_time[0].value)} {etc.total_exposure_time.unit}', 'integration time')
             elif etc.target == 'exposure':
-                self.time_label = big_number(f'{int(etc.total_exposure_time[0][wavelength_index][0].value)} {etc.total_exposure_time.unit}', 'integration time')
+                self.time_label = big_number(f'{round(etc.total_exposure_time[0][wavelength_index][0].value)} {etc.total_exposure_time.unit}', 'integration time')
             
             self.clk_label = big_number('--- s', 'clock time')
             if etc.target == 'signal_noise_ratio':
                 if exp.units.value == 's':
-                    self.exp_label = big_number(f'{int(res.exposure_slider.value)} {exp.units.value}', 'exposure')
+                    self.exp_label = big_number(f'{round(res.exposure_slider.value)} {exp.units.value}', 'exposure')
                 else:
                     self.exp_label = big_number(f'{float(res.exposure_slider.value):.3} {exp.units.value}', 'exposure')
                 self.snr_label = big_number(f'{etc.signal_noise_ratio[0][wavelength_index][0]:.4}', 'S/N')
@@ -428,18 +437,29 @@ class results_panel:
                tooltips=[('S/N', '$y{0}'), ('λ (μm)', '$x{0.000}')], width=250, height=200, sizing_mode='scale_width')
         self.snr_plot.xaxis.axis_label = 'wavelengths (nm)'
         self.snr_plot.yaxis.axis_label = 'signal to noise ratio'
-        self.snr_plot.scatter(x='wavelengths', y='snr', source=results, alpha=0.5, size=6)  # , view=self.exposure_view
-        self.snr_plot.line(x='wavelengths', y='snr', source=results)
+        scatter = self.snr_plot.scatter(x='wavelengths', y='snr', source=results, alpha=0.5, size=6, legend_label='\u00A0')  # , view=self.exposure_view
+        scatter.visible = False  # Initially start hidden
+        self.snr_plot.line(x='wavelengths', y='snr', source=results, legend_label='')
         self.snr_plot.output_backend = 'svg'
+        self.snr_plot.legend.label_height=10
+        self.snr_plot.legend.label_width=10
+        self.snr_plot.legend.label_text_font_size = '10px'
+        self.snr_plot.legend.spacing = 5
+        self.snr_plot.legend.click_policy = 'hide'
 
         # Plot exp vs. wavelength
         self.exp_plot = figure(title='Exposure Time', tools='pan, wheel_zoom, hover, reset, save', active_scroll='wheel_zoom', sizing_mode='scale_width',
                tooltips=[('exp (s)', '$y{0}'), ('λ (μm)', '$x{0.000}')], width=250, height=200, y_range=(min(results.data['exposure'])*.8, nanpercentile(results.data['exposure'], 50)))
         self.exp_plot.xaxis.axis_label = 'wavelengths (nm)'
         self.exp_plot.yaxis.axis_label = 'exposure time (s)'
-        self.exp_plot.scatter(x='wavelengths', y='exposure', source=results, alpha=0.5, size=6)  # , view=self.exposure_view
-        self.exp_plot.line(x='wavelengths', y='exposure', source=results)
+        self.exp_plot.scatter(x='wavelengths', y='exposure', source=results, alpha=0.5, size=6, legend_label='\u00A0')  # , view=self.exposure_view
+        line = self.exp_plot.line(x='wavelengths', y='exposure', source=results, legend_label='')
+        line.visible = False  # Initially start hidden
         self.exp_plot.output_backend = 'svg'
+        self.exp_plot.legend.label_height=10
+        self.exp_plot.legend.label_width=10
+        self.exp_plot.legend.label_text_font_size = '10px'
+        self.exp_plot.legend.click_policy = 'hide'
         # Custom JS callback for the plot reset button to ensure proper y_range handling
         js_reset_callback = '''
         const exp = src.data['exposure'].filter( value => !Number.isNaN(value) );
@@ -450,20 +470,21 @@ class results_panel:
 
 
         # Plot 2
-        self.counts_plot = figure(title='CCD Counts', tools='pan, wheel_zoom, hover, reset, save', active_scroll='wheel_zoom', tooltips=[('count (ADU/px)', '$y{0}'), ('λ (μm)', '$x{0.000}')], y_axis_type='log', width=250, height=200, sizing_mode='scale_width')
+        self.counts_plot = figure(title='Counts', tools='pan, wheel_zoom, hover, reset, save', active_scroll='wheel_zoom', tooltips=[('count (ADU/px)', '$y{0}'), ('λ (μm)', '$x{0.000}')], y_axis_type='log', width=250, height=200, sizing_mode='scale_width')
         self.counts_plot.xaxis.axis_label = 'wavelengths (nm)'
-        self.counts_plot.yaxis.axis_label = 'CCD counts (ADU/px)'
+        self.counts_plot.yaxis.axis_label = 'Counts (ADU/px)'
 
         self.counts_plot.line(x='wavelengths', y='source', source=results, legend_label='Source', line_color='#D55E00')
         self.counts_plot.line(x='wavelengths', y='background', source=results, legend_label='Background', line_color='#0072B2')
         self.counts_plot.line(x='wavelengths', y='read_noise', source=results, legend_label='Read Noise', line_color='#009E73')
         self.counts_plot.line(x='wavelengths', y='dark_current', source=results, legend_label='Dark Current', line_color='#000000')
         self.counts_plot.line(x='wavelengths', y='nonlinear', source=results, legend_label='Non-linearity', line_color='#D55E00', line_dash='dashed')
-        #self.counts_plot.add_layout(self.counts_plot.legend[0], 'right')
+        #self.counts_plot.add_layout(self.counts_plot.legend[0], 'right')  # For moving legend outside plot
         self.counts_plot.legend.label_height=10
         self.counts_plot.legend.label_width=10
         self.counts_plot.legend.label_text_font_size = '10px'
         self.counts_plot.legend.click_policy = 'hide'
+        self.counts_plot.legend.spacing = 0  # Figure out whether or not this line helps!
         
 
         # Download button, code from https://stackoverflow.com/questions/49388511/send-file-from-server-to-client-on-bokeh
@@ -630,6 +651,7 @@ src = source_panel()
 res = results_panel()
 summary = summary_panel()
 instr = instrument_panel()
+help = instruction_text()
 curdoc().add_root(res.contents)
 curdoc().add_root(menu.contents)
 curdoc().add_root(exp.contents)
@@ -637,6 +659,7 @@ curdoc().add_root(atm.contents)
 curdoc().add_root(src.contents)
 curdoc().add_root(summary.contents)
 curdoc().add_root(instr.contents)
+curdoc().add_root(help.contents)
 curdoc().title = 'WMKO ETC'
 
 

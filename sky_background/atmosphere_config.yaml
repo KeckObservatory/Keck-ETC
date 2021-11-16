@@ -4,7 +4,7 @@
 defaults:
     seeing: 0.8 arcsec
     airmass: 1.2
-    water_vapor: 1.0 mm
+    water_vapor: 1.6 mm
 
 # Directory for atmosphere files, relative or absolute
 file_directory: sky_background

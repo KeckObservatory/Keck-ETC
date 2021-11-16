@@ -7,8 +7,8 @@ instruments: [lris, nires, deimos, hires, nirc2, kcwi, esi]
 # Default values
 defaults:
   instrument: nires
-  exposure: [3600 s]
-  signal_noise_ratio: [10]
+  exposure: [3600 s]  # List of default values, will be overridden by GUI
+  signal_noise_ratio: [10]  # List of default values, will be overridden by GUI
   target: signal_noise_ratio
   default_wavelengths_number: 500  # If wavelengths aren't explicitly given, calculate array from min to max w/ default_wavelengths_number of points
   dithers: 1

@@ -52,33 +52,9 @@ if __name__ == '__main__':
     # test.set_parameter('signal_noise_ratio', snr * u.dimensionless_unscaled)
     # print(test.exposure)
     
-
-    # TESTING FITS vs. ASCII FILE SPEED!!
-
+    from astropy.io import fits
     from os import listdir
-    from astropy.table import Table
-    import numpy as np
-    import astropy.units as u
 
-
-    water_vapor_index = [u.Quantity(x).to(u.mm).value for x in  ['1 mm', '1.6 mm', '3 mm', '5 mm']] * u.mm
-    airmass_index = u.Quantity([1.0, 1.5, 2.0])
-    wavelength_index = [u.Quantity(x).to(u.angstrom) for x in ['0.9 um', '5.6 um', '0.02 nm']]
-    wavelength_index = np.arange(
-        u.Quantity(wavelength_index[0]).value,
-        u.Quantity(wavelength_index[1]).value,
-        u.Quantity(wavelength_index[2]).value
-    ) * u.angstrom
-
-    transmission = np.zeros([len(airmass_index), len(water_vapor_index), len(wavelength_index)])
-    emission = np.zeros([len(airmass_index), len(water_vapor_index), len(wavelength_index)])
-
-    for i, filename in enumerate(listdir('./sky_background')):
-        try:
-            if filename.startswith('mktrans') or filename.startswith('mk_skybg'):
-                data = Table.read('./sky_background/'+filename, format='ascii.ecsv')
-                data.meta['vapor'] = data.meta.pop('water_vapor')
-                data.write('./sky_background/'+filename.split('.')[0]+'.fits', format='fits')
-        except ValueError:
-            pass
-
+    for filename in listdir('sky_background/mkea_sky*'):
+        file = fits.open(filename)
+        print(file.header)

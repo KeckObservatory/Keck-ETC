@@ -57,9 +57,7 @@ class exposure_time_calculator:
 
 
         background_rate = self.atmosphere.get_emission(self.wavelengths) * self.instrument.get_throughput(self.wavelengths) * self.binning[0] * self.binning[1]
-        # TODO -- divide by spectral resolution to get Δλ, then find problem and fix equation!!!!
-        background_rate *= self.telescope_area * slit_size * (self.wavelengths) * self.reads  # Correct should be (/ self.instrument.spectral_resolution), but gives wrong values
-
+        background_rate *= self.telescope_area * slit_size * (self.wavelengths / self.instrument.spectral_resolution) * self.reads
         # Divide reads by 2 because read noise is per CDS (2 reads)
         read_noise = self.instrument.get_read_noise()**2 * (self.reads/2) * slit_size_pixels / self.binning[0]  # Binning in the spatial direction
 
@@ -116,7 +114,7 @@ class exposure_time_calculator:
                 #exposure = [next(iter(exposure_pos)) if check else next(iter(exposure_neg)) for check in (exposure_pos.real >= 0) & (exposure_pos.imag == 0)] * u.s
                 if ((exposure.real < 0) | (exposure.imag != 0)).any():
                     exposure[(exposure.real < 0) | (exposure.imag != 0)] = NaN
-                    warn('In ETC -- Some/all nonexistent solutions found for S/N = '+str(snr.value)+', returning exposure = NaN', RuntimeWarning)
+                    warn('In ETC -- Some/all solutions do not exist for S/N = '+str(snr.value)+', returning exposure = NaN', RuntimeWarning)
                 self.exposure[idx, :] = exposure.real.to(u.s)
 
             self.exposure = u.Quantity(self.exposure, u.s)  # Convert ndarray to quantity

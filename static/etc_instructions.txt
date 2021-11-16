@@ -1,0 +1,16 @@
+Welcome to the W. M. Keck Observatory exposure time calculator!
+
+To use this tool, Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed faucibus et mauris ut blandit. Duis vehicula venenatis arcu eget consectetur. Nunc in lectus leo. Aliquam blandit eros consectetur lectus viverra euismod. Suspendisse viverra turpis vitae leo tincidunt sodales a eget purus. Quisque sed quam quis ipsum tempus fermentum a non lectus. Nulla facilisi. Curabitur vitae velit a lectus suscipit efficitur. Suspendisse venenatis arcu nec volutpat porta. Mauris a lorem ut magna volutpat placerat.
+
+Pellentesque condimentum sit amet enim in vulputate. Quisque ut nisl id tellus iaculis luctus eu eu lacus. Sed feugiat malesuada magna sed elementum. Curabitur a risus nec velit malesuada mattis non ac elit. Etiam sodales justo ac tortor viverra, sed accumsan felis laoreet. Sed orci justo, pretium non est in, varius condimentum est. Praesent maximus consequat tincidunt. Nam vulputate tortor tincidunt risus semper bibendum. Donec iaculis elit mauris, eu tempus dolor sodales sed. Morbi vitae nisl sit amet massa interdum vestibulum.
+
+Phasellus ac dolor ornare, porttitor velit at, eleifend ante. Aliquam sed lacus eget risus laoreet dignissim vitae et tellus. Aliquam vitae imperdiet leo. Ut non massa varius, blandit ligula eget, venenatis elit. Ut egestas risus et tortor tempus eleifend. Ut efficitur nisl mauris, vel mattis orci facilisis in. Sed id ultrices enim. Nunc in hendrerit quam. In magna nisi, mattis vitae auctor sed, blandit a ligula. Curabitur tempus nisi ut malesuada pellentesque. Morbi eget pretium felis. Sed imperdiet nisi eu fermentum pretium. Donec sit amet lorem non est commodo dictum. Cras aliquam nunc non imperdiet sollicitudin.
+
+Pellentesque metus nunc, fermentum vitae venenatis a, mattis ac purus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec viverra fringilla nisi sit amet dapibus. Donec lobortis turpis at nulla fermentum dignissim. Phasellus et imperdiet sapien. Nam posuere, elit et facilisis pellentesque, leo dolor pretium nisl, quis sollicitudin nibh dolor non lectus. Quisque in pellentesque dolor. Suspendisse ultricies egestas tortor, at varius dui. Ut hendrerit ligula eget semper lacinia.
+
+Praesent porttitor nibh quis ante scelerisque, ac pharetra ante ultricies. Proin sed ornare nunc. Suspendisse potenti. Curabitur auctor nisl eu mollis vehicula. Aliquam nec enim vitae mi tempus dapibus sit amet rutrum purus. Maecenas eu tellus condimentum, tempor ligula in, luctus neque. Etiam nec magna dui.
+
+Some important things to include are:
+    - ETC assumes a gaussian, doesn't use PSF
+    - SNR is calculated for whole slit (per unit resolution / per resolution element)
+    - How to use interactive plots (scroll to zoom, scroll on axis to zoom one axis, click on legend to show/hide lines, reset button, save button)
