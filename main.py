@@ -6,6 +6,7 @@ from bokeh.events import DocumentReady, Reset
 from bokeh.layouts import column, row
 
 # Import exposure time calculator
+import yaml
 from ETC import exposure_time_calculator
 from numpy import nanpercentile, linspace, round
 from astropy import units as u
@@ -175,7 +176,7 @@ class exposure_panel:
     def load(self):
         self.exposure_active_flag = True
         self.title = section_title('Exposure')
-        self.exposure_label = Paragraph(text='Exposure:', margin=(5, 5, 0, 5))
+        self.exposure_label = Paragraph(text='Exposure:', margin=(5, 5, 0, 5), css_classes=['exposure_input'])
         self.exposure_min = Spinner(title='Min:', value=0, low=0, width=100, sizing_mode='scale_width')  # value=etc.exposure[0].value
         self.exposure_max = Spinner(title='Max:', value=7200, low=0, width=100, sizing_mode='scale_width')  # value=etc.exposure[-1].value
         self.units = Select(title='\u00A0', value=str(etc.exposure.unit), options=['ms', 's', 'min', 'hr'], width=100, sizing_mode='scale_width')
@@ -185,7 +186,7 @@ class exposure_panel:
         self.exposure = column(self.exposure_label, row(self.exposure_min, self.exposure_max, self.units, sizing_mode='scale_width'), sizing_mode='scale_width')
 
         # Create dropdown for selecting whether to calculate snr or exp
-        self.target = Select(title='Calculation Target:', value='signal to noise ratio', options=['signal to noise ratio', 'exposure'], width=300, sizing_mode='scale_width')
+        self.target = Select(title='Calculation Target:', value='signal to noise ratio', options=['signal to noise ratio', 'exposure'], width=300, sizing_mode='scale_width', css_classes=['calculation_target'])
         self.target.on_change('value', self.target_callback)
 
         # Create elements to calculate snr
@@ -249,12 +250,11 @@ class source_panel:
         self.temperature = quantity_input('source.temperature', 'Temperature:', etc.source.temperature.value, ['K', 'deg_C'], str(etc.source.temperature.unit), equivalency=u.temperature())
         self.index = quantity_input('source.index', 'Power Index:', etc.source.index.value)
         self.upload = column(
-            Paragraph(text='Upload spectrum (ECSV):', margin=(5, 5, 0, 5), width=200, sizing_mode='scale_width'),
-            FileInput(accept='.txt', multiple=False, width=200, sizing_mode='scale_width'),
+            Paragraph(text='Upload spectrum:', margin=(5, 5, 0, 5), width=200, sizing_mode='scale_width', css_classes=['file_upload']),
+            FileInput(accept='.txt,.fits', multiple=False, width=200, sizing_mode='scale_width', css_classes=['file_upload']),
             sizing_mode='scale_width'
         )
         self.upload.children[1].on_change('filename', self.file_callback)
-        self.upload.children[1].js_on_change('value', CustomJS(args={}, code='console.log(cb_obj);'))
         self.set_content_visibility()
 
     def set_content_visibility(self):
@@ -303,7 +303,7 @@ class instrument_panel:
         self.title = section_title('Instrument')
         current_slit = f'{etc.instrument.slit_width.to(u.arcsec).value}" x {etc.instrument.slit_length.to(u.arcsec).value}"'
         slit_list = [f'{u.Quantity(x[0]).to(u.arcsec).value}" x {u.Quantity(x[1]).to(u.arcsec).value}"' for x in etc.instrument.config.slits]
-        self.slit = Select(title='Slit:', value=current_slit, options=slit_list, width=300, sizing_mode='scale_width')
+        self.slit = Select(title='Slit:', value=current_slit, options=slit_list, width=300, sizing_mode='scale_width', css_classes=['help-icon'])
         # TODO -- add slit functionality, including "custom" option in dropdown (for appropriate instruments), which opens up a input row with "width" "length" and "unit"
         self.mode = dropdown_input('mode', 'Mode:', etc.instrument.mode, etc.instrument.config.modes)
         # TODO -- add grating, grism, and filter dependent on etc.instrument!
@@ -349,7 +349,7 @@ class summary_panel:
             central_wavelength = res.wavelength_slider.value * u.um
             wavelength_index = abs(etc.wavelengths - central_wavelength.to(etc.wavelengths.unit)) == min(
                 abs(etc.wavelengths - central_wavelength.to(etc.wavelengths.unit)))
-            self.title = section_title(etc.instrument.name.upper())
+            self.title = section_title('Results')
             self.flux_label = big_number(
                 f'{etc.source_flux[wavelength_index][0].to("erg / (cm^2 s Angstrom)", equivalencies=u.spectral_density(central_wavelength)).value:.1} flam',
                 'source flux')
@@ -434,7 +434,7 @@ class results_panel:
 
         # Plot snr vs. wavelength
         self.snr_plot = figure(title='Signal to Noise Ratio', tools='pan, wheel_zoom, hover, reset, save', active_scroll='wheel_zoom',
-               tooltips=[('S/N', '$y{0}'), ('λ (μm)', '$x{0.000}')], width=250, height=200, sizing_mode='scale_width')
+               tooltips=[('S/N', '$y{0.0}'), ('λ (μm)', '$x{0}')], width=250, height=200, sizing_mode='scale_width')
         self.snr_plot.xaxis.axis_label = 'wavelengths (nm)'
         self.snr_plot.yaxis.axis_label = 'signal to noise ratio'
         scatter = self.snr_plot.scatter(x='wavelengths', y='snr', source=results, alpha=0.5, size=6, legend_label='\u00A0')  # , view=self.exposure_view
@@ -449,7 +449,7 @@ class results_panel:
 
         # Plot exp vs. wavelength
         self.exp_plot = figure(title='Exposure Time', tools='pan, wheel_zoom, hover, reset, save', active_scroll='wheel_zoom', sizing_mode='scale_width',
-               tooltips=[('exp (s)', '$y{0}'), ('λ (μm)', '$x{0.000}')], width=250, height=200, y_range=(min(results.data['exposure'])*.8, nanpercentile(results.data['exposure'], 50)))
+               tooltips=[('exp (s)', '$y{0}'), ('λ (μm)', '$x{0}')], width=250, height=200, y_range=(min(results.data['exposure'])*.8, nanpercentile(results.data['exposure'], 50)))
         self.exp_plot.xaxis.axis_label = 'wavelengths (nm)'
         self.exp_plot.yaxis.axis_label = 'exposure time (s)'
         self.exp_plot.scatter(x='wavelengths', y='exposure', source=results, alpha=0.5, size=6, legend_label='\u00A0')  # , view=self.exposure_view
@@ -470,7 +470,7 @@ class results_panel:
 
 
         # Plot 2
-        self.counts_plot = figure(title='Counts', tools='pan, wheel_zoom, hover, reset, save', active_scroll='wheel_zoom', tooltips=[('count (ADU/px)', '$y{0}'), ('λ (μm)', '$x{0.000}')], y_axis_type='log', width=250, height=200, sizing_mode='scale_width')
+        self.counts_plot = figure(title='Counts', tools='pan, wheel_zoom, hover, reset, save', active_scroll='wheel_zoom', tooltips=[('count (ADU/px)', '$y{0}'), ('λ (μm)', '$x{0}')], y_axis_type='log', width=250, height=200, sizing_mode='scale_width')
         self.counts_plot.xaxis.axis_label = 'wavelengths (nm)'
         self.counts_plot.yaxis.axis_label = 'Counts (ADU/px)'
 
@@ -632,7 +632,28 @@ alert_container.js_on_change('tags', alert_handler)
 def show_alert(msg):
     alert_container.tags = [msg]
 # Define DOM object to trigger resize event after contents have been loaded, because otherwise responsive elements won't size properly
-page_loaded = CustomJS(args={}, code='window.dispatchEvent(new Event("resize"));')
+page_loaded_js = '''
+window.dispatchEvent(new Event("resize"));
+for(const title in titles){
+    document.querySelectorAll('.'+title+' label, .'+title+' p').forEach( (label) =>{
+        const info = document.createElement('label');
+        info.setAttribute('data-tooltip', titles[title]);
+        //info.classList.add('info');
+        info.appendChild(document.createTextNode('\U0001F6C8'));
+        const line = document.createElement('div');
+        line.classList.add('label-container');
+        if (label.nodeName == 'P'){
+            label.parentElement.classList.add('label-container');
+            label.parentElement.parentElement.classList.add('paragraph-row');
+        }
+        label.parentElement.insertBefore(line, label);
+        line.appendChild(label);
+        line.appendChild(info);
+        info.classList.add('info');
+    });
+};
+'''
+page_loaded = CustomJS(args={'titles':yaml.safe_load(open('static/mouseover_text.yaml'))}, code=page_loaded_js)
 page_loaded_container = Div(name='page_loaded_container', visible=False)
 curdoc().add_root(page_loaded_container)
 page_loaded_container.js_on_change('tags', page_loaded)

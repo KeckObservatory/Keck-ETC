@@ -1,5 +1,6 @@
 import yaml
 from astropy.table import Table
+from io import BytesIO
 from numpy import interp as interpolate
 from numpy import NaN, isnan, exp, log, sqrt, pi
 from astropy.constants import c, h, k_B
@@ -163,8 +164,14 @@ class source:
 
     def add_template(self, template, name):
         # TODO -- input validation
-        template_string = b64decode(template).decode('utf-8').split('\n')
-        data = Table.read(template_string, format='ascii.ecsv')
+        if name.lower().endswith('.txt'):
+            template_string = b64decode(template).decode('utf-8').split('\n')
+            data = Table.read(template_string, format='ascii.ecsv')
+        elif name.lower().endswith('.fits'):
+            template_binary = b64decode(template)
+            data = Table.read(BytesIO(template_binary), format='fits')
+        else:
+            raise ValueError('In source.add_template() -- Provided file must be either FITS or ASCII.ECSV format')
         # WARNING -- copying same broken code from above, fix later!
         def scale_and_interpolate(w):
             wavelengths = data['wavelength'].to(u.angstrom) * (1 + self.redshift)  # Apply redshift
