@@ -4,7 +4,28 @@
 
   file_upload: Upload a custom spectrum in either ASCII.ECSV or FITS file formats, including properly specified units in the header
 
-  #exposure_input: Specify range of exposure values (min, max) then select using slider
-  exposure_input: Specify whether you wish to calculate exposure or SNR... aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  exposure_input: Specify range of exposure values (min, max) then select using slider
+  
+  calculation_target: Specify whether you wish to calculate exposure or SNR
 
-  calculation_target: Specify whether you wish to calculate exposure or SNR... aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaa
+  airmass_input: Placeholder
+
+  seeing_input: Placeholder
+
+  water_vapor: Placeholder
+
+  source_type: Placeholder
+
+  flux_units: Magnitude of source at center of selected band
+
+  wavelength_band: Placeholder
+
+  reshift_input: Placeholder
+
+  dithers_input: Placeholder
+
+  repeats_input: Placeholder
+
+  coadds_input: Placeholder
+
+  reads_input: Placeholder

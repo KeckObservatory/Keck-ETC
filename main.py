@@ -81,7 +81,7 @@ class quantity_input:
         self.contents.children[0].step = (self.contents.children[0].step * unit_old).to(unit_new, equivalencies=self.equivalency).value
         self.value_callback_active = True
 
-    def __init__(self, key, name, default, unit_options=None, unit_default=None, error_text=None, increment=1.0, low=None, high=None, equivalency=None, width=300):
+    def __init__(self, key, name, default, unit_options=None, unit_default=None, error_text=None, increment=1.0, low=None, high=None, equivalency=None, width=300, css_classes=[]):
         self.value_callback_active = True
         self.key = key
         self.name = name
@@ -93,14 +93,17 @@ class quantity_input:
         self.low = low
         self.high = high
         self.equivalency = equivalency
+        self.css_classes = css_classes
 
         # Define value (and optional unit) inputs, add to self.contents
         self.contents = row(Spinner(title=self.name, value=self.default, step=self.increment, low=self.low, high=self.high, width=width, sizing_mode='scale_width'), sizing_mode='scale_width')
         self.contents.children[0].on_change('value', self.value_callback)
         if unit_options is not None and unit_default is not None:
             self.contents.children[0].width = int(width/2)
-            self.contents.children.append(Select(title='\u00A0', value=unit_default, options=unit_options, width=int(width/2), sizing_mode='scale_width'))
+            self.contents.children.append(Select(title='\u00A0', value=unit_default, options=unit_options, width=int(width/2), sizing_mode='scale_width', css_classes=self.css_classes))
             self.contents.children[1].on_change('value', self.unit_callback)
+        else:
+            self.contents.children[0].css_classes = self.css_classes
 
 
 class dropdown_input:
@@ -168,6 +171,7 @@ class exposure_panel:
             self.contents.children = new_contents
         update_results()
         res.reload()
+        page_loaded()
 
 
     def __init__(self):
@@ -217,9 +221,13 @@ class exposure_panel:
 class source_panel:
 
     def file_callback(self, attr, old, new):
-        # TODO -- support for FITS file formats
-        etc.source.add_template(self.upload.children[1].value, self.upload.children[1].filename)
+        try:
+            etc.source.add_template(self.upload.children[1].value, self.upload.children[1].filename)
+        except:
+            show_alert('Error: uploaded source spectrum is not valid')
+            self.contents.children.remove(self.upload)  # Reset text label to "No file chosen"
         self.set_content_visibility()
+        
 
     def __init__(self):
         self.contents = column(Div(css_classes=['loading-symbol'], sizing_mode='scale_width'), name='source_panel', sizing_mode='scale_width', css_classes=['input_section'])
@@ -269,8 +277,9 @@ class source_panel:
         }
         new_contents = [self.title.contents] + [value for key, value in content_map.items() if key in etc.source.active_parameters] + [self.upload]
         # In order to size properly, first set to []
-        self.contents.children = [self.upload]
+        self.contents.children = []
         self.contents.children = new_contents
+        page_loaded()
 
 
 class atmosphere_panel:
@@ -283,9 +292,9 @@ class atmosphere_panel:
         self.airmass_error_text = f'Airmass requires a value between {etc.atmosphere._airmass_index[0].value} and {etc.atmosphere._airmass_index[-1].value} {etc.atmosphere.airmass.unit}'
         self.water_vapor_error_text = f'Water vapor requires a value between {etc.atmosphere._water_vapor_index[0].value} and {etc.atmosphere._water_vapor_index[-1].value} {etc.atmosphere.water_vapor.unit}'
 
-        self.seeing = quantity_input('atmosphere.seeing', 'Seeing:', etc.atmosphere.seeing.value, ['arcsec'], str(etc.atmosphere.seeing.unit), increment=0.1, low=0)
-        self.airmass = quantity_input('atmosphere.airmass', 'Airmass:', etc.atmosphere.airmass.value, error_text=self.airmass_error_text, increment=0.1)
-        self.water_vapor = quantity_input('atmosphere.water_vapor', 'Water Vapor:', etc.atmosphere.water_vapor.value, ['mm', 'cm'], str(etc.atmosphere.water_vapor.unit), error_text=self.water_vapor_error_text, increment=0.5)
+        self.seeing = quantity_input('atmosphere.seeing', 'Seeing:', etc.atmosphere.seeing.value, ['arcsec'], str(etc.atmosphere.seeing.unit), increment=0.1, low=0, css_classes=['seeing_input'])
+        self.airmass = quantity_input('atmosphere.airmass', 'Airmass:', etc.atmosphere.airmass.value, error_text=self.airmass_error_text, increment=0.1, css_classes=['airmass_input'])
+        self.water_vapor = quantity_input('atmosphere.water_vapor', 'Water Vapor:', etc.atmosphere.water_vapor.value, ['mm', 'cm'], str(etc.atmosphere.water_vapor.unit), error_text=self.water_vapor_error_text, increment=0.5, css_classes=['water_vapor'])
 
         self.contents.children = [self.title.contents, self.seeing.contents, self.airmass.contents, self.water_vapor.contents]
 
@@ -572,6 +581,7 @@ class results_panel:
                 # self.snr_plot.visible = True
                 # self.exp_plot.visible = False
                 self.snr_slider.visible = False
+                page_loaded()
         elif exp.target.value == 'exposure':
             self.new_source.data = {'x': linspace(exp.snr_min.value, exp.snr_max.value, 25) if exp.snr_max.value > exp.snr_min.value else linspace(0, 20, 25), 'y': [0]*25}
             self.create_data('none', self.wavelength_slider.value, self.wavelength_slider.value)
@@ -597,8 +607,8 @@ class results_panel:
                 # self.exp_plot.visible = True
                 self.exp_plot.y_range.start = min(etc.exposure[0].value)*.8
                 self.exp_plot.y_range.end = nanpercentile(etc.exposure[0].value, 50)
-                # TODO -- change behavior of reset button!
-                #self.exp_plot.y_range = Range1d(min(etc.exposure[0].value)*.8, nanpercentile(etc.exposure[0].value, 50))
+                page_loaded()
+    
 
 class instrument_menu:
 
@@ -635,6 +645,9 @@ def show_alert(msg):
 page_loaded_js = '''
 window.dispatchEvent(new Event("resize"));
 for(const title in titles){
+    if (document.querySelectorAll('.'+title+' label[data-tooltip]').length > 0){
+        continue;
+    }
     document.querySelectorAll('.'+title+' label, .'+title+' p').forEach( (label) =>{
         const info = document.createElement('label');
         info.setAttribute('data-tooltip', titles[title]);
