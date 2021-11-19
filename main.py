@@ -159,6 +159,13 @@ class exposure_panel:
         res.reload()
         self.exposure_active_flag = True
 
+    def slider_callback(self, attr, old, new):
+        if self.target.value == 'signal to noise ratio':
+            etc.set_parameter('exposure', [str(new)+self.units.value])
+        elif self.target.value == 'exposure':
+            etc.set_parameter('signal_noise_ratio', [new])
+        update_results()
+
     def target_callback(self, attr, old, new):
         if new == 'exposure':
             new_contents = [self.snr if item==self.exposure else item for item in self.contents.children]
@@ -193,7 +200,9 @@ class exposure_panel:
         self.exposure_min.on_change('value', self.exposure_callback)
         self.exposure_max.on_change('value', self.exposure_callback)
         self.units.on_change('value', self.unit_callback)
-        self.exposure = column(self.exposure_label, row(self.exposure_min, self.exposure_max, self.units, sizing_mode='scale_width'), sizing_mode='scale_width')
+        self.exposure_slider = Slider(start=exp.exposure_min.value, end=exp.exposure_max.value, step=(exp.exposure_max.value - exp.exposure_min.value)/100, value=etc.exposure[0].value, title='Exposure ['+str(etc.exposure.unit)+']', width=100, sizing_mode='scale_width') if exp.exposure_max.value > exp.exposure_min.value else Slider(start=etc.exposure[0].value, end=etc.exposure[0].value+1, step=1, value=etc.exposure[0].value, visible=False)
+        self.exposure_slider.on_change('value_throttled', self.slider_callback)
+        self.exposure = column(self.exposure_label, self.exposure_slider, row(self.exposure_min, self.exposure_max, self.units, sizing_mode='scale_width'), sizing_mode='scale_width')
 
         # Create dropdown for selecting whether to calculate snr or exp
         self.target = Select(title='Calculation Target:', value='signal to noise ratio', options=['signal to noise ratio', 'exposure'], width=300, sizing_mode='scale_width', css_classes=['calculation_target'])
@@ -205,7 +214,9 @@ class exposure_panel:
         self.snr_max = Spinner(title='Max:', value=0, low=0, width=100, sizing_mode='scale_width', step=5)
         self.snr_min.on_change('value', self.exposure_callback)
         self.snr_max.on_change('value', self.exposure_callback)
-        self.snr = column(self.snr_label, row(self.snr_min, self.snr_max, sizing_mode='scale_width'), sizing_mode = 'scale_width')
+        self.snr_slider = Slider(start=0, end=1, value=0, step=1, title='Signal to Noise Ratio', visible=False, width=100, sizing_mode='scale_width')
+        self.snr_slider.on_change('value_throttled', self.slider_callback)
+        self.snr = column(self.snr_label, self.snr_slider, row(self.snr_min, self.snr_max, sizing_mode='scale_width'), sizing_mode = 'scale_width')
 
         # Dithers
         self.dithers = quantity_input('dithers', 'Dithers:', etc.dithers.value, low=1, width=150)
@@ -233,6 +244,12 @@ class source_panel:
             show_alert('Error: uploaded source spectrum is not valid')
             self.contents.children.remove(self.upload)  # Reset text label to "No file chosen"
         self.set_content_visibility()
+
+    def type_callback(self, attr, old, new):
+        name = [key for key, val in vars(etc.source.config.source_types).items() if val.name == new]
+        etc.set_parameter('source.type', name[0])
+        update_results()
+        self.set_content_visibility()
         
 
     def __init__(self):
@@ -241,8 +258,9 @@ class source_panel:
     def load(self):
         self.title = section_title('Source')
 
-        self.types = dropdown_input('source.type', 'Source Type:', etc.source.type, etc.source.available_types)
-        self.types.contents.children[0].on_change('value', lambda attr, old, new: self.set_content_visibility())  # Add callback to change inputs when source changes
+        self.types = Select(title='Source Type:', value=vars(etc.source.config.source_types)[etc.source.type].name, options=[vars(etc.source.config.source_types)[source].name for source in etc.source.available_types], width=300, sizing_mode='scale_width')
+        self.types.on_change('value', self.type_callback)
+        
         self.band = dropdown_input('source.wavelength_band', 'Band:', etc.source.wavelength_band,
                               list(vars(etc.source.config.wavelength_bands).keys()), width=100)
         self.brightness = quantity_input(
@@ -260,7 +278,7 @@ class source_panel:
 
         # Define other inputs...
         self.redshift = quantity_input('source.redshift', 'Redshift:', etc.source.redshift.value)
-        self.fwhm = quantity_input('source.fwhm', 'FWHM:', etc.source.fwhm.value, ['Angstrom', 'nm', 'um', 'mm'], str(etc.source.fwhm.unit), low=0)
+        self.width = quantity_input('source.width', 'Line Width:', etc.source.width.value, ['Angstrom', 'nm', 'um', 'mm'], str(etc.source.width.unit), low=0)
         # To include options for fahrenheit and rankine, need 'u.imperial.enable()' in here and ETC.py... check w/ Sherry!
         self.temperature = quantity_input('source.temperature', 'Temperature:', etc.source.temperature.value, ['K', 'deg_C'], str(etc.source.temperature.unit), equivalency=u.temperature())
         self.index = quantity_input('source.index', 'Power Index:', etc.source.index.value)
@@ -275,10 +293,10 @@ class source_panel:
     def set_content_visibility(self):
         # TODO -- ask Sherry about mag vs. temp, etc...
         content_map = {
-            'type': self.types.contents,
+            'type': self.types,
             'brightness': self.brightness.contents,
             'redshift': self.redshift.contents,
-            'fwhm': self.fwhm.contents,
+            'width': self.width.contents,
             'temperature': self.temperature.contents,
             'index': self.index.contents
         }
@@ -401,12 +419,7 @@ class summary_panel:
 class results_panel:
     # TODO -- Separate into individual graphs / sections!!
 
-    def slider_callback(self, attr, old, new):
-        if exp.target.value == 'signal to noise ratio':
-            etc.set_parameter('exposure', [str(new)+exp.units.value])
-        elif exp.target.value == 'exposure':
-            etc.set_parameter('signal_noise_ratio', [new])
-        update_results()
+    
 
     # Highly experimental code for using a second source to display snr vs. exp --!
     def create_data(self, attr, old, new):
@@ -428,20 +441,17 @@ class results_panel:
             summary.load()
 
     def __init__(self):
-        self.contents = row(Div(css_classes=['loading-symbol']), name='results', css_classes=['input_section'])
+        self.contents = column(Div(css_classes=['loading-symbol']), name='results', css_classes=['input_section'])
 
     def load(self):
         # Plot 1
-        self.exposure_slider = Slider(start=exp.exposure_min.value, end=exp.exposure_max.value, step=(exp.exposure_max.value - exp.exposure_min.value)/100, value=etc.exposure[0].value, title='Exposure ['+str(etc.exposure.unit)+']', width=100, sizing_mode='scale_width') if exp.exposure_max.value > exp.exposure_min.value else Slider(start=etc.exposure[0].value, end=etc.exposure[0].value+1, step=1, value=etc.exposure[0].value, visible=False)
-        self.exposure_slider.on_change('value_throttled', self.slider_callback)
-        self.snr_slider = Slider(start=0, end=1, value=0, step=1, title='Signal to Noise Ratio', visible=False, width=100, sizing_mode='scale_width')
-        self.snr_slider.on_change('value_throttled', self.slider_callback)
+        
         """ FOR CLIENT-SIDE COMPUTATION
-        js_code = \"""
+        js_code = '''
             const exp_value = source.data['exposure'].reduce((prev, cur) => Math.abs(cur - cb_obj.value) < Math.abs(prev - cb_obj.value) ? cur : prev);
             filter.booleans = source.data['exposure'].map(x => x == exp_value);
             source.change.emit();
-        \"""
+        '''
         self.exposure_filter = BooleanFilter(booleans=[False] * len(results.data['exposure']))
         self.exposure_view = CDSView(source=results, filters=[self.exposure_filter])
         # Callback to change filter, but currently plot is blank... why?
@@ -450,7 +460,7 @@ class results_panel:
 
         # Plot snr vs. wavelength
         self.snr_plot = figure(title='Signal to Noise Ratio', tools='pan, wheel_zoom, hover, reset, save', active_scroll='wheel_zoom',
-               tooltips=[('S/N', '$y{0.0}'), ('λ (μm)', '$x{0}')], width=250, height=200, sizing_mode='scale_width')
+               tooltips=[('S/N', '$y{0.0}'), ('λ (μm)', '$x{0}')], width=600, height=200, sizing_mode='scale_width')
         self.snr_plot.xaxis.axis_label = 'wavelengths (nm)'
         self.snr_plot.yaxis.axis_label = 'signal to noise ratio'
         scatter = self.snr_plot.scatter(x='wavelengths', y='snr', source=results, alpha=0.5, size=6, legend_label='\u00A0')  # , view=self.exposure_view
@@ -465,7 +475,7 @@ class results_panel:
 
         # Plot exp vs. wavelength
         self.exp_plot = figure(title='Exposure Time', tools='pan, wheel_zoom, hover, reset, save', active_scroll='wheel_zoom', sizing_mode='scale_width',
-               tooltips=[('exp (s)', '$y{0}'), ('λ (μm)', '$x{0}')], width=250, height=200, y_range=(min(results.data['exposure'])*.8, nanpercentile(results.data['exposure'], 50)))
+               tooltips=[('exp (s)', '$y{0}'), ('λ (μm)', '$x{0}')], width=600, height=200, y_range=(min(results.data['exposure'])*.8, nanpercentile(results.data['exposure'], 50)))
         self.exp_plot.xaxis.axis_label = 'wavelengths (nm)'
         self.exp_plot.yaxis.axis_label = 'exposure time (s)'
         self.exp_plot.scatter(x='wavelengths', y='exposure', source=results, alpha=0.5, size=6, legend_label='\u00A0')  # , view=self.exposure_view
@@ -486,7 +496,7 @@ class results_panel:
 
 
         # Plot 2
-        self.counts_plot = figure(title='Counts', tools='pan, wheel_zoom, hover, reset, save', active_scroll='wheel_zoom', tooltips=[('count (ADU/px)', '$y{0}'), ('λ (μm)', '$x{0}')], y_axis_type='log', width=250, height=200, sizing_mode='scale_width')
+        self.counts_plot = figure(title='Counts', tools='pan, wheel_zoom, hover, reset, save', active_scroll='wheel_zoom', tooltips=[('count (ADU/px)', '$y{0}'), ('λ (μm)', '$x{0}')], y_axis_type='log', width=600, height=200, sizing_mode='scale_width')
         self.counts_plot.xaxis.axis_label = 'wavelengths (nm)'
         self.counts_plot.yaxis.axis_label = 'Counts (ADU/px)'
 
@@ -544,10 +554,10 @@ class results_panel:
 
         # EXPERIMENTAL CODE !!! --- creating second data source with snr vs. exp
         self.new_source = ColumnDataSource({'x':linspace(0, 7200, 100), 'y':[0]*100})
-        self.wavelength_slider = Slider(start=etc.wavelengths[0].value, end=etc.wavelengths[-1].value, step=(etc.wavelengths[1]-etc.wavelengths[0]).value, value=(etc.wavelengths[-1]+etc.wavelengths[0]).value/2, title='Wavelength ['+str(etc.wavelengths.unit)+']', width=100, sizing_mode='scale_width')
+        self.wavelength_slider = Slider(start=etc.wavelengths[0].value, end=etc.wavelengths[-1].value, step=(etc.wavelengths[1]-etc.wavelengths[0]).value, value=(etc.wavelengths[-1]+etc.wavelengths[0]).value/2, title='Wavelength ['+str(etc.wavelengths.unit)+']', width=100, sizing_mode='scale_width', orientation='vertical')
         self.wavelength_slider.on_change('value_throttled', self.create_data)
         self.create_data('none', self.wavelength_slider.value, self.wavelength_slider.value)
-        self.vs_plot = figure(title='Exposure vs. SNR', tools='pan, wheel_zoom, hover, reset, save', active_scroll='wheel_zoom', tooltips=[('y', '$y{0.00}'), ('x', '$x{0.00}')], width=250, height=200, sizing_mode='scale_width')
+        self.vs_plot = figure(title='Exposure vs. SNR', tools='pan, wheel_zoom, hover, reset, save', active_scroll='wheel_zoom', tooltips=[('y', '$y{0.00}'), ('x', '$x{0.00}')], width=600, height=200, sizing_mode='scale_width')
         self.vs_plot.xaxis.axis_label = 'exposure (s)'
         self.vs_plot.yaxis.axis_label = 'Signal to Noise Ratio'
         self.vs_plot.line(x='x', y='y', source=self.new_source)
@@ -556,12 +566,12 @@ class results_panel:
 
 
 
-        self.snr_col = column(self.snr_plot, self.exposure_slider, sizing_mode='scale_width')
-        self.exp_col = column(self.exp_plot, self.snr_slider, sizing_mode='scale_width', visible=False)
-        self.ccd_col = column(self.counts_plot, self.download_button, sizing_mode='scale_width')
-        self.vs_col = column(self.vs_plot, self.wavelength_slider, sizing_mode='scale_width')
+        self.snr_col = row(self.snr_plot, sizing_mode='scale_width', css_classes=['input_section'])
+        self.exp_col = row(self.exp_plot, sizing_mode='scale_width', css_classes=['input_section'], visible=False)
+        self.ccd_col = row(self.counts_plot, sizing_mode='scale_width', css_classes=['input_section'])
+        self.vs_col = row(self.vs_plot, self.wavelength_slider, sizing_mode='scale_width', css_classes=['input_section'])
         self.exposure_slider.value = self.exposure_slider.value
-        self.contents.children = [self.snr_col, self.exp_col, self.vs_col, self.ccd_col]
+        self.contents.children = [self.snr_col, self.ccd_col, self.vs_col]
 
     def reload(self):
         if exp.target.value == 'signal to noise ratio':

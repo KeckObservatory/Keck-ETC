@@ -8,10 +8,10 @@ defaults:
 
 source_types:
 
-  gaussian:
-    name: Gaussian
+  emission:
+    name: Emission Line
     parameters:
-      fwhm: 200 nm
+      width: 200 nm
 
   blackbody:
     name: Blackbody

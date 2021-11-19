@@ -57,8 +57,8 @@ class source:
             else:
                 if name == 'blackbody':
                     self._functions[name] = self._blackbody
-                elif name == 'gaussian':
-                    self._functions[name] = self._gaussian
+                elif name == 'emission':
+                    self._functions[name] = self._emission
                 elif name == 'power':
                     self._functions[name] = self._power_law
                 elif name == 'flat':
@@ -189,11 +189,11 @@ class source:
         self.set_type(self.type)
 
 
-    def _gaussian(self, wavelengths):
+    def _emission(self, wavelengths):
         # TODO -- Is there any reason to keep self.wavelength and self.wavelength_band separate? Can we ditch self.wavelength?
         # TODO -- Replace area / sqrt(2pi) σ w/ amplitude (brightness, unless we're keeping central wavelength and mag. band separate)
         central_wavelength = u.Quantity(vars(self.config.wavelength_bands)[self.wavelength_band])
-        sigma = self.fwhm / (2 * sqrt(2 * log(2) ))
+        sigma = self.width / (2 * sqrt(2 * log(2) ))
         flux = self.brightness.to(u.photon / (u.cm**3 * u.s), equivalencies=u.spectral_density(wavelengths.to(u.angstrom)) + self.spectral_density_vega(wavelengths.to(u.angstrom))) / exp( (wavelengths - central_wavelength)**2/(2*sigma**2) )
         return flux
 
