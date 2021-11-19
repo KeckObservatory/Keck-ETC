@@ -65,20 +65,26 @@ class quantity_input:
             try:
                 parameter = new if len(self.contents.children) < 2 else str(new) + self.contents.children[1].value
                 etc.set_parameter(self.key, parameter)
-            except ValueError:
+            except (RecursionError, ValueError) as e:
                 if self.error_text is not None:
                     show_alert(self.error_text)
+                else:
+                    show_alert('Error: '+str(e))
+                self.value_callback_active = False
                 self.contents.children[0].value = old
+                self.value_callback_active = True
             update_results()
 
     def unit_callback(self, attr, old, new):
         self.value_callback_active = False
         unit_old = u.ABmag if old == 'mag(AB)' else (
-            u.STmag if old == 'mag(ST)' else (u.m_bol if old == 'mag(Bol)' else u.Unit(old)))
+            u.STmag if old == 'mag(ST)' else (u.m_bol if old == 'mag(Bol)' else (etc.source.vegamag if old == 'mag(vega)' else u.Unit(old))))
+        unit_mid = u.AB if unit_old==u.ABmag else (u.ST if unit_old==u.STmag else unit_old)
         unit_new = u.ABmag if new == 'mag(AB)' else (
-            u.STmag if new == 'mag(ST)' else (u.m_bol if new == 'mag(Bol)' else u.Unit(new)))
-        self.contents.children[0].value = (self.contents.children[0].value * unit_old).to(unit_new, equivalencies=self.equivalency).value
-        self.contents.children[0].step = (self.contents.children[0].step * unit_old).to(unit_new, equivalencies=self.equivalency).value
+            u.STmag if new == 'mag(ST)' else (u.m_bol if new == 'mag(Bol)'  else (etc.source.vegamag if new == 'mag(vega)' else u.Unit(new))))
+        self.contents.children[0].value = (self.contents.children[0].value * unit_old).to(unit_mid).to(unit_new, equivalencies=self.equivalency).value
+        if not(old in ['mag(AB)', 'mag(ST)', 'mag(Bol)', 'mag(vega)'] or new in ['mag(AB)', 'mag(ST)', 'mag(Bol)', 'mag(vega)']): # Don't do these conversions for magnitude
+            self.contents.children[0].step = (self.contents.children[0].step * unit_old).to(unit_mid).to(unit_new, equivalencies=self.equivalency).value
         self.value_callback_active = True
 
     def __init__(self, key, name, default, unit_options=None, unit_default=None, error_text=None, increment=1.0, low=None, high=None, equivalency=None, width=300, css_classes=[]):
@@ -203,8 +209,8 @@ class exposure_panel:
 
         # Dithers
         self.dithers = quantity_input('dithers', 'Dithers:', etc.dithers.value, low=1, width=150)
-        self.repeats = quantity_input('repeats', 'Repeats:', etc.repeats.value, low=0, width=150)
-        self.coadds = quantity_input('coadds', 'Coadds:', etc.coadds.value, low=0, width=150)
+        self.repeats = quantity_input('repeats', 'Repeats:', etc.repeats.value, low=1, width=150)
+        self.coadds = quantity_input('coadds', 'Coadds:', etc.coadds.value, low=1, width=150)
         self.reads = dropdown_input('reads', 'Reads:', str(etc.reads.value), [str(x) for x in etc.config.reads_options], width=150)
         
 
@@ -243,9 +249,10 @@ class source_panel:
             key='source.brightness',
             name='Flux:',
             default=etc.source.brightness.value,
-            unit_options=['mag(AB)', 'mag(ST)', 'Jy', 'erg / (Angstrom cm2 s)'],
+            unit_options=['mag(AB)', 'mag(vega)', 'mag(ST)', 'Jy', 'erg / (Angstrom cm2 s)'],
             unit_default=str(etc.source.brightness.unit),
-            equivalency=u.spectral_density(u.Quantity(vars(etc.source.config.wavelength_bands)[self.band.contents.children[0].value])),
+            equivalency=u.spectral_density(u.Quantity(vars(etc.source.config.wavelength_bands)[self.band.contents.children[0].value]))+
+            etc.source.spectral_density_vega(u.Quantity(vars(etc.source.config.wavelength_bands)[self.band.contents.children[0].value])),
             width=200
         )
         # Add wavelength_band to brightness_row for sizing purposes

@@ -141,7 +141,8 @@ label.info::after{
   padding: 2px;
   display: none;
   position: absolute;
-  width: fit-content;
+  width: max-content;
+  max-width: 100%;
   overflow-wrap: normal;
   text-overflow: ellipsis;
   white-space: normal;

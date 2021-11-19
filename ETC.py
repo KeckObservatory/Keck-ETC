@@ -48,7 +48,7 @@ class exposure_time_calculator:
         source_slit_ratio = source_size / (pi * (self.atmosphere.seeing/2)**2)
 
         # Total number of subexposures, to be multiplied by exposure time
-        number_exposures = self.dithers * (1 + self.repeats) * (1 + self.coadds)
+        number_exposures = self.dithers * self.repeats * self.coadds
 
         self.source_flux = self.source.get_flux(self.wavelengths) * self.atmosphere.get_transmission(self.wavelengths)
 

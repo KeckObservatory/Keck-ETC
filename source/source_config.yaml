@@ -45,6 +45,9 @@ source_types:
 # Path (absolute or relative) to directory containing source template files
 template_filepath: source/
 
+# Source for flux of vega, used to define mag(vega) as a unit
+vega_filename: vega_template.txt
+
 # List of wavelength bands and their central wavelength, edit to change available options
 wavelength_bands:
   U: 365 nm

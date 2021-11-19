@@ -13,8 +13,8 @@ defaults:
   default_wavelengths_number: 500  # If wavelengths aren't explicitly given, calculate array from min to max w/ default_wavelengths_number of points
   dithers: 1
   reads: 2
-  repeats: 0
-  coadds: 0
+  repeats: 1
+  coadds: 1
   binning: [1, 1]
   
 telescope_area: 75.76 m^2

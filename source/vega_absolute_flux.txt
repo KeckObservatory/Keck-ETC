@@ -1,0 +1,21 @@
+# %ECSV 1.0
+# ---
+# datatype:
+# - {name: wavelength, unit: Angstrom, datatype: float64}
+# - {name: flux, unit: erg / (Angstrom cm2 s), datatype: float64}
+# meta: !!omap
+# - source: https://www.stsci.edu/instruments/observatory/PDF/scs8.rev.pdf
+# schema: astropy-2.0
+wavelength flux
+3735    4.22e-9
+4443    6.20e-9
+5483    3.55e-9
+6855    1.795e-9
+8637    8.60e-10
+12300   3.05e-10
+12500   2.90e-10
+16100   1.19e-10
+16400   1.10e-10
+21500   4.18e-11
+21900   3.88e-11
+22000   3.82e-11

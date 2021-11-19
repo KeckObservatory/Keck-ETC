@@ -2,7 +2,7 @@ import yaml
 from astropy.table import Table
 from io import BytesIO
 from numpy import interp as interpolate
-from numpy import NaN, isnan, exp, log, sqrt, pi
+from numpy import NaN, isnan, exp, log, sqrt, pi, log10
 from astropy.constants import c, h, k_B
 import astropy.units as u
 from base64 import b64decode
@@ -47,9 +47,9 @@ class source:
                 def define_data_scope(data):  # Wrapper function to narrow the scope of data and make sure each interpolation uses its own dataset
                     def scale_and_interpolate(w):  # TODO -- Figure out why each function is returning the same results...
                         wavelengths = data['wavelength'].to(u.angstrom) * (1 + self.redshift)  # Apply redshift
-                        flux = data['flux'].to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(wavelengths))  # Convert to units of flux
+                        flux = data['flux'].to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(wavelengths) + self.spectral_density_vega(wavelengths.to(u.angstrom)))  # Convert to units of flux
                         central_wavelength = u.Quantity(vars(self.config.wavelength_bands)[self.wavelength_band])  # Get central wavelength of passband
-                        flux = flux / interpolate(central_wavelength, wavelengths, flux) * self.brightness.to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(central_wavelength))  # Scale source by given mag/flux
+                        flux = flux / interpolate(central_wavelength, wavelengths, flux) * self.brightness.to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(central_wavelength) + self.spectral_density_vega(central_wavelength.to(u.angstrom)))  # Scale source by given mag/flux
                         return interpolate(w, wavelengths, flux, left=0, right=0)
                     return scale_and_interpolate
 
@@ -99,6 +99,65 @@ class source:
                     raise ValueError('ERROR: In source_config.yaml -- invalid parameter for source type '+source_type.name)
 
 
+    def _define_vegamag(self):
+        self.vegamag = u.def_unit('mag(vega)', u.mag, format={'generic': 'mag(vega)', 'console': 'mag(vega)'})
+
+        def define_data_scope(data):  # Wrapper function to narrow the scope of data and make sure each interpolation uses its own dataset
+                    def shift_and_interpolate(w):  # TODO -- Figure out why each function is returning the same results...
+                        wavelengths = data['wavelength'].to(u.angstrom) * (1 + self.redshift)  # Apply redshift
+                        flux = data['flux'].to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(wavelengths) + self.spectral_density_vega(wavelengths.to(u.angstrom)))  # Convert to units of flux
+                        return interpolate(w, wavelengths, flux, left=0, right=0)
+                    return shift_and_interpolate
+        
+        self.vega_flux = define_data_scope(Table.read(self.config.template_filepath+'/'+self.config.vega_filename, format='ascii.ecsv'))
+
+        # Define astropy equivalency
+        def spectral_density_vega(w):
+
+            photlam = u.photon/(u.cm**2 * u.s * u.angstrom)
+            flam = u.erg/(u.cm**2 * u.s * u.angstrom)
+
+            def converter_photlam(x):
+                return -2.5 * log10(x / self.vega_flux(w).value)
+
+            def iconverter_photlam(x):
+                return self.vega_flux(w).value * 10**(-0.4*x)
+
+            def converter_flam(x):
+                return converter_photlam((x*flam).to(photlam, equivalencies=u.spectral_density(w)).value)
+
+            def iconverter_flam(x):
+                return (iconverter_photlam(x)*photlam).to(flam, equivalencies=u.spectral_density(w)).value
+
+            def converter_jy(x):
+                return converter_photlam((x*u.Jy).to(photlam, equivalencies=u.spectral_density(w)).value)
+
+            def iconverter_jy(x):
+                return (iconverter_photlam(x)*photlam).to(u.Jy, equivalencies=u.spectral_density(w)).value
+
+            def converter_ab(x):
+                return converter_photlam(u.Quantity(x, u.AB).to(photlam, equivalencies=u.spectral_density(w)).value)
+
+            def iconverter_ab(x):
+                return (iconverter_photlam(x)*photlam).to(u.AB, equivalencies=u.spectral_density(w)).value
+
+            def converter_st(x):
+                return converter_photlam(u.Quantity(x, u.ST).to(photlam, equivalencies=u.spectral_density(w)).value)
+
+            def iconverter_st(x):
+                return u.Quantity(iconverter_photlam(x), photlam).to(u.ST, equivalencies=u.spectral_density(w)).value
+
+
+            return [
+                    (photlam, self.vegamag, converter_photlam, iconverter_photlam),
+                    (flam, self.vegamag, converter_flam, iconverter_flam),
+                    (u.AB, self.vegamag, converter_ab, iconverter_ab),
+                    (u.Jy, self.vegamag, converter_jy, iconverter_jy),
+                    (u.ST, self.vegamag, converter_st, iconverter_st),
+                ]
+
+        self.spectral_density_vega = spectral_density_vega
+
 
     def set_type(self, new_type):
         self.type = new_type
@@ -113,6 +172,7 @@ class source:
 
 
     def __init__(self):
+
         self._mount_config(_CONFIG_FILEPATH)
 
         self._validate_config()
@@ -124,6 +184,8 @@ class source:
 
         self._load_files()
 
+        self._define_vegamag()
+
         self.set_type(self.type)
 
 
@@ -132,7 +194,7 @@ class source:
         # TODO -- Replace area / sqrt(2pi) σ w/ amplitude (brightness, unless we're keeping central wavelength and mag. band separate)
         central_wavelength = u.Quantity(vars(self.config.wavelength_bands)[self.wavelength_band])
         sigma = self.fwhm / (2 * sqrt(2 * log(2) ))
-        flux = self.brightness.to(u.photon / (u.cm**3 * u.s), equivalencies=u.spectral_density(wavelengths.to(u.angstrom))) / exp( (wavelengths - central_wavelength)**2/(2*sigma**2) )
+        flux = self.brightness.to(u.photon / (u.cm**3 * u.s), equivalencies=u.spectral_density(wavelengths.to(u.angstrom)) + self.spectral_density_vega(wavelengths.to(u.angstrom))) / exp( (wavelengths - central_wavelength)**2/(2*sigma**2) )
         return flux
 
 
@@ -142,16 +204,16 @@ class source:
         flux = (2*h*c**2 / wavelengths**5) / (exp(h*c/(wavelengths*self.temperature*k_B)) - 1) #/ u.steradian
         # Multiply by proper angle in order to remove the per steradian, hooowww?? Check with Sherry, easiest just to scale to given mag/flux, but is that what users will assume?
 
-        return flux.to(u.photon / (u.cm**3 * u.s), equivalencies=u.spectral_density(wavelengths.to(u.angstrom)))
+        return flux.to(u.photon / (u.cm**3 * u.s), equivalencies=u.spectral_density(wavelengths.to(u.angstrom)) + self.spectral_density_vega(wavelengths.to(u.angstrom)))
 
 
     def _flat(self, wavelengths):
-        return ([self.brightness] * len(wavelengths) * self.brightness.unit).to(u.photon / (u.cm**3 * u.s), equivalencies=u.spectral_density(wavelengths.to(u.angstrom)))
+        return ([self.brightness] * len(wavelengths) * self.brightness.unit).to(u.photon / (u.cm**3 * u.s), equivalencies=u.spectral_density(wavelengths.to(u.angstrom)) + self.spectral_density_vega(wavelengths.to(u.angstrom)))
 
 
     def _power_law(self, wavelengths):
         central_wavelength = u.Quantity(vars(self.config.wavelength_bands)[self.wavelength_band])
-        flux = self.brightness.to(u.photon / (u.cm**3 * u.s), equivalencies=u.spectral_density(wavelengths.to(u.angstrom))) * (wavelengths / central_wavelength) ** self.index
+        flux = self.brightness.to(u.photon / (u.cm**3 * u.s), equivalencies=u.spectral_density(wavelengths.to(u.angstrom)) + self.spectral_density_vega(wavelengths.to(u.angstrom))) * (wavelengths / central_wavelength) ** self.index
         return flux
 
     
@@ -160,7 +222,7 @@ class source:
         # Check below is currently unecessary, I changed boundary handling to 0 instead of NaN -- but check w/ Sherry before deleting
         if isnan(flux).any():
             warn('In source.get_flux() -- some or all provided wavelengths are outside the current bounds, returning NaN', RuntimeWarning)
-        return flux.to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(wavelengths.to(u.angstrom)))
+        return flux.to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(wavelengths.to(u.angstrom)) + self.spectral_density_vega(wavelengths.to(u.angstrom)))
 
     def add_template(self, template, name):
         # TODO -- input validation
@@ -191,6 +253,8 @@ class source:
                 conversion = [float(brightness.lower().replace(stmag,'')) * u.STmag for stmag in ['magst', 'stmag', 'mag(st)'] if brightness.lower().endswith(stmag)]
             if len(conversion) == 0:
                 conversion = [float(brightness.lower().replace(m_bol,'')) * u.m_bol for m_bol in ['magbol', 'bolmag', 'mag(bol)'] if brightness.lower().endswith(m_bol)]
+            if len(conversion) == 0:
+                conversion = [float(brightness.lower().replace(vega,'')) * self.vegamag for vega in ['magvega', 'vegamag', 'mag(vega)'] if brightness.lower().endswith(vega)]
             if len(conversion) == 0:
                 self.brightness = u.Quantity(brightness)
             else:
