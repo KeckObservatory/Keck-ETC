@@ -136,6 +136,10 @@ div.paragraph-row {
   width: calc(100% - 10px) !important;
 }
 
+label.info{
+  margin-right: 0.2vw;
+}
+
 label.info::after{
   content: attr(data-tooltip);
   padding: 2px;

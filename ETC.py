@@ -5,6 +5,7 @@ from Atmosphere import atmosphere
 import yaml
 from numpy import pi, linspace, zeros, array, arccos, sqrt, NaN
 from warnings import warn
+from json import loads as json_loads
 
 class exposure_time_calculator:
 
@@ -161,6 +162,12 @@ class exposure_time_calculator:
 
         self._calculate()
 
+    def set_parameters(self, parameter_string):
+        # TODO -- input validation
+        parameters = json_loads(parameter_string)
+        for key, val in parameters.items():
+            self.set_parameter(key, val)
+
 
     def set_parameter(self, name, value):
         # TODO -- validation
@@ -205,6 +212,33 @@ class exposure_time_calculator:
         # TODO -- input validation
         if name == 'name':
             self.instrument.set_name(value)
+        elif name == 'mode':
+            self.instrument.mode = str(value)
         else:
             vars(self.instrument)[name] = u.Quantity(value)
         self._calculate()
+
+    def get_parameters(self):
+
+        parameters = {
+            'dithers': str(self.dithers),
+            'reads': str(self.reads),
+            'repeats': str(self.repeats),
+            'coadds': str(self.coadds),
+            'binning': self.binning.value,
+            'atmosphere.seeing': str(self.atmosphere.seeing),
+            'atmosphere.airmass': str(self.atmosphere.airmass),
+            'atmosphere.water_vapor': str(self.atmosphere.water_vapor)
+        }
+        if self.target == 'signal_noise_ratio':
+            parameters['exposure'] = [str(exp)+'s' for exp in self.exposure.to(u.s).value]
+        elif self.target == 'exposure':
+            parameters['signal_noise_ratio'] = self.signal_noise_ratio.value
+
+        for parameter in self.source.active_parameters:
+            parameters['source.'+parameter] = str(vars(self.source)[parameter])
+
+        for parameter in self.instrument.active_parameters:
+            parameters['instrument.'+parameter] = str(vars(self.instrument)[parameter])
+
+        return parameters

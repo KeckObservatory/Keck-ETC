@@ -22,6 +22,12 @@
             }
         };
         window.addEventListener('error', errorHandler, false);
+        const resizeHandler = (e) => {
+            if (e.isTrusted) {
+                location.reload();
+            }
+        };
+        window.addEventListener('resize', resizeHandler);
     </script>
 {% endblock %}
 
@@ -65,5 +71,6 @@
         </article>
     </section>
     {{ embed(roots.alert_container) }}
+    {{ embed(roots.cookie_container) }}
     {{ embed(roots.page_loaded_container) }}
 {% endblock %}

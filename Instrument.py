@@ -85,6 +85,6 @@ class instrument:
         self.spectral_resolution = u.Quantity(self.config.spectral_resolution)
         self.nonlinear_depth = u.Quantity(self.config.nonlinear_depth)
         self.mode = self.config.defaults.mode  # Currently does nothing, TODO -- support for different modes
-
+        self.active_parameters = ['name', 'slit_width', 'slit_length', 'mode']  # TODO -- adjust based on gratings, grism, filter, etc.
 
         self._read_throughput()

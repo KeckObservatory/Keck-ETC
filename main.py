@@ -16,6 +16,7 @@ import pdb
 # Function definitions go here
 
 def update_results():
+
     if etc.target == 'signal_noise_ratio':
         """Below code is for computing multiple exposures...
         results.data = {
@@ -52,6 +53,8 @@ def update_results():
             'dark_current': etc.dark_current_count_adu[0].value,
             'nonlinear': [etc.instrument.nonlinear_depth.value] * len(etc.wavelengths)
         }
+
+    set_cookies(etc.get_parameters())
     summary.load()
 
 
@@ -139,6 +142,16 @@ class exposure_panel:
             elif self.exposure_active_flag:
                 if self.exposure_max.value < self.exposure_min.value:  # Can't have a negative range
                     self.exposure_max.value = self.exposure_min.value
+                elif self.exposure_max.value > self.exposure_min.value:
+                    self.exposure_slider.title = 'Exposure ['+self.units.value+']'
+                    self.exposure_slider.start = self.exposure_min.value
+                    self.exposure_slider.end = self.exposure_max.value
+                    self.exposure_slider.step = (self.exposure_slider.end - self.exposure_slider.start) / 100  # HARD-CODED FOR NOW, CHANGE LATER??
+                    # Trim current value to be within new boundaries, if applicable
+                    if self.exposure_slider.value < self.exposure_slider.start:
+                        self.exposure_slider.value = self.exposure_slider.start
+                    if self.exposure_slider.value > self.exposure_slider.end:
+                        self.exposure_slider.value = self.exposure_slider.end
                 res.reload()
         elif self.target.value == 'exposure':
             if self.snr_min.value is None:
@@ -148,6 +161,15 @@ class exposure_panel:
             else:
                 if self.snr_max.value < self.snr_min.value:
                     self.snr_max.value = self.snr_min.value
+                elif self.snr_max.value > self.snr_min.value:
+                    self.snr_slider.start = self.snr_min.value
+                    self.snr_slider.end = self.snr_max.value
+                    self.snr_slider.step = (self.snr_slider.end - self.snr_slider.start) / 100  # HARD-CODED FOR NOW, CHANGE LATER??
+                    # Trim current value to be within new boundaries, if applicable
+                    if self.snr_slider.value < self.snr_slider.start:
+                        self.snr_slider.value = self.snr_slider.start
+                    if self.snr_slider.value > self.snr_slider.end:
+                        self.snr_slider.value = self.snr_slider.end
                 res.reload()
 
     def unit_callback(self, attr, old, new):
@@ -200,7 +222,7 @@ class exposure_panel:
         self.exposure_min.on_change('value', self.exposure_callback)
         self.exposure_max.on_change('value', self.exposure_callback)
         self.units.on_change('value', self.unit_callback)
-        self.exposure_slider = Slider(start=exp.exposure_min.value, end=exp.exposure_max.value, step=(exp.exposure_max.value - exp.exposure_min.value)/100, value=etc.exposure[0].value, title='Exposure ['+str(etc.exposure.unit)+']', width=100, sizing_mode='scale_width') if exp.exposure_max.value > exp.exposure_min.value else Slider(start=etc.exposure[0].value, end=etc.exposure[0].value+1, step=1, value=etc.exposure[0].value, visible=False)
+        self.exposure_slider = Slider(start=exp.exposure_min.value, end=exp.exposure_max.value, step=(exp.exposure_max.value - exp.exposure_min.value)/100, value=etc.exposure[0].value, title='Exposure ['+str(etc.exposure.unit)+']', width=100, sizing_mode='scale_width') if exp.exposure_max.value > exp.exposure_min.value else Slider(start=etc.exposure[0].value, end=etc.exposure[0].value+1, step=1, value=etc.exposure[0].value, width=100, sizing_mode='scale_width', visible=False)
         self.exposure_slider.on_change('value_throttled', self.slider_callback)
         self.exposure = column(self.exposure_label, self.exposure_slider, row(self.exposure_min, self.exposure_max, self.units, sizing_mode='scale_width'), sizing_mode='scale_width')
 
@@ -396,9 +418,9 @@ class summary_panel:
             self.clk_label = big_number('--- s', 'clock time')
             if etc.target == 'signal_noise_ratio':
                 if exp.units.value == 's':
-                    self.exp_label = big_number(f'{round(res.exposure_slider.value)} {exp.units.value}', 'exposure')
+                    self.exp_label = big_number(f'{round(exp.exposure_slider.value)} {exp.units.value}', 'exposure')
                 else:
-                    self.exp_label = big_number(f'{float(res.exposure_slider.value):.3} {exp.units.value}', 'exposure')
+                    self.exp_label = big_number(f'{float(exp.exposure_slider.value):.3} {exp.units.value}', 'exposure')
                 self.snr_label = big_number(f'{etc.signal_noise_ratio[0][wavelength_index][0]:.4}', 'S/N')
             elif etc.target == 'exposure':
                 if etc.exposure[0][wavelength_index][0].to(u.s).value < 60:
@@ -444,26 +466,13 @@ class results_panel:
         self.contents = column(Div(css_classes=['loading-symbol']), name='results', css_classes=['input_section'])
 
     def load(self):
-        # Plot 1
         
-        """ FOR CLIENT-SIDE COMPUTATION
-        js_code = '''
-            const exp_value = source.data['exposure'].reduce((prev, cur) => Math.abs(cur - cb_obj.value) < Math.abs(prev - cb_obj.value) ? cur : prev);
-            filter.booleans = source.data['exposure'].map(x => x == exp_value);
-            source.change.emit();
-        '''
-        self.exposure_filter = BooleanFilter(booleans=[False] * len(results.data['exposure']))
-        self.exposure_view = CDSView(source=results, filters=[self.exposure_filter])
-        # Callback to change filter, but currently plot is blank... why?
-        self.exposure_slider.js_on_change('value', CustomJS(args=dict(source=results, filter=self.exposure_filter), code=js_code))
-        """
-
         # Plot snr vs. wavelength
         self.snr_plot = figure(title='Signal to Noise Ratio', tools='pan, wheel_zoom, hover, reset, save', active_scroll='wheel_zoom',
-               tooltips=[('S/N', '$y{0.0}'), ('λ (μm)', '$x{0}')], width=600, height=200, sizing_mode='scale_width')
+               tooltips=[('S/N', '$y{0.0}'), ('λ (μm)', '$x{0}')], width=300, height=100, sizing_mode='scale_width')
         self.snr_plot.xaxis.axis_label = 'wavelengths (nm)'
         self.snr_plot.yaxis.axis_label = 'signal to noise ratio'
-        scatter = self.snr_plot.scatter(x='wavelengths', y='snr', source=results, alpha=0.5, size=6, legend_label='\u00A0')  # , view=self.exposure_view
+        scatter = self.snr_plot.scatter(x='wavelengths', y='snr', source=results, alpha=0.5, size=6, legend_label='\u00A0')
         scatter.visible = False  # Initially start hidden
         self.snr_plot.line(x='wavelengths', y='snr', source=results, legend_label='')
         self.snr_plot.output_backend = 'svg'
@@ -478,7 +487,7 @@ class results_panel:
                tooltips=[('exp (s)', '$y{0}'), ('λ (μm)', '$x{0}')], width=600, height=200, y_range=(min(results.data['exposure'])*.8, nanpercentile(results.data['exposure'], 50)))
         self.exp_plot.xaxis.axis_label = 'wavelengths (nm)'
         self.exp_plot.yaxis.axis_label = 'exposure time (s)'
-        self.exp_plot.scatter(x='wavelengths', y='exposure', source=results, alpha=0.5, size=6, legend_label='\u00A0')  # , view=self.exposure_view
+        self.exp_plot.scatter(x='wavelengths', y='exposure', source=results, alpha=0.5, size=6, legend_label='\u00A0')
         line = self.exp_plot.line(x='wavelengths', y='exposure', source=results, legend_label='')
         line.visible = False  # Initially start hidden
         self.exp_plot.output_backend = 'svg'
@@ -554,7 +563,7 @@ class results_panel:
 
         # EXPERIMENTAL CODE !!! --- creating second data source with snr vs. exp
         self.new_source = ColumnDataSource({'x':linspace(0, 7200, 100), 'y':[0]*100})
-        self.wavelength_slider = Slider(start=etc.wavelengths[0].value, end=etc.wavelengths[-1].value, step=(etc.wavelengths[1]-etc.wavelengths[0]).value, value=(etc.wavelengths[-1]+etc.wavelengths[0]).value/2, title='Wavelength ['+str(etc.wavelengths.unit)+']', width=100, sizing_mode='scale_width', orientation='vertical')
+        self.wavelength_slider = Slider(start=etc.wavelengths[0].value, end=etc.wavelengths[-1].value, step=(etc.wavelengths[1]-etc.wavelengths[0]).value, value=(etc.wavelengths[-1]+etc.wavelengths[0]).value/2, title='Wavelength ['+str(etc.wavelengths.unit)+']', width=100, sizing_mode='scale_height', orientation='vertical')
         self.wavelength_slider.on_change('value_throttled', self.create_data)
         self.create_data('none', self.wavelength_slider.value, self.wavelength_slider.value)
         self.vs_plot = figure(title='Exposure vs. SNR', tools='pan, wheel_zoom, hover, reset, save', active_scroll='wheel_zoom', tooltips=[('y', '$y{0.00}'), ('x', '$x{0.00}')], width=600, height=200, sizing_mode='scale_width')
@@ -570,8 +579,8 @@ class results_panel:
         self.exp_col = row(self.exp_plot, sizing_mode='scale_width', css_classes=['input_section'], visible=False)
         self.ccd_col = row(self.counts_plot, sizing_mode='scale_width', css_classes=['input_section'])
         self.vs_col = row(self.vs_plot, self.wavelength_slider, sizing_mode='scale_width', css_classes=['input_section'])
-        self.exposure_slider.value = self.exposure_slider.value
-        self.contents.children = [self.snr_col, self.ccd_col, self.vs_col]
+
+        self.contents.children = [self.snr_plot, self.exp_plot, self.counts_plot, self.vs_plot]
 
     def reload(self):
         if exp.target.value == 'signal to noise ratio':
@@ -579,49 +588,19 @@ class results_panel:
             self.create_data('none', self.wavelength_slider.value, self.wavelength_slider.value)
             self.vs_plot.xaxis.axis_label = 'exposure (s)'
             self.vs_plot.yaxis.axis_label = 'Signal to Noise Ratio'
-            if exp.exposure_max.value > exp.exposure_min.value:
-                self.exposure_slider.title = 'Exposure ['+exp.units.value+']'
-                self.exposure_slider.start = exp.exposure_min.value
-                self.exposure_slider.end = exp.exposure_max.value
-                self.exposure_slider.step = (self.exposure_slider.end - self.exposure_slider.start) / 100  # HARD-CODED FOR NOW, CHANGE LATER??
-                # Trim current value to be within new boundaries, if applicable
-                if self.exposure_slider.value < self.exposure_slider.start:
-                    self.exposure_slider.value = self.exposure_slider.start
-                if self.exposure_slider.value > self.exposure_slider.end:
-                    self.exposure_slider.value = self.exposure_slider.end
-                self.exposure_slider.visible = True
-            else:
-                self.exposure_slider.visible = False
             if not self.snr_col.visible:
                 self.exp_col.visible = False
                 self.snr_col.visible = True
-                # self.snr_plot.visible = True
-                # self.exp_plot.visible = False
-                self.snr_slider.visible = False
                 page_loaded()
         elif exp.target.value == 'exposure':
             self.new_source.data = {'x': linspace(exp.snr_min.value, exp.snr_max.value, 25) if exp.snr_max.value > exp.snr_min.value else linspace(0, 20, 25), 'y': [0]*25}
             self.create_data('none', self.wavelength_slider.value, self.wavelength_slider.value)
             self.vs_plot.xaxis.axis_label = 'Signal to Noise Ratio'
             self.vs_plot.yaxis.axis_label = 'exposure (s)'
-            if exp.snr_max.value > exp.snr_min.value:
-                self.snr_slider.start = exp.snr_min.value
-                self.snr_slider.end = exp.snr_max.value
-                self.snr_slider.step = (self.snr_slider.end - self.snr_slider.start) / 100  # HARD-CODED FOR NOW, CHANGE LATER??
-                # Trim current value to be within new boundaries, if applicable
-                if self.snr_slider.value < self.snr_slider.start:
-                    self.snr_slider.value = self.snr_slider.start
-                if self.snr_slider.value > self.snr_slider.end:
-                    self.snr_slider.value = self.snr_slider.end
-                self.snr_slider.visible = True
-            else:
-                self.snr_slider.visible = False
+            
             if not self.exp_col.visible:
                 self.snr_col.visible = False
                 self.exp_col.visible = True
-                # self.snr_plot.visible = False
-                self.exposure_slider.visible = False
-                # self.exp_plot.visible = True
                 self.exp_plot.y_range.start = min(etc.exposure[0].value)*.8
                 self.exp_plot.y_range.end = nanpercentile(etc.exposure[0].value, 50)
                 page_loaded()
@@ -658,6 +637,13 @@ curdoc().add_root(alert_container)
 alert_container.js_on_change('tags', alert_handler)
 def show_alert(msg):
     alert_container.tags = [msg]
+# Define DOM object to call js and set cookies from python
+cookie_handler = CustomJS(args={}, code='if (cb_obj.tags.length > 0) { document.cookie=JSON.stringify(cb_obj.tags[0]); cb_obj.tgs=[]; }')
+cookie_container = Div(name='cookie_container', visible=False)
+curdoc().add_root(cookie_container)
+cookie_container.js_on_change('tags', cookie_handler)
+def set_cookies(obj):
+    cookie_container.tags = [obj]
 # Define DOM object to trigger resize event after contents have been loaded, because otherwise responsive elements won't size properly
 page_loaded_js = '''
 window.dispatchEvent(new Event("resize"));
@@ -694,7 +680,7 @@ def page_loaded():
 # START INITIALIZATION HERE
 global etc
 etc = None
-results = ColumnDataSource(syncable=False)
+results = ColumnDataSource()
 menu = instrument_menu()
 exp = exposure_panel()
 atm = atmosphere_panel()
@@ -717,6 +703,8 @@ curdoc().title = 'WMKO ETC'
 def load_contents(event):
     global etc
     etc = exposure_time_calculator()
+    if 'Cookie' in curdoc().session_context.request.headers.keys():
+        etc.set_parameters(curdoc().session_context.request.headers['Cookie'])
     update_results()
     menu.load()
     exp.load()
