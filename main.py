@@ -1,8 +1,8 @@
 
 from bokeh.io import curdoc
 from bokeh.plotting import figure
-from bokeh.models import ColumnDataSource, Panel, Select, Tabs, Spinner, Div, FileInput, Paragraph, CustomJS, Slider, Range1d, Button
-from bokeh.events import DocumentReady, Reset
+from bokeh.models import ColumnDataSource, Panel, Select, Tabs, Spinner, Div, FileInput, Paragraph, CustomJS, Slider, Span, Button
+from bokeh.events import DocumentReady, Reset, MouseMove
 from bokeh.layouts import column, row
 
 # Import exposure time calculator
@@ -176,7 +176,8 @@ class exposure_panel:
         self.exposure_active_flag = False
         self.exposure_min.value = (self.exposure_min.value * u.Unit(old)).to(new).value
         self.exposure_max.value = (self.exposure_max.value * u.Unit(old)).to(new).value
-        res.exposure_slider.value = (res.exposure_slider.value * u.Unit(old)).to(new).value
+        self.exposure_slider.value = (self.exposure_slider.value * u.Unit(old)).to(new).value
+        self.exposure_slider.title = 'Exposure ['+new+']'
         summary.load()
         res.reload()
         self.exposure_active_flag = True
@@ -215,16 +216,17 @@ class exposure_panel:
     def load(self):
         self.exposure_active_flag = True
         self.title = section_title('Exposure')
-        self.exposure_label = Paragraph(text='Exposure:', margin=(5, 5, 0, 5), css_classes=['exposure_input'])
+        #self.exposure_label = Paragraph(text='Exposure:', margin=(5, 5, 0, 5), css_classes=['exposure_input'])
         self.exposure_min = Spinner(title='Min:', value=0, low=0, width=100, sizing_mode='scale_width')  # value=etc.exposure[0].value
         self.exposure_max = Spinner(title='Max:', value=7200, low=0, width=100, sizing_mode='scale_width')  # value=etc.exposure[-1].value
         self.units = Select(title='\u00A0', value=str(etc.exposure.unit), options=['ms', 's', 'min', 'hr'], width=100, sizing_mode='scale_width')
         self.exposure_min.on_change('value', self.exposure_callback)
         self.exposure_max.on_change('value', self.exposure_callback)
         self.units.on_change('value', self.unit_callback)
-        self.exposure_slider = Slider(start=exp.exposure_min.value, end=exp.exposure_max.value, step=(exp.exposure_max.value - exp.exposure_min.value)/100, value=etc.exposure[0].value, title='Exposure ['+str(etc.exposure.unit)+']', width=100, sizing_mode='scale_width') if exp.exposure_max.value > exp.exposure_min.value else Slider(start=etc.exposure[0].value, end=etc.exposure[0].value+1, step=1, value=etc.exposure[0].value, width=100, sizing_mode='scale_width', visible=False)
+        self.exposure_slider = Slider(start=exp.exposure_min.value, end=exp.exposure_max.value, step=(exp.exposure_max.value - exp.exposure_min.value)/100, value=etc.exposure[0].value, title='Exposure ['+str(etc.exposure.unit)+']', width=100, sizing_mode='scale_width', css_classes=['exposure_input'])
         self.exposure_slider.on_change('value_throttled', self.slider_callback)
-        self.exposure = column(self.exposure_label, self.exposure_slider, row(self.exposure_min, self.exposure_max, self.units, sizing_mode='scale_width'), sizing_mode='scale_width')
+        #self.exposure_slider.js_on_change('value', page_loaded_callback)
+        self.exposure = column(self.exposure_slider, row(self.exposure_min, self.exposure_max, self.units, sizing_mode='scale_width'), sizing_mode='scale_width')
 
         # Create dropdown for selecting whether to calculate snr or exp
         self.target = Select(title='Calculation Target:', value='signal to noise ratio', options=['signal to noise ratio', 'exposure'], width=300, sizing_mode='scale_width', css_classes=['calculation_target'])
@@ -363,7 +365,7 @@ class instrument_panel:
         # TODO -- add slit functionality, including "custom" option in dropdown (for appropriate instruments), which opens up a input row with "width" "length" and "unit"
         self.mode = dropdown_input('mode', 'Mode:', etc.instrument.mode, etc.instrument.config.modes)
         # TODO -- add grating, grism, and filter dependent on etc.instrument!
-        self.binning = Select(title='CCD Binning:', value=f'{etc.binning[0].value}x{etc.binning[1].value}', options=[f'{b[0]}x{b[1]}' for b in etc.config.binning_options], width=300, sizing_mode='scale_width')
+        self.binning = Select(title='CCD Binning:', value=f'{int(etc.binning[0].value)}x{int(etc.binning[1].value)}', options=[f'{int(b[0])}x{int(b[1])}' for b in etc.config.binning_options], width=300, sizing_mode='scale_width')
         self.binning.on_change('value', self.binning_callback)
         self.contents.children = [self.title.contents, self.mode.contents, self.slit, self.binning]
 
@@ -392,8 +394,11 @@ class instruction_text:
 class summary_panel:
     # TODO -- Add everything, make it look good, etc.
 
+    
+
     def __init__(self):
         self.contents = column(Div(css_classes=['loading-symbol']), sizing_mode='scale_width', name='sidebar', css_classes=['input_section'])
+
 
     def load(self):
         # Quick ~hacky check to make sure everything else is loaded first, switch to boolean flag for clarity later
@@ -436,6 +441,32 @@ class summary_panel:
                                                                         self.wav_label.contents, self.flux_label.contents,
                                                                         self.time_label.contents, self.clk_label.contents,
                                                                         css_classes=['sidebar-container'])]
+            
+            # TODO -- FINISH!!!
+            self.update_js = '''
+            const wavelength = cb_obj.x;
+            const closest = source.data['wavelengths'].reduce(function(prev, curr) {
+                return (Math.abs(curr - wavelength) < Math.abs(prev - wavelength) ? curr : prev);
+            });
+
+            const index = source.data['wavelengths'].indexOf(closest);
+            console.log(index);
+            console.log(source.data['exposure]);
+            console.log(source.data['exposure'][index]);
+            exp.text = String(source.data['exposure'][index]);
+            snr.text = String(source.data['snr'][index]);
+            wav.text = String(source.data['wavelengths'][index]);
+            flux.text = String(source.data['flux'][index]);
+            '''
+            self.update = CustomJS(args={
+                'time': self.time_label.contents.children[0],
+                'exp': self.exp_label.contents.children[0],
+                'snr': self.snr_label.contents.children[0],
+                'flux': self.flux_label.contents.children[0],
+                'wav': self.wav_label.contents.children[0],
+                'source': results
+            }, code=self.update_js)
+            res.snr_plot.js_on_event(MouseMove, self.update)
 
 
 class results_panel:
@@ -467,6 +498,10 @@ class results_panel:
 
     def load(self):
         
+        # Vertical line to indicate & select wavelength
+        self.wavelength = Span(location=etc.wavelengths[0].value, dimension='height', line_color='black', line_dash='dashed')
+        self.wavelength_js = CustomJS(args={'vline':self.wavelength}, code='vline.location=cb_obj.x;')
+
         # Plot snr vs. wavelength
         self.snr_plot = figure(title='Signal to Noise Ratio', tools='pan, wheel_zoom, hover, reset, save', active_scroll='wheel_zoom',
                tooltips=[('S/N', '$y{0.0}'), ('λ (μm)', '$x{0}')], width=300, height=100, sizing_mode='scale_width')
@@ -475,12 +510,14 @@ class results_panel:
         scatter = self.snr_plot.scatter(x='wavelengths', y='snr', source=results, alpha=0.5, size=6, legend_label='\u00A0')
         scatter.visible = False  # Initially start hidden
         self.snr_plot.line(x='wavelengths', y='snr', source=results, legend_label='')
+        self.snr_plot.add_layout(self.wavelength)
         self.snr_plot.output_backend = 'svg'
         self.snr_plot.legend.label_height=10
         self.snr_plot.legend.label_width=10
         self.snr_plot.legend.label_text_font_size = '10px'
         self.snr_plot.legend.spacing = 5
         self.snr_plot.legend.click_policy = 'hide'
+        self.snr_plot.js_on_event(MouseMove, self.wavelength_js)
 
         # Plot exp vs. wavelength
         self.exp_plot = figure(title='Exposure Time', tools='pan, wheel_zoom, hover, reset, save', active_scroll='wheel_zoom', sizing_mode='scale_width',
@@ -490,6 +527,7 @@ class results_panel:
         self.exp_plot.scatter(x='wavelengths', y='exposure', source=results, alpha=0.5, size=6, legend_label='\u00A0')
         line = self.exp_plot.line(x='wavelengths', y='exposure', source=results, legend_label='')
         line.visible = False  # Initially start hidden
+        self.exp_plot.add_layout(self.wavelength)
         self.exp_plot.output_backend = 'svg'
         self.exp_plot.legend.label_height=10
         self.exp_plot.legend.label_width=10
@@ -515,6 +553,7 @@ class results_panel:
         self.counts_plot.line(x='wavelengths', y='dark_current', source=results, legend_label='Dark Current', line_color='#000000')
         self.counts_plot.line(x='wavelengths', y='nonlinear', source=results, legend_label='Non-linearity', line_color='#D55E00', line_dash='dashed')
         #self.counts_plot.add_layout(self.counts_plot.legend[0], 'right')  # For moving legend outside plot
+        self.counts_plot.add_layout(self.wavelength)
         self.counts_plot.legend.label_height=10
         self.counts_plot.legend.label_width=10
         self.counts_plot.legend.label_text_font_size = '10px'
@@ -651,7 +690,7 @@ for(const title in titles){
     if (document.querySelectorAll('.'+title+' label[data-tooltip]').length > 0){
         continue;
     }
-    document.querySelectorAll('.'+title+' label, .'+title+' p').forEach( (label) =>{
+    document.querySelectorAll('.'+title+' label, .'+title+' p, .'+title+' div.bk-slider-title').forEach( (label) =>{
         const info = document.createElement('label');
         info.setAttribute('data-tooltip', titles[title]);
         //info.classList.add('info');
@@ -669,10 +708,10 @@ for(const title in titles){
     });
 };
 '''
-page_loaded = CustomJS(args={'titles':yaml.safe_load(open('static/mouseover_text.yaml'))}, code=page_loaded_js)
+page_loaded_callback = CustomJS(args={'titles':yaml.safe_load(open('static/mouseover_text.yaml'))}, code=page_loaded_js)
 page_loaded_container = Div(name='page_loaded_container', visible=False)
 curdoc().add_root(page_loaded_container)
-page_loaded_container.js_on_change('tags', page_loaded)
+page_loaded_container.js_on_change('tags', page_loaded_callback)
 def page_loaded():
     page_loaded_container.tags = [True] if page_loaded_container.tags != [True] else [False]
 
