@@ -178,6 +178,14 @@ class exposure_time_calculator:
         elif name.startswith('atmosphere.'):
             self._set_atmosphere_parameter('.'.join(name.split('.')[1:]), value)
         else:
+            if name == 'target':
+                if value != 'signal_noise_ratio' or value != 'exposure':
+                    raise ValueError('In ETC.set_parameter() -- target must be either "exposure" or "signal_noise_ratio"')
+                if value == 'exposure' and self.target == 'signal_noise_ratio':
+                    self.signal_noise_ratio = [u.Quantity(x) for x in self.config.defaults.signal_noise_ratio] * u.dimensionless_unscaled
+                elif value == 'signal_noise_ratio' and self.target == 'exposure':
+                    self.exposure = [u.Quantity(x) for x in self.config.defaults.exposure] * u.s
+                self.target = value
             if name == 'exposure':
                 self.target = 'signal_noise_ratio'
                 self.exposure = [u.Quantity(x).to(u.s) for x in value] * u.s

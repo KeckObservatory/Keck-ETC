@@ -13,18 +13,20 @@
         const errorHandler = (e) => {
             if (e.message.includes('not connected')) {                  
                 alert('Connection lost, please refresh page');
-                location.reload();
             } else if (e.message.includes('Unhandled ERROR')) {
                 alert('Server error, please refresh page');
-                location.reload();
             } else {
-                alert('Error: '+e.message);
+                alert('Unexpected '+e.message+'\nPlease refresh page');
             }
+            location.reload();
         };
-        window.addEventListener('error', errorHandler, false);
+        window.addEventListener('error', errorHandler, {once:true});  // Set once to true to prevent duplicate js alerts before reloading page
         const resizeHandler = (e) => {
             if (e.isTrusted) {
-                location.reload();
+                const reset = window.Bokeh.documents[0].get_model_by_name('reset_contents_container');
+                if (reset.tags[0] === false){
+                    reset.tags = [true];
+                }
             }
         };
         window.addEventListener('resize', resizeHandler);
@@ -73,4 +75,5 @@
     {{ embed(roots.alert_container) }}
     {{ embed(roots.cookie_container) }}
     {{ embed(roots.page_loaded_container) }}
+    {{ embed(roots.reset_contents_container) }}
 {% endblock %}

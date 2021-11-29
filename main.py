@@ -38,7 +38,9 @@ def update_results():
             'read_noise': list(etc.read_noise_count_adu.value) * len(etc.wavelengths),
             'dark_current': list(etc.dark_current_count_adu.value) * len(etc.wavelengths),
             'snr': etc.signal_noise_ratio[0].value,
-            'nonlinear':[etc.instrument.nonlinear_depth.value] * len(etc.wavelengths)
+            'nonlinear':[etc.instrument.nonlinear_depth.value] * len(etc.wavelengths),
+            'integration': [etc.total_exposure_time.to(u.s)[0].value] * len(etc.wavelengths),
+            'flux': etc.source_flux.to(u.erg / (u.Angstrom * u.cm**2 * u.s), equivalencies=u.spectral_density(etc.wavelengths)).value
         }
 
 
@@ -51,7 +53,9 @@ def update_results():
             'background': [x if x > 1 else 1 for x in etc.background_count_adu[0].value],  # Log plot, so remove the zeros!
             'read_noise': etc.read_noise_count_adu[0].value,
             'dark_current': etc.dark_current_count_adu[0].value,
-            'nonlinear': [etc.instrument.nonlinear_depth.value] * len(etc.wavelengths)
+            'nonlinear': [etc.instrument.nonlinear_depth.value] * len(etc.wavelengths),
+            'integration': etc.total_exposure_time[0].to(u.s).value,
+            'flux': etc.source_flux.to(u.erg / (u.Angstrom * u.cm**2 * u.s), equivalencies=u.spectral_density(etc.wavelengths)).value
         }
 
     set_cookies(etc.get_parameters())
@@ -213,6 +217,9 @@ class exposure_panel:
     def __init__(self):
         self.contents = column(Div(css_classes=['loading-symbol']), name='exposure_panel', sizing_mode='scale_width', css_classes=['input_section'])
 
+    def reset(self):
+        self.contents.children = [Div(css_classes=['loading-symbol'])]
+
     def load(self):
         self.exposure_active_flag = True
         self.title = section_title('Exposure')
@@ -223,13 +230,17 @@ class exposure_panel:
         self.exposure_min.on_change('value', self.exposure_callback)
         self.exposure_max.on_change('value', self.exposure_callback)
         self.units.on_change('value', self.unit_callback)
-        self.exposure_slider = Slider(start=exp.exposure_min.value, end=exp.exposure_max.value, step=(exp.exposure_max.value - exp.exposure_min.value)/100, value=etc.exposure[0].value, title='Exposure ['+str(etc.exposure.unit)+']', width=100, sizing_mode='scale_width', css_classes=['exposure_input'])
+        self.exposure_slider = Slider(start=exp.exposure_min.value, end=exp.exposure_max.value, step=(exp.exposure_max.value - exp.exposure_min.value)/100, value=exp.exposure_min.value, title='Exposure ['+str(etc.exposure.unit)+']', width=100, sizing_mode='scale_width', css_classes=['exposure_input'])
+        if etc.target == 'signal_noise_ratio':
+            self.exposure_slider.value = etc.exposure[0].value
         self.exposure_slider.on_change('value_throttled', self.slider_callback)
         #self.exposure_slider.js_on_change('value', page_loaded_callback)
         self.exposure = column(self.exposure_slider, row(self.exposure_min, self.exposure_max, self.units, sizing_mode='scale_width'), sizing_mode='scale_width')
 
         # Create dropdown for selecting whether to calculate snr or exp
         self.target = Select(title='Calculation Target:', value='signal to noise ratio', options=['signal to noise ratio', 'exposure'], width=300, sizing_mode='scale_width', css_classes=['calculation_target'])
+        if etc.target == 'exposure':
+            self.target.value = 'exposure'
         self.target.on_change('value', self.target_callback)
 
         # Create elements to calculate snr
@@ -248,15 +259,22 @@ class exposure_panel:
         self.coadds = quantity_input('coadds', 'Coadds:', etc.coadds.value, low=1, width=150)
         self.reads = dropdown_input('reads', 'Reads:', str(etc.reads.value), [str(x) for x in etc.config.reads_options], width=150)
         
-
-
-        self.contents.children = [
-            self.title.contents, 
-            self.target,
-            self.exposure,
-            row(self.dithers.contents, self.repeats.contents, sizing_mode='scale_width'),
-            row(self.coadds.contents, self.reads.contents, sizing_mode = 'scale_width')
-        ]
+        if etc.target == 'signal_noise_ratio':
+            self.contents.children = [
+                self.title.contents, 
+                self.target,
+                self.exposure,
+                row(self.dithers.contents, self.repeats.contents, sizing_mode='scale_width'),
+                row(self.coadds.contents, self.reads.contents, sizing_mode = 'scale_width')
+            ]
+        elif etc.target == 'exposure':
+            self.contents.children = [
+                self.title.contents, 
+                self.target,
+                self.snr,
+                row(self.dithers.contents, self.repeats.contents, sizing_mode='scale_width'),
+                row(self.coadds.contents, self.reads.contents, sizing_mode = 'scale_width')
+            ]
 
 
 class source_panel:
@@ -278,6 +296,10 @@ class source_panel:
 
     def __init__(self):
         self.contents = column(Div(css_classes=['loading-symbol'], sizing_mode='scale_width'), name='source_panel', sizing_mode='scale_width', css_classes=['input_section'])
+
+
+    def reset(self):
+        self.contents.children = [Div(css_classes=['loading-symbol'], sizing_mode='scale_width')]
 
     def load(self):
         self.title = section_title('Source')
@@ -336,6 +358,11 @@ class atmosphere_panel:
     def __init__(self):
         self.contents = column(Div(css_classes=['loading-symbol'], sizing_mode='scale_width'), name='atmosphere_panel', sizing_mode='scale_width', css_classes=['input_section'])
 
+
+    def reset(self):
+        self.contents.children = [Div(css_classes=['loading-symbol'], sizing_mode='scale_width')]
+
+
     def load(self):
         self.title = section_title('Atmosphere')
         self.airmass_error_text = f'Airmass requires a value between {etc.atmosphere._airmass_index[0].value} and {etc.atmosphere._airmass_index[-1].value} {etc.atmosphere.airmass.unit}'
@@ -356,6 +383,11 @@ class instrument_panel:
 
     def __init__(self):
         self.contents = column(Div(css_classes=['loading-symbol'], sizing_mode='scale_width'), name='instrument_panel', sizing_mode='scale_width', css_classes=['input_section'])
+        
+
+    def reset(self):
+        self.contents.children = [Div(css_classes=['loading-symbol'], sizing_mode='scale_width')]
+
 
     def load(self):
         self.title = section_title('Instrument')
@@ -399,6 +431,10 @@ class summary_panel:
     def __init__(self):
         self.contents = column(Div(css_classes=['loading-symbol']), sizing_mode='scale_width', name='sidebar', css_classes=['input_section'])
 
+
+    def reset(self):
+        self.contents.children = [Div(css_classes=['loading-symbol'])]
+        
 
     def load(self):
         # Quick ~hacky check to make sure everything else is loaded first, switch to boolean flag for clarity later
@@ -450,13 +486,11 @@ class summary_panel:
             });
 
             const index = source.data['wavelengths'].indexOf(closest);
-            console.log(index);
-            console.log(source.data['exposure]);
-            console.log(source.data['exposure'][index]);
-            exp.text = String(source.data['exposure'][index]);
-            snr.text = String(source.data['snr'][index]);
-            wav.text = String(source.data['wavelengths'][index]);
-            flux.text = String(source.data['flux'][index]);
+            exp.text = String(source.data.exposure[index].toFixed(0))+' s';
+            snr.text = String(source.data.snr[index].toFixed(2));
+            wav.text = String((source.data.wavelengths[index]/1000).toFixed(3))+' μm';
+            flux.text = String(source.data.flux[index].toExponential(0))+' flam';
+            time.text = String(source.data.integration[index].toFixed(0))+' s';
             '''
             self.update = CustomJS(args={
                 'time': self.time_label.contents.children[0],
@@ -495,6 +529,11 @@ class results_panel:
 
     def __init__(self):
         self.contents = column(Div(css_classes=['loading-symbol']), name='results', css_classes=['input_section'])
+
+
+    def reset(self):
+        self.contents.children = [Div(css_classes=['loading-symbol'])]
+
 
     def load(self):
         
@@ -714,6 +753,27 @@ curdoc().add_root(page_loaded_container)
 page_loaded_container.js_on_change('tags', page_loaded_callback)
 def page_loaded():
     page_loaded_container.tags = [True] if page_loaded_container.tags != [True] else [False]
+# Define DOM object to trigger reset python contents from javascript
+def reset_contents_callback(attr, old, new):
+    if attr == 'tags' and old == [False] and new == [True]:
+        exp.reset()
+        res.reset()
+        src.reset()
+        atm.reset()
+        instr.reset()
+        summary.reset()
+        menu.load()
+        exp.load()
+        res.load()
+        src.load()
+        atm.load()
+        instr.load()
+        summary.load()
+        page_loaded()
+        reset_contents_container.tags = [False]
+reset_contents_container = Div(name='reset_contents_container', tags=[False], visible=False)
+curdoc().add_root(reset_contents_container)
+reset_contents_container.on_change('tags', reset_contents_callback)
 
 
 # START INITIALIZATION HERE
