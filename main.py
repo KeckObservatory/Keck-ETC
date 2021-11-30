@@ -287,7 +287,8 @@ class source_panel:
             etc.source.add_template(self.upload.children[1].value, self.upload.children[1].filename)
         except:
             show_alert('Error: uploaded source spectrum is not valid')
-            self.contents.children.remove(self.upload)  # Reset text label to "No file chosen"
+            self.contents.children.remove(self.upload)  # Resets text label to "No file chosen"
+        self.types.options =  [vars(etc.source.config.source_types)[source].name for source in etc.source.available_types]
         self.set_content_visibility()
 
     def type_callback(self, attr, old, new):
@@ -585,12 +586,12 @@ class results_panel:
         self.wavelength = Span(location=etc.wavelengths[0].to(u.nm).value, dimension='height', line_color='black', line_dash='dashed')
         self.wavelength_js = CustomJS(args={'vline':self.wavelength}, code='vline.location=cb_obj.x;')
 
-        # Define tools to use in plots
+        # Define tools to use in plots -- TODO pick better order
         plot_tools = 'pan, box_zoom, wheel_zoom, undo, redo, reset, save, zoom_in, zoom_out, hover, help'
 
         # Plot snr vs. wavelength
         self.snr_plot = figure(title='Signal to Noise Ratio', active_inspect='hover', tools=plot_tools,
-               tooltips=[('S/N', '$y{0.0}'), ('λ (μm)', '$x{0}')], sizing_mode='scale_both')
+               tooltips=[('S/N', '$y{0.0}'), ('λ (nm)', '$x{0}')], sizing_mode='scale_both')
         self.snr_plot.sizing_mode = 'scale_both'
         self.snr_plot.xaxis.axis_label = 'wavelengths (nm)'
         self.snr_plot.yaxis.axis_label = 'signal to noise ratio'
@@ -609,7 +610,7 @@ class results_panel:
 
         # Plot exp vs. wavelength
         self.exp_plot = figure(title='Exposure Time', active_inspect='hover', tools=plot_tools,  sizing_mode='scale_width', width=500, height=100,
-               tooltips=[('exp (s)', '$y{0}'), ('λ (μm)', '$x{0}')], y_range=(min(results.data['exposure'])*.8, nanpercentile(results.data['exposure'], 50)))
+               tooltips=[('exp (s)', '$y{0}'), ('λ (nm)', '$x{0}')], y_range=(min(results.data['exposure'])*.8, nanpercentile(results.data['exposure'], 50)))
         self.exp_plot.xaxis.axis_label = 'wavelengths (nm)'
         self.exp_plot.yaxis.axis_label = 'exposure time (s)'
         self.exp_plot.scatter(x='wavelengths', y='exposure', source=results, alpha=0.5, size=6, legend_label='\u00A0')
@@ -632,7 +633,7 @@ class results_panel:
 
 
         # Plot 2
-        self.counts_plot = figure(title='Counts', active_inspect='hover', tools=plot_tools,  tooltips=[('count (ADU/px)', '$y{0}'), ('λ (μm)', '$x{0}')], y_axis_type='log', sizing_mode='scale_width')
+        self.counts_plot = figure(title='Counts', active_inspect='hover', tools=plot_tools,  tooltips=[('count (ADU/px)', '$y{0}'), ('λ (nm)', '$x{0}')], y_axis_type='log', sizing_mode='scale_width')
         self.counts_plot.xaxis.axis_label = 'wavelengths (nm)'
         self.counts_plot.yaxis.axis_label = 'Counts (ADU/px)'
 

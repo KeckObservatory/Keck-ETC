@@ -160,6 +160,9 @@ class source:
 
 
     def set_type(self, new_type):
+        if new_type not in self.available_types:
+            warn(f'In Source.set_type() -- source type "{new_type}"" is not available', RuntimeWarning)
+            return
         self.type = new_type
         self.active_parameters = list(vars(self.config.defaults).keys())
         if self.type in vars(self.config.source_types).keys() and 'parameters' in vars(vars(self.config.source_types)[self.type]).keys():
@@ -229,20 +232,30 @@ class source:
         if name.lower().endswith('.txt'):
             template_string = b64decode(template).decode('utf-8').split('\n')
             data = Table.read(template_string, format='ascii.ecsv')
+            for column in data.keys():
+                data.rename_column(column, column.upper())
         elif name.lower().endswith('.fits'):
             template_binary = b64decode(template)
             data = Table.read(BytesIO(template_binary), format='fits')
         else:
             raise ValueError('In source.add_template() -- Provided file must be either FITS or ASCII.ECSV format')
-        # WARNING -- copying same broken code from above, fix later!
-        def scale_and_interpolate(w):
-            wavelengths = data['wavelength'].to(u.angstrom) * (1 + self.redshift)  # Apply redshift
-            flux = data['flux'].to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(wavelengths))  # Convert to units of flux
-            central_wavelength = u.Quantity(vars(self.config.wavelength_bands)[self.wavelength_band])  # Get central wavelength of passband
-            flux = flux / interpolate(central_wavelength, wavelengths, flux) * self.brightness.to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(central_wavelength))  # Scale source by given mag/flux
-            return interpolate(w, wavelengths, flux, left=0, right=0)
-        self._functions[name.split('.')[0]] = scale_and_interpolate  # Save function corresponding to this source
+        def define_data_scope(data):  # Wrapper function to narrow the scope of data and make sure each interpolation uses its own dataset
+            def scale_and_interpolate(w):
+                wavelengths = data['WAVELENGTH'].to(u.angstrom) * (1 + self.redshift)  # Apply redshift
+                flux = data['FLUX'].to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(wavelengths) + self.spectral_density_vega(wavelengths.to(u.angstrom)))  # Convert to units of flux
+                central_wavelength = u.Quantity(vars(self.config.wavelength_bands)[self.wavelength_band])  # Get central wavelength of passband
+                flux = flux / interpolate(central_wavelength, wavelengths, flux) * self.brightness.to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(central_wavelength) + self.spectral_density_vega(central_wavelength.to(u.angstrom)))  # Scale source by given mag/flux
+                return interpolate(w, wavelengths, flux, left=0, right=0)
+            return scale_and_interpolate
+
+        self._functions[name.split('.')[0]] = define_data_scope(data)  # Save function corresponding to this source
         self.available_types.append(name.split('.')[0])  # Add to list of types available to choose from
+        # Add name to config so that it's accessible
+        class GenericObject:
+            pass
+        obj = GenericObject()
+        obj.name = name.split('.')[0]
+        vars(self.config.source_types)[name.split('.')[0]] = obj
 
     def set_brightness(self, brightness):
         if isinstance(brightness, u.Quantity):
