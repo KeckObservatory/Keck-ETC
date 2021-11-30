@@ -22,7 +22,7 @@
         };
         window.addEventListener('error', errorHandler, {once:true});  // Set once to true to prevent duplicate js alerts before reloading page
         const resizeHandler = (e) => {
-            if (e.isTrusted) {
+            if (e.isTrusted && typeof window.Bokeh.documents[0] != 'undefined') {
                 const reset = window.Bokeh.documents[0].get_model_by_name('reset_contents_container');
                 if (reset.tags[0] === false){
                     reset.tags = [true];
