@@ -1,7 +1,7 @@
 
 from bokeh.io import curdoc
-from bokeh.plotting import figure
-from bokeh.models import ColumnDataSource, Panel, Select, Tabs, Spinner, Div, FileInput, Paragraph, CustomJS, Slider, Span, Button
+from bokeh.plotting import figure, gridplot
+from bokeh.models import ColumnDataSource, Panel, Select, Tabs, Spinner, Div, FileInput, Paragraph, CustomJS, Slider, Span, Button, Toolbar, PanTool
 from bokeh.events import DocumentReady, Reset, MouseMove
 from bokeh.layouts import column, row
 
@@ -200,6 +200,7 @@ class exposure_panel:
             etc.set_parameter('signal_noise_ratio', etc.config.defaults.signal_noise_ratio)
             self.snr_min.value = 5#etc.signal_noise_ratio[0].value
             self.snr_max.value = 15#etc.signal_noise_ratio[-1].value
+            self.snr_slider.value = etc.signal_noise_ratio[0].value
             self.contents.children = new_contents
 
         if new == 'signal to noise ratio':
@@ -208,6 +209,7 @@ class exposure_panel:
             etc.set_parameter('exposure', etc.config.defaults.exposure)
             self.exposure_min.value = 0#etc.exposure[0].value
             self.exposure_max.value = (2*u.hr).to(self.units.value).value#etc.exposure[-1].value
+            self.exposure_slider.value = etc.exposure[0].to(self.units.value).value
             self.contents.children = new_contents
         update_results()
         res.reload()
@@ -244,14 +246,15 @@ class exposure_panel:
         self.target.on_change('value', self.target_callback)
 
         # Create elements to calculate snr
-        self.snr_label = Paragraph(text='Signal to Noise Ratio:', margin=(5, 5, 0, 5))
         self.snr_min = Spinner(title='Min:', value=0, low=0, width=100, sizing_mode='scale_width', step=5)  # Default to 0 because exp is initially active
-        self.snr_max = Spinner(title='Max:', value=0, low=0, width=100, sizing_mode='scale_width', step=5)
+        self.snr_max = Spinner(title='Max:', value=200, low=0, width=100, sizing_mode='scale_width', step=5)
         self.snr_min.on_change('value', self.exposure_callback)
         self.snr_max.on_change('value', self.exposure_callback)
-        self.snr_slider = Slider(start=0, end=1, value=0, step=1, title='Signal to Noise Ratio', visible=False, width=100, sizing_mode='scale_width')
+        self.snr_slider = Slider(start=self.snr_min.value, end=self.snr_max.value, value=self.snr_min.value, step=1, title='Signal to Noise Ratio', width=100, sizing_mode='scale_width')
+        if etc.target == 'exposure':
+            self.snr_slider.value = etc.signal_noise_ratio[0].value
         self.snr_slider.on_change('value_throttled', self.slider_callback)
-        self.snr = column(self.snr_label, self.snr_slider, row(self.snr_min, self.snr_max, sizing_mode='scale_width'), sizing_mode = 'scale_width')
+        self.snr = column(self.snr_slider, row(self.snr_min, self.snr_max, sizing_mode='scale_width'), sizing_mode = 'scale_width')
 
         # Dithers
         self.dithers = quantity_input('dithers', 'Dithers:', etc.dithers.value, low=1, width=150)
@@ -443,7 +446,7 @@ class summary_panel:
             #     vars(etc.source.config.wavelength_bands)[src.band.contents.children[0].value])
 
 
-            central_wavelength = res.wavelength_slider.value * u.um
+            central_wavelength = res.wavelength.location * u.nm
             wavelength_index = abs(etc.wavelengths - central_wavelength.to(etc.wavelengths.unit)) == min(
                 abs(etc.wavelengths - central_wavelength.to(etc.wavelengths.unit)))
             self.title = section_title('Results')
@@ -472,10 +475,48 @@ class summary_panel:
                     self.exp_label = big_number(f'{etc.exposure[0][wavelength_index][0].to(u.hr).value:.3} hr', 'exposure')
                 self.snr_label = big_number(f'{float(etc.signal_noise_ratio[0].value):.4}', 'S/N')
 
+            # Download button, code from https://stackoverflow.com/questions/49388511/send-file-from-server-to-client-on-bokeh
+            self.download_button = Button(label="Download Data", button_type="default", width=100, sizing_mode='scale_width', css_classes=['center', 'input_section'])
+            download_js_code="""
+            function table_to_csv(source) {
+                const columns = Object.keys(source.data)
+                const nrows = source.get_length()
+                const lines = [columns.join(',')]
+
+                for (let i = 0; i < nrows; i++) {
+                    let row = [];
+                    for (let j = 0; j < columns.length; j++) {
+                        const column = columns[j]
+                        row.push(source.data[column][i].toString())
+                    }
+                    lines.push(row.join(','))
+                }
+                return lines.join('\\n').concat('\\n')
+            }
+
+
+            const filename = 'etc_results.csv'
+            var filetext = table_to_csv(source)
+            const blob = new Blob([filetext], { type: 'text/csv;charset=utf-8;' })
+
+            //addresses IE
+            if (navigator.msSaveBlob) {
+                navigator.msSaveBlob(blob, filename)
+            } else {
+                const link = document.createElement('a')
+                link.href = URL.createObjectURL(blob)
+                link.download = filename
+                link.target = '_blank'
+                link.style.visibility = 'hidden'
+                link.dispatchEvent(new MouseEvent('click'))
+            }
+            """
+            self.download_button.js_on_click(CustomJS(args=dict(source=results),code=download_js_code))
+
             self.contents.children = [self.title.contents]
             self.contents.children = [self.title.contents, column(self.exp_label.contents, self.snr_label.contents,
                                                                         self.wav_label.contents, self.flux_label.contents,
-                                                                        self.time_label.contents, self.clk_label.contents,
+                                                                        self.time_label.contents, self.clk_label.contents, self.download_button,
                                                                         css_classes=['sidebar-container'])]
             
             # TODO -- FINISH!!!
@@ -500,7 +541,10 @@ class summary_panel:
                 'wav': self.wav_label.contents.children[0],
                 'source': results
             }, code=self.update_js)
+            # Add callback to appropriate plots to trigger update
             res.snr_plot.js_on_event(MouseMove, self.update)
+            res.exp_plot.js_on_event(MouseMove, self.update)
+            res.counts_plot.js_on_event(MouseMove, self.update)
 
 
 class results_panel:
@@ -511,7 +555,7 @@ class results_panel:
     # Highly experimental code for using a second source to display snr vs. exp --!
     def create_data(self, attr, old, new):
             wavelengths = etc.wavelengths.copy()
-            etc.set_parameter('wavelengths', [new * wavelengths.unit])
+            etc.set_parameter('wavelengths', [new * u.nm])
             if etc.target == 'signal_noise_ratio':
                 exposure = etc.exposure.copy()
                 etc.set_parameter('exposure', [str(item)+exp.units.value for item in self.new_source.data['x']])
@@ -528,7 +572,7 @@ class results_panel:
             summary.load()
 
     def __init__(self):
-        self.contents = column(Div(css_classes=['loading-symbol']), name='results', css_classes=['input_section'])
+        self.contents = column(Div(css_classes=['loading-symbol']), name='results', sizing_mode='scale_both', css_classes=['input_section'])
 
 
     def reset(self):
@@ -536,14 +580,18 @@ class results_panel:
 
 
     def load(self):
-        
+
         # Vertical line to indicate & select wavelength
-        self.wavelength = Span(location=etc.wavelengths[0].value, dimension='height', line_color='black', line_dash='dashed')
+        self.wavelength = Span(location=etc.wavelengths[0].to(u.nm).value, dimension='height', line_color='black', line_dash='dashed')
         self.wavelength_js = CustomJS(args={'vline':self.wavelength}, code='vline.location=cb_obj.x;')
 
+        # Define tools to use in plots
+        plot_tools = 'pan, box_zoom, wheel_zoom, undo, redo, reset, save, zoom_in, zoom_out, hover, help'
+
         # Plot snr vs. wavelength
-        self.snr_plot = figure(title='Signal to Noise Ratio', tools='pan, wheel_zoom, hover, reset, save', active_scroll='wheel_zoom',
-               tooltips=[('S/N', '$y{0.0}'), ('λ (μm)', '$x{0}')], width=300, height=100, sizing_mode='scale_width')
+        self.snr_plot = figure(title='Signal to Noise Ratio', active_drag='pan', tools=plot_tools,
+               tooltips=[('S/N', '$y{0.0}'), ('λ (μm)', '$x{0}')], sizing_mode='scale_both')
+        self.snr_plot.sizing_mode = 'scale_both'
         self.snr_plot.xaxis.axis_label = 'wavelengths (nm)'
         self.snr_plot.yaxis.axis_label = 'signal to noise ratio'
         scatter = self.snr_plot.scatter(x='wavelengths', y='snr', source=results, alpha=0.5, size=6, legend_label='\u00A0')
@@ -557,10 +605,11 @@ class results_panel:
         self.snr_plot.legend.spacing = 5
         self.snr_plot.legend.click_policy = 'hide'
         self.snr_plot.js_on_event(MouseMove, self.wavelength_js)
+        
 
         # Plot exp vs. wavelength
-        self.exp_plot = figure(title='Exposure Time', tools='pan, wheel_zoom, hover, reset, save', active_scroll='wheel_zoom', sizing_mode='scale_width',
-               tooltips=[('exp (s)', '$y{0}'), ('λ (μm)', '$x{0}')], width=600, height=200, y_range=(min(results.data['exposure'])*.8, nanpercentile(results.data['exposure'], 50)))
+        self.exp_plot = figure(title='Exposure Time',active_drag='pan', tools=plot_tools,  sizing_mode='scale_width',
+               tooltips=[('exp (s)', '$y{0}'), ('λ (μm)', '$x{0}')], y_range=(min(results.data['exposure'])*.8, nanpercentile(results.data['exposure'], 50)))
         self.exp_plot.xaxis.axis_label = 'wavelengths (nm)'
         self.exp_plot.yaxis.axis_label = 'exposure time (s)'
         self.exp_plot.scatter(x='wavelengths', y='exposure', source=results, alpha=0.5, size=6, legend_label='\u00A0')
@@ -572,6 +621,7 @@ class results_panel:
         self.exp_plot.legend.label_width=10
         self.exp_plot.legend.label_text_font_size = '10px'
         self.exp_plot.legend.click_policy = 'hide'
+        self.exp_plot.js_on_event(MouseMove, self.wavelength_js)
         # Custom JS callback for the plot reset button to ensure proper y_range handling
         js_reset_callback = '''
         const exp = src.data['exposure'].filter( value => !Number.isNaN(value) );
@@ -582,7 +632,7 @@ class results_panel:
 
 
         # Plot 2
-        self.counts_plot = figure(title='Counts', tools='pan, wheel_zoom, hover, reset, save', active_scroll='wheel_zoom', tooltips=[('count (ADU/px)', '$y{0}'), ('λ (μm)', '$x{0}')], y_axis_type='log', width=600, height=200, sizing_mode='scale_width')
+        self.counts_plot = figure(title='Counts', active_drag='pan', tools=plot_tools,  tooltips=[('count (ADU/px)', '$y{0}'), ('λ (μm)', '$x{0}')], y_axis_type='log', sizing_mode='scale_width')
         self.counts_plot.xaxis.axis_label = 'wavelengths (nm)'
         self.counts_plot.yaxis.axis_label = 'Counts (ADU/px)'
 
@@ -598,87 +648,54 @@ class results_panel:
         self.counts_plot.legend.label_text_font_size = '10px'
         self.counts_plot.legend.click_policy = 'hide'
         self.counts_plot.legend.spacing = 0  # Figure out whether or not this line helps!
-        
-
-        # Download button, code from https://stackoverflow.com/questions/49388511/send-file-from-server-to-client-on-bokeh
-        self.download_button = Button(label="Download Data", button_type="default", width=100, sizing_mode='scale_width')
-        download_js_code="""
-        function table_to_csv(source) {
-            const columns = Object.keys(source.data)
-            const nrows = source.get_length()
-            const lines = [columns.join(',')]
-
-            for (let i = 0; i < nrows; i++) {
-                let row = [];
-                for (let j = 0; j < columns.length; j++) {
-                    const column = columns[j]
-                    row.push(source.data[column][i].toString())
-                }
-                lines.push(row.join(','))
-            }
-            return lines.join('\\n').concat('\\n')
-        }
-
-
-        const filename = 'etc_results.csv'
-        var filetext = table_to_csv(source)
-        const blob = new Blob([filetext], { type: 'text/csv;charset=utf-8;' })
-
-        //addresses IE
-        if (navigator.msSaveBlob) {
-            navigator.msSaveBlob(blob, filename)
-        } else {
-            const link = document.createElement('a')
-            link.href = URL.createObjectURL(blob)
-            link.download = filename
-            link.target = '_blank'
-            link.style.visibility = 'hidden'
-            link.dispatchEvent(new MouseEvent('click'))
-        }
-        """
-        self.download_button.js_on_click(CustomJS(args=dict(source=results),code=download_js_code))
+        self.counts_plot.output_backend = 'svg'
+        self.counts_plot.js_on_event(MouseMove, self.wavelength_js)
 
 
         # EXPERIMENTAL CODE !!! --- creating second data source with snr vs. exp
         self.new_source = ColumnDataSource({'x':linspace(0, 7200, 100), 'y':[0]*100})
-        self.wavelength_slider = Slider(start=etc.wavelengths[0].value, end=etc.wavelengths[-1].value, step=(etc.wavelengths[1]-etc.wavelengths[0]).value, value=(etc.wavelengths[-1]+etc.wavelengths[0]).value/2, title='Wavelength ['+str(etc.wavelengths.unit)+']', width=100, sizing_mode='scale_height', orientation='vertical')
-        self.wavelength_slider.on_change('value_throttled', self.create_data)
-        self.create_data('none', self.wavelength_slider.value, self.wavelength_slider.value)
-        self.vs_plot = figure(title='Exposure vs. SNR', tools='pan, wheel_zoom, hover, reset, save', active_scroll='wheel_zoom', tooltips=[('y', '$y{0.00}'), ('x', '$x{0.00}')], width=600, height=200, sizing_mode='scale_width')
+        self.create_data('none', self.wavelength.location, self.wavelength.location)
+        self.vs_plot = figure(title='Exposure vs. SNR', active_drag='pan', tools=plot_tools,  tooltips=[('y', '$y{0.00}'), ('x', '$x{0.00}')], sizing_mode='scale_width')
         self.vs_plot.xaxis.axis_label = 'exposure (s)'
         self.vs_plot.yaxis.axis_label = 'Signal to Noise Ratio'
         self.vs_plot.line(x='x', y='y', source=self.new_source)
-
-        
-
+        self.vs_plot.output_backend = 'svg'
 
 
-        self.snr_col = row(self.snr_plot, sizing_mode='scale_width', css_classes=['input_section'])
-        self.exp_col = row(self.exp_plot, sizing_mode='scale_width', css_classes=['input_section'], visible=False)
-        self.ccd_col = row(self.counts_plot, sizing_mode='scale_width', css_classes=['input_section'])
-        self.vs_col = row(self.vs_plot, self.wavelength_slider, sizing_mode='scale_width', css_classes=['input_section'])
+        # Define grid of plots
+        self.plots = gridplot([[self.snr_plot], [self.exp_plot], [self.counts_plot], [self.vs_plot]], 
+            merge_tools=True, 
+            sizing_mode='scale_width',
+            plot_width=500,
+            plot_height=100,
+        )
+        if etc.target == 'signal_noise_ratio':
+            self.exp_plot.visible = False
+        elif etc.target == 'exposure':
+            self.snr_plot.visible = False
 
-        self.contents.children = [self.snr_plot, self.exp_plot, self.counts_plot, self.vs_plot]
+
+        self.contents.children = [self.plots]
 
     def reload(self):
         if exp.target.value == 'signal to noise ratio':
             self.new_source.data = {'x': linspace(exp.exposure_min.value, exp.exposure_max.value, 100) if exp.exposure_max.value > exp.exposure_min.value else linspace(0, 7200, 100), 'y':[0]*100}
-            self.create_data('none', self.wavelength_slider.value, self.wavelength_slider.value)
+            self.create_data('none', self.wavelength.location, self.wavelength.location)
             self.vs_plot.xaxis.axis_label = 'exposure (s)'
             self.vs_plot.yaxis.axis_label = 'Signal to Noise Ratio'
-            if not self.snr_col.visible:
-                self.exp_col.visible = False
-                self.snr_col.visible = True
+            if not self.snr_plot.visible:
+                self.exp_plot.visible = False
+                self.snr_plot.visible = True
                 page_loaded()
         elif exp.target.value == 'exposure':
             self.new_source.data = {'x': linspace(exp.snr_min.value, exp.snr_max.value, 25) if exp.snr_max.value > exp.snr_min.value else linspace(0, 20, 25), 'y': [0]*25}
-            self.create_data('none', self.wavelength_slider.value, self.wavelength_slider.value)
+            self.create_data('none', self.wavelength.location, self.wavelength.location)
             self.vs_plot.xaxis.axis_label = 'Signal to Noise Ratio'
             self.vs_plot.yaxis.axis_label = 'exposure (s)'
             
-            if not self.exp_col.visible:
-                self.snr_col.visible = False
-                self.exp_col.visible = True
+            if not self.exp_plot.visible:
+                self.snr_plot.visible = False
+                self.exp_plot.visible = True
                 self.exp_plot.y_range.start = min(etc.exposure[0].value)*.8
                 self.exp_plot.y_range.end = nanpercentile(etc.exposure[0].value, 50)
                 page_loaded()
@@ -699,7 +716,7 @@ class instrument_menu:
         self.contents = Tabs(tabs=[Panel(child=Div(text='<div style="width: 90vw;"></div>'), title='\u00A0'*10) for i in range(10)], name='instruments', sizing_mode='scale_width')
 
     def load(self):
-        # Set correct tab active, before defining tabs because it looks better as it loads
+        # Set correct tab active before defining tabs because it looks better as it loads
         self.contents.active = [i for i, x in enumerate(etc.config.instruments) if x.lower() == etc.instrument.name.lower()][0]
         self.contents.tabs = [ Panel(child=Div(sizing_mode='scale_width'), title=instrument.upper()) for instrument in etc.config.instruments ]
         self.contents.on_change('active', self.callback)
