@@ -589,7 +589,7 @@ class results_panel:
         plot_tools = 'pan, box_zoom, wheel_zoom, undo, redo, reset, save, zoom_in, zoom_out, hover, help'
 
         # Plot snr vs. wavelength
-        self.snr_plot = figure(title='Signal to Noise Ratio', active_drag='pan', tools=plot_tools,
+        self.snr_plot = figure(title='Signal to Noise Ratio', active_inspect='hover', tools=plot_tools,
                tooltips=[('S/N', '$y{0.0}'), ('λ (μm)', '$x{0}')], sizing_mode='scale_both')
         self.snr_plot.sizing_mode = 'scale_both'
         self.snr_plot.xaxis.axis_label = 'wavelengths (nm)'
@@ -608,7 +608,7 @@ class results_panel:
         
 
         # Plot exp vs. wavelength
-        self.exp_plot = figure(title='Exposure Time',active_drag='pan', tools=plot_tools,  sizing_mode='scale_width',
+        self.exp_plot = figure(title='Exposure Time', active_inspect='hover', tools=plot_tools,  sizing_mode='scale_width', width=500, height=100,
                tooltips=[('exp (s)', '$y{0}'), ('λ (μm)', '$x{0}')], y_range=(min(results.data['exposure'])*.8, nanpercentile(results.data['exposure'], 50)))
         self.exp_plot.xaxis.axis_label = 'wavelengths (nm)'
         self.exp_plot.yaxis.axis_label = 'exposure time (s)'
@@ -632,13 +632,13 @@ class results_panel:
 
 
         # Plot 2
-        self.counts_plot = figure(title='Counts', active_drag='pan', tools=plot_tools,  tooltips=[('count (ADU/px)', '$y{0}'), ('λ (μm)', '$x{0}')], y_axis_type='log', sizing_mode='scale_width')
+        self.counts_plot = figure(title='Counts', active_inspect='hover', tools=plot_tools,  tooltips=[('count (ADU/px)', '$y{0}'), ('λ (μm)', '$x{0}')], y_axis_type='log', sizing_mode='scale_width')
         self.counts_plot.xaxis.axis_label = 'wavelengths (nm)'
         self.counts_plot.yaxis.axis_label = 'Counts (ADU/px)'
 
-        self.counts_plot.line(x='wavelengths', y='source', source=results, legend_label='Source', line_color='#D55E00')
+        self.counts_plot.line(x='wavelengths', y='source', source=results, legend_label='Source', line_color='#009E73')
         self.counts_plot.line(x='wavelengths', y='background', source=results, legend_label='Background', line_color='#0072B2')
-        self.counts_plot.line(x='wavelengths', y='read_noise', source=results, legend_label='Read Noise', line_color='#009E73')
+        self.counts_plot.line(x='wavelengths', y='read_noise', source=results, legend_label='Read Noise', line_color='#CC79A7')
         self.counts_plot.line(x='wavelengths', y='dark_current', source=results, legend_label='Dark Current', line_color='#000000')
         self.counts_plot.line(x='wavelengths', y='nonlinear', source=results, legend_label='Non-linearity', line_color='#D55E00', line_dash='dashed')
         #self.counts_plot.add_layout(self.counts_plot.legend[0], 'right')  # For moving legend outside plot
@@ -655,7 +655,7 @@ class results_panel:
         # EXPERIMENTAL CODE !!! --- creating second data source with snr vs. exp
         self.new_source = ColumnDataSource({'x':linspace(0, 7200, 100), 'y':[0]*100})
         self.create_data('none', self.wavelength.location, self.wavelength.location)
-        self.vs_plot = figure(title='Exposure vs. SNR', active_drag='pan', tools=plot_tools,  tooltips=[('y', '$y{0.00}'), ('x', '$x{0.00}')], sizing_mode='scale_width')
+        self.vs_plot = figure(title='Exposure vs. SNR', active_inspect='hover', tools=plot_tools,  tooltips=[('y', '$y{0.00}'), ('x', '$x{0.00}')], sizing_mode='scale_width')
         self.vs_plot.xaxis.axis_label = 'exposure (s)'
         self.vs_plot.yaxis.axis_label = 'Signal to Noise Ratio'
         self.vs_plot.line(x='x', y='y', source=self.new_source)
@@ -733,7 +733,13 @@ alert_container.js_on_change('tags', alert_handler)
 def show_alert(msg):
     alert_container.tags = [msg]
 # Define DOM object to call js and set cookies from python
-cookie_handler = CustomJS(args={}, code='if (cb_obj.tags.length > 0) { document.cookie=JSON.stringify(cb_obj.tags[0]); cb_obj.tgs=[]; }')
+cookie_handler = CustomJS(args={}, code='''
+if (cb_obj.tags.length > 0) {
+    const exp_date = new Date( new Date().getTime() + 7 * 24 * 60 * 60 );  // Add a week to current date
+    const cookie_string = 'etcsettings=' + JSON.stringify(cb_obj.tags[0]) + '; expires=' + exp_date.toUTCString() + ';';
+    document.cookie = cookie_string;
+    cb_obj.tags=[]; }
+''')
 cookie_container = Div(name='cookie_container', visible=False)
 curdoc().add_root(cookie_container)
 cookie_container.js_on_change('tags', cookie_handler)
@@ -793,6 +799,15 @@ curdoc().add_root(reset_contents_container)
 reset_contents_container.on_change('tags', reset_contents_callback)
 
 
+# Testing reset button, probably move to separate class/method eventually
+reset_js = CustomJS(code='document.cookie="etcsettings={}";location.reload();')
+reset_button = Button(label='Reset Calculator', button_type='default', name='reset_button', width_policy='min')
+reset_button.js_on_click(reset_js)
+curdoc().add_root(reset_button)
+
+
+
+
 # START INITIALIZATION HERE
 global etc
 etc = None
@@ -820,7 +835,10 @@ def load_contents(event):
     global etc
     etc = exposure_time_calculator()
     if 'Cookie' in curdoc().session_context.request.headers.keys():
-        etc.set_parameters(curdoc().session_context.request.headers['Cookie'])
+        cookies = curdoc().session_context.request.headers['Cookie'].split(';')
+        settings = [cookie for cookie in cookies if cookie.strip().startswith('etcsettings=')]
+        if settings:
+            etc.set_parameters(settings[0].replace('etcsettings=',''))
     update_results()
     menu.load()
     exp.load()

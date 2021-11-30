@@ -35,7 +35,10 @@
 
 {% block contents %}
     <section>
-        <h2>W.M.K.O. Exposure Time Calculator</h2>
+        <div class='title-bar'>
+            <h2>W.M.K.O. Exposure Time Calculator</h2>
+            {{ embed(roots.reset_button) }}
+        </div>
         <div class="instrument-menu">
             {{ embed(roots.instruments) }}
         </div>

@@ -101,6 +101,12 @@ h2 {
   margin-block-start: 0.5em;
 }
 
+div.title-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 body {
     font-family: 'Helvetica', 'Arial', sans-serif;
 }
@@ -113,7 +119,7 @@ body {
 .sidebar-container {
   display: flex !important;
   width: 100% !important;
-  flex-grow: 1;  /* figure out how to have height be 100% */
+  flex-grow: 1;
   flex-direction: column !important;
   justify-content: space-around !important;
 }
