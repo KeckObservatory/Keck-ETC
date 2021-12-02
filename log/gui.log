@@ -100,3 +100,25 @@ ValueError: root with 'reset_button' name not found
 2021-12-01 12:16:53,928 Starting Bokeh server with process id: 12148
 2021-12-01 12:18:11,997 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
 2021-12-01 12:18:11,998 Cannot start Bokeh server, port 5006 is already in use
+2021-12-02 10:03:12,287 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-02 10:03:12,288 User authentication hooks NOT provided (default user enabled)
+2021-12-02 10:03:12,293 Bokeh app running at: http://localhost:8080/prototype
+2021-12-02 10:03:12,294 Starting Bokeh server with process id: 26457
+2021-12-02 10:31:16,981 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-02 10:31:16,982 Cannot start Bokeh server [EACCES]: PermissionError(13, 'Permission denied')
+2021-12-02 10:31:34,040 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-02 10:31:34,042 User authentication hooks NOT provided (default user enabled)
+2021-12-02 10:31:34,045 Bokeh app running at: http://localhost:8000/prototype
+2021-12-02 10:31:34,045 Starting Bokeh server with process id: 28077
+2021-12-02 10:40:28,907 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-02 10:40:28,908 User authentication hooks NOT provided (default user enabled)
+2021-12-02 10:40:28,914 Bokeh app running at: http://localhost:8080/prototype
+2021-12-02 10:40:28,914 Starting Bokeh server with process id: 29000
+2021-12-02 10:43:47,447 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-02 10:43:47,449 User authentication hooks NOT provided (default user enabled)
+2021-12-02 10:43:47,453 Bokeh app running at: http://localhost:5000/prototype
+2021-12-02 10:43:47,453 Starting Bokeh server with process id: 29212
+2021-12-02 11:45:17,355 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-02 11:45:17,356 User authentication hooks NOT provided (default user enabled)
+2021-12-02 11:45:17,361 Bokeh app running at: http://localhost:8000/prototype
+2021-12-02 11:45:17,362 Starting Bokeh server with process id: 30461

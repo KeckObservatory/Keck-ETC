@@ -1,0 +1,83 @@
+## W.M. Keck Observatory Exposure Time Calculator
+
+*Developed by Keaton Blair and Sherry Yeh, 2021*
+*Liscensing info. goes here*
+
+### About Program
+
+This project contains the source code for the server running the W.M.K.O. exposure time calculator. The calculator GUI can be found at <https://www2.keck.hawaii.edu/not-yet-released>, while the API can be found at <https://www2.keck.hawaii.edu/not-yet-released-again>. Usage instructions for the GUI and API can be found on their relevant pages. The remainder of this document contains instructions to download, install, and run the server on your own local machine.
+
+### Installation
+
+To install this program, download or clone this directory using `bash git clone https://github.com/Keaton-WMKO/etc-prototype.git`.
+
+Next, ensure that all requirments are met using
+```bash
+cd etc-prototype
+
+python3 --version
+
+bokeh --version
+```
+
+To install requirements, use
+```bash
+pip install --upgrade pip
+```
+if using `pip`, or
+```bash
+conda install
+```
+if using `conda`
+
+### Requirements
+
+- Bash v?
+- Python v?
+- Bokeh v?
+
+- Python Libraries:
+    - numpy v?
+    - astropy v?
+    - yaml
+    - warnings
+    - json
+    - io
+    - Base64
+    - os
+    - scipy v?
+    - http
+    - urllib
+
+### Running 
+
+To run the server, run the executable file `etc` with argument `start`. Use `--help` to see usage, view complete example below.
+
+```bash
+$   ./etc start gui
+
+Starting gui server on port 5006
+
+$   ./etc start api -p 8080
+
+Starting api server on port 8080
+
+$   ./etc status
+
+Checking status of server * on port *
+Running 1 API server on port 8080
+Running 1 GUI server on port 5006
+
+$   ./etc -h
+
+usage: /usr/local/home/kblair/Documents/ETC/prototype/etc {start,stop,status,restart} [-f] [-p port_number] [-h]
+    positional arguments: {start,stop,status,restart}
+        start           Begin running a server, requires additional argument 'gui' or 'api'
+        stop            Stop running a server, requires additional argument 'gui' or 'api'
+        status          Print server status, accepts optional argument 'gui' or 'api'
+        restart         Restart a server, requires additional argument 'gui' or 'api'
+    Optional arguments:
+        -p, --port      Specifies port for server
+        -f, --force     Force kill running server, use with 'stop' or 'restart'
+        -h, --help      Displays this message
+```

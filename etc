@@ -6,23 +6,21 @@ PROGRAM_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd 
 # Define script variables to default values
 port=5006
 printhelp=false
-all=false
+forcekill=false
+statusall=true
 server="none"
 action="none"
 usage=$(cat << END
-Usage: etc action server [-v] [-p port_number]
-    Required arguments --
-        server:
-            gui: performs action on GUI server
-            api: performs action on API server
-        action:
-            start: initializes server
-            stop: quits server
-            status: prints server status
-            restart: restarts server
-    Optional arguments --
-        -p | --port - specifies port for server
-        -h | --help - displays this message
+usage: $PROGRAM_DIR/etc {start,stop,status,restart} [-f] [-p port_number] [-h]
+    positional arguments: {start,stop,status,restart}
+        start           Begin running a server, requires additional argument 'gui' or 'api'
+        stop            Stop running a server, requires additional argument 'gui' or 'api'
+        status          Print server status, accepts optional argument 'gui' or 'api'
+        restart         Restart a server, requires additional argument 'gui' or 'api'
+    Optional arguments:
+        -p, --port      Specifies port for server
+        -f, --force     Force kill running server, use with 'stop' or 'restart'
+        -h, --help      Displays this message
 END
 )
 
@@ -33,8 +31,8 @@ while [[ -n $1 ]]; do
         gui | api ) server="$1";;
         start | stop | status | restart ) action="$1";;
         -h | --help ) printhelp=true;;
-        -p | --port ) shift; port=$1;;
-        -a | --all ) all=true;;
+        -p | --port ) shift; port=$1; statusall=false;;
+        -f | --force ) forcekill=true;;
         * ) 
             echo "Invalid option: $1"
             echo "$usage"
@@ -68,17 +66,31 @@ fi
 
 # Navigate to base directory for ETC
 cd $PROGRAM_DIR
-# Run appropriate command
+
+# If command is stop or restart, stop corresponding server
 if [ "$action" == "stop" ] || [ "$action" == "restart" ]; then
+    echo "Stopping $server server on port $port"
 
     pid="$(tac ./log/etc.log | grep -m1 "start $server $port" | awk '{print $NF}')"
-    err="$(kill $pid 2&>1)"
-    if [[ -z $err ]]; then echo "Error killing process $pid" >&2; exit -1; fi
+    if $forcekill; then
+        err="$(kill -SIGKILL $pid 2>&1)"
+    else
+        err="$(kill $pid 2>&1)"
+    fi
+    # If an error exists, then print error message and exit
+    if [[ ! -z $err ]]; then 
+        echo "$err \n Error killing $server server on port $port -- use 'status' to view current servers" >&2
+        exit -1
+    fi
+    # If no error was detected, print success message and append to log
+    echo "Succesfully terminated $server server on port $port"
     echo "$(date +"%Y-%m-%d %T") stop $server $port $pid" >> ./log/etc.log
 
 fi
 
 if [ "$action" == "start" ] || [ "$action" == "restart" ]; then
+
+    echo "Starting $server server on port $port"
 
     if [ "$server" == "gui" ]; then
 
@@ -86,17 +98,53 @@ if [ "$action" == "start" ] || [ "$action" == "restart" ]; then
         echo "$(date +"%Y-%m-%d %T") start $server $port $!" >> ./log/etc.log
 
     elif [ "$server" == "api" ]; then
+
         echo ""
     fi
 fi
 
 if [ "$action" == "status" ]; then
 
+    if $statusall; then port="*"; fi
+
+    if [ "$server" == "none" ]; then server="*"; fi
+    
+    echo "Checking status of server $server on port $port"
+
+    apiports=""
+    guiports=""
+
+    while read -r log; do
+        log=($log)
+        pid=${log[5]}
+        if ps -p $pid > /dev/null; then
+            if [[ ${log[3]} == "gui" ]]; then
+                guiports+="${log[4]}, "
+            elif [[ ${log[3]} == "api" ]]; then
+                apiports+="${log[4]}, "
+            fi
+        fi
+    done < <(grep "start $server $port" ./log/etc.log)
+
+    # Write status to stdout
+    if [[ $(echo $apiports | wc -w) -gt 1 ]]; then
+        echo "Running $(echo $apiports | wc -w) API servers on ports ${apiports%??}"
+    elif [[ $(echo $apiports | wc -w) -gt 0 ]]; then
+        echo "Running $(echo $apiports | wc -w) API server on port ${apiports%??}"
+    else
+        echo "No API servers running on port $port"
+    fi
+
+    if [[ $(echo $guiports | wc -w) -gt 1 ]]; then
+        echo "Running $(echo $guiports | wc -w) GUI servers on ports ${guiports%??}"
+    elif [[ $(echo $guiports | wc -w) -gt 0 ]]; then
+        echo "Running $(echo $guiports | wc -w) GUI server on port ${guiports%??}"
+    else
+        echo "No GUI servers running on port $port"
+    fi
 
 
 fi
 
 
-
-echo "Running $action on $server on port $port"
 exit 0
