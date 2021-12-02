@@ -520,7 +520,7 @@ class summary_panel:
                                                                         self.time_label.contents, self.clk_label.contents, self.download_button,
                                                                         css_classes=['sidebar-container'])]
             
-            # TODO -- FINISH!!!
+            # TODO -- Change to sci. notation if number is too large
             self.update_js = '''
             const wavelength = cb_obj.x;
             const closest = source.data['wavelengths'].reduce(function(prev, curr) {

@@ -1,0 +1,102 @@
+#!/bin/bash
+
+# Get directory of this script
+PROGRAM_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
+# Define script variables to default values
+port=5006
+printhelp=false
+all=false
+server="none"
+action="none"
+usage=$(cat << END
+Usage: etc action server [-v] [-p port_number]
+    Required arguments --
+        server:
+            gui: performs action on GUI server
+            api: performs action on API server
+        action:
+            start: initializes server
+            stop: quits server
+            status: prints server status
+            restart: restarts server
+    Optional arguments --
+        -p | --port - specifies port for server
+        -h | --help - displays this message
+END
+)
+
+
+# Get command line arguments and set appropriate variables
+while [[ -n $1 ]]; do
+    case $1 in
+        gui | api ) server="$1";;
+        start | stop | status | restart ) action="$1";;
+        -h | --help ) printhelp=true;;
+        -p | --port ) shift; port=$1;;
+        -a | --all ) all=true;;
+        * ) 
+            echo "Invalid option: $1"
+            echo "$usage"
+            exit 0;;
+    esac
+    shift
+done
+
+# If help, print usage
+if $printhelp; then
+    echo "$usage"
+    exit 0
+fi
+
+# Validate input
+if [ "$action" == "none" ]; then
+    echo "Missing required argument action" >&2
+    echo "$usage" >&2
+    exit -1
+fi
+if [ "$action" != "status" ] && [ "$server" == "none" ]; then
+    echo "Missing required argument server" >&2
+    echo "$usage" >&2
+    exit -1
+fi
+if ! [[ $port =~ ^[0-9]+$ ]]; then
+    echo "Invalid port number $port" >&2
+    exit -1
+fi
+
+
+# Navigate to base directory for ETC
+cd $PROGRAM_DIR
+# Run appropriate command
+if [ "$action" == "stop" ] || [ "$action" == "restart" ]; then
+
+    pid="$(tac ./log/etc.log | grep -m1 "start $server $port" | awk '{print $NF}')"
+    err="$(kill $pid 2&>1)"
+    if [[ -z $err ]]; then echo "Error killing process $pid" >&2; exit -1; fi
+    echo "$(date +"%Y-%m-%d %T") stop $server $port $pid" >> ./log/etc.log
+
+fi
+
+if [ "$action" == "start" ] || [ "$action" == "restart" ]; then
+
+    if [ "$server" == "gui" ]; then
+
+        nohup bokeh serve . --port "$port" --log-file ./log/gui.log &>/dev/null &
+        echo "$(date +"%Y-%m-%d %T") start $server $port $!" >> ./log/etc.log
+
+    elif [ "$server" == "api" ]; then
+        echo ""
+    fi
+fi
+
+if [ "$action" == "status" ]; then
+
+
+
+fi
+
+
+
+echo "Running $action on $server on port $port"
+exit 0

@@ -1,0 +1,102 @@
+2021-12-01 11:00:16,888 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-01 11:00:16,896 User authentication hooks NOT provided (default user enabled)
+2021-12-01 11:00:16,904 Bokeh app running at: http://localhost:80/etc-prototype
+2021-12-01 11:00:16,904 Starting Bokeh server with process id: 4768
+2021-12-01 11:02:55,537 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-01 11:02:55,537 User authentication hooks NOT provided (default user enabled)
+2021-12-01 11:02:55,545 Bokeh app running at: http://localhost:80/etc-prototype
+2021-12-01 11:02:55,545 Starting Bokeh server with process id: 25868
+2021-12-01 11:03:05,249 WebSocket connection opened
+2021-12-01 11:03:05,249 ServerConnection created
+2021-12-01 11:25:33,201 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-01 11:25:33,213 User authentication hooks NOT provided (default user enabled)
+2021-12-01 11:25:33,227 Bokeh app running at: http://localhost:80/etc-prototype
+2021-12-01 11:25:33,227 Starting Bokeh server with process id: 20052
+2021-12-01 11:26:40,149 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-01 11:26:40,151 User authentication hooks NOT provided (default user enabled)
+2021-12-01 11:26:40,157 Bokeh app running at: http://localhost:80/etc-prototype
+2021-12-01 11:26:40,157 Starting Bokeh server with process id: 25828
+2021-12-01 11:27:15,396 Error running application handler <bokeh.application.handlers.directory.DirectoryHandler object at 0x000001E2FED98610>: [Errno 2] No such file or directory: 'static/mouseover_text.yaml'
+File "main.py", line 774, in <module>:
+page_loaded_callback = CustomJS(args={'titles':yaml.safe_load(open('static/mouseover_text.yaml'))}, code=page_loaded_js) Traceback (most recent call last):
+  File "c:\users\12069\appdata\local\programs\python\python38\lib\site-packages\bokeh\application\handlers\code_runner.py", line 197, in run
+    exec(self._code, module.__dict__)
+  File "C:\Users\12069\Documents\WMKO_Documents\etc-prototype\main.py", line 774, in <module>
+    page_loaded_callback = CustomJS(args={'titles':yaml.safe_load(open('static/mouseover_text.yaml'))}, code=page_loaded_js)
+FileNotFoundError: [Errno 2] No such file or directory: 'static/mouseover_text.yaml'
+ 
+2021-12-01 11:27:15,406 Uncaught exception GET /etc-prototype (::1)
+HTTPServerRequest(protocol='http', host='localhost', method='GET', uri='/etc-prototype', version='HTTP/1.1', remote_ip='::1')
+Traceback (most recent call last):
+  File "c:\users\12069\appdata\local\programs\python\python38\lib\site-packages\tornado\web.py", line 1704, in _execute
+    result = await result
+  File "c:\users\12069\appdata\local\programs\python\python38\lib\site-packages\bokeh\server\views\doc_handler.py", line 54, in get
+    page = server_html_page_for_session(session,
+  File "c:\users\12069\appdata\local\programs\python\python38\lib\site-packages\bokeh\embed\server.py", line 238, in server_html_page_for_session
+    html = html_page_for_render_items(bundle, {}, [render_item], title,
+  File "c:\users\12069\appdata\local\programs\python\python38\lib\site-packages\bokeh\embed\elements.py", line 126, in html_page_for_render_items
+    html = template.render(context)
+  File "c:\users\12069\appdata\local\programs\python\python38\lib\site-packages\jinja2\environment.py", line 1304, in render
+    self.environment.handle_exception()
+  File "c:\users\12069\appdata\local\programs\python\python38\lib\site-packages\jinja2\environment.py", line 925, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\Users\12069\Documents\WMKO_Documents\etc-prototype\templates\index.html", line 1, in top-level template code
+    {% extends base %}
+  File "c:\users\12069\appdata\local\programs\python\python38\lib\site-packages\bokeh\core\_templates\file.html", line 40, in top-level template code
+    {% block body %}
+  File "c:\users\12069\appdata\local\programs\python\python38\lib\site-packages\bokeh\core\_templates\file.html", line 42, in block 'body'
+    {% block inner_body %}
+  File "c:\users\12069\appdata\local\programs\python\python38\lib\site-packages\bokeh\core\_templates\file.html", line 43, in block 'inner_body'
+    {% block contents %}
+  File "C:\Users\12069\Documents\WMKO_Documents\etc-prototype\templates\index.html", line 40, in block 'contents'
+    {{ embed(roots.reset_button) }}
+  File "c:\users\12069\appdata\local\programs\python\python38\lib\site-packages\jinja2\environment.py", line 474, in getattr
+    return getattr(obj, attribute)
+  File "c:\users\12069\appdata\local\programs\python\python38\lib\site-packages\bokeh\embed\util.py", line 244, in __getattr__
+    return self.__getitem__(key)
+  File "c:\users\12069\appdata\local\programs\python\python38\lib\site-packages\bokeh\embed\util.py", line 239, in __getitem__
+    raise ValueError("root with '%s' name not found" % key)
+ValueError: root with 'reset_button' name not found
+2021-12-01 11:27:15,484 500 GET /etc-prototype (::1) 928.47ms
+2021-12-01 11:27:15,872 404 GET /favicon.ico (::1) 1.00ms
+2021-12-01 11:36:46,026 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-01 11:36:46,028 User authentication hooks NOT provided (default user enabled)
+2021-12-01 11:36:46,032 Bokeh app running at: http://localhost:80/etc-prototype
+2021-12-01 11:36:46,032 Starting Bokeh server with process id: 4676
+2021-12-01 11:36:53,626 WebSocket connection opened
+2021-12-01 11:36:53,627 ServerConnection created
+2021-12-01 11:37:27,838 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-01 11:37:27,840 User authentication hooks NOT provided (default user enabled)
+2021-12-01 11:37:27,845 Bokeh app running at: http://localhost:80/etc-prototype
+2021-12-01 11:37:27,845 Starting Bokeh server with process id: 14440
+2021-12-01 11:37:32,563 WebSocket connection opened
+2021-12-01 11:37:32,563 ServerConnection created
+2021-12-01 11:39:37,158 WebSocket connection closed: code=1001, reason=None
+2021-12-01 11:43:53,034 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-01 11:43:53,036 User authentication hooks NOT provided (default user enabled)
+2021-12-01 11:43:53,041 Bokeh app running at: http://localhost:5006/etc-prototype
+2021-12-01 11:43:53,041 Starting Bokeh server with process id: 4872
+2021-12-01 11:45:56,799 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-01 11:45:56,802 User authentication hooks NOT provided (default user enabled)
+2021-12-01 11:45:56,805 Bokeh app running at: http://localhost:10/etc-prototype
+2021-12-01 11:45:56,805 Starting Bokeh server with process id: 1784
+2021-12-01 11:46:34,864 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-01 11:46:34,866 User authentication hooks NOT provided (default user enabled)
+2021-12-01 11:46:34,870 Bokeh app running at: http://localhost:5006/etc-prototype
+2021-12-01 11:46:34,870 Starting Bokeh server with process id: 16336
+2021-12-01 11:48:24,953 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-01 11:48:24,956 User authentication hooks NOT provided (default user enabled)
+2021-12-01 11:48:24,959 Bokeh app running at: http://localhost:5006/etc-prototype
+2021-12-01 11:48:24,959 Starting Bokeh server with process id: 17348
+2021-12-01 11:55:07,338 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-01 11:55:07,339 Cannot start Bokeh server, port 5006 is already in use
+2021-12-01 11:59:44,556 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-01 11:59:44,557 Cannot start Bokeh server, port 5006 is already in use
+2021-12-01 12:16:33,068 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-01 12:16:33,068 Cannot start Bokeh server, port 5006 is already in use
+2021-12-01 12:16:53,919 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-01 12:16:53,921 User authentication hooks NOT provided (default user enabled)
+2021-12-01 12:16:53,928 Bokeh app running at: http://localhost:80/etc-prototype
+2021-12-01 12:16:53,928 Starting Bokeh server with process id: 12148
+2021-12-01 12:18:11,997 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-01 12:18:11,998 Cannot start Bokeh server, port 5006 is already in use
