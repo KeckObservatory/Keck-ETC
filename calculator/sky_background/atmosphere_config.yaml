@@ -7,7 +7,7 @@ defaults:
     water_vapor: 1.6 mm
 
 # Directory for atmosphere files, relative or absolute
-file_directory: sky_background
+file_directory: calculator/sky_background
 
 # Pattern to match for transmission/emission files, program matches the start of the filenames against these strings
 emission_filepath: mk_skybg_zm_

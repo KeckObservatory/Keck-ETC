@@ -1,0 +1,34 @@
+USAGE:  /etc_api?return=[desired_values]&parameter1=value1&parameter2=value2&...
+
+EXAMPLES:
+    /etc_api?return=[signal_noise_ratio]&exposure=[3600s,7200s]&instrument.name=NIRES&dithers=4&atmosphere.seeing=1.0&source.brightness=20mag(AB)
+
+    /etc_api?return=[background_count,source_count,read_noise_count,dark_current_count]&instrument.mode=spectroscopic&source.redshift=5.2
+
+AVAILABLE RETURN OPTIONS:
+    exposure:               description
+    signal_noise_ratio:     description
+    wavelengths:            description
+    source_flux:            description
+    source_count_adu:       description
+    background_count_adu:   description
+    read_noise_count_adu:   description
+    dark_current_count_adu: description
+    total_integraion_time:  description
+
+AVAILABLE PARAMETERS:
+    exposure:               list of exposure times with units, i.e. [500s, 10min, 2.1hr]
+    signal_noise_ratio:     list of snr values, i.e. [10, 50.1, 220]
+    target:                 Calculation target, possible values are 'exposure' or 'signal_noise_ratio'
+    dithers:                Number of dithers, must be > 0
+    repeats:                Number of repeats, must be > 0
+    coadds:                 Number of coadds, must be > 0
+    reads:                  Number of reads, possible values are 2, 4, 8, 16, 32, 64, 128
+    source.type:            Source template, possible values are emission, blackbody, power, flat, vega, qso, seyfert1, seyfert2
+    source.flux:            Source flux/magnitude with units, available units are mag(AB), mag(vega), mag(ST), Jy, erg / (Angstrom cm2 s)
+    source.wavelength_band: Name of wavelength band, possible values are ...
+    source.width:           Width of emission line, i.e. 200nm
+    source.temperature:     Temperature of blackbody source, available units are K and deg_C
+    source.index:           Index of power law source type, i.e. -1.0
+    atmosphere.seeing:      ...
+    ...

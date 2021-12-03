@@ -37,7 +37,7 @@ class instrument:
         #         filepath = '/usr/local/home/kblair/Documents/ETC/prototype/instruments/'+self.name+'/'+f+'_'+g+'.txt'
         #         data = Table.read(filepath, format='ascii.ecsv')
         #         self._throughput[(g, f)] = data
-        filepath = 'instruments/'+self.name+'/'+self.config.throughput_path
+        filepath = 'calculator/instruments/'+self.name+'/'+self.config.throughput_path
         self._throughput = Table.read(filepath, format='ascii.ecsv')
         self.min_wavelength = self._throughput['wav'][0] * self._throughput['wav'].unit
         self.max_wavelength = self._throughput['wav'][-1] * self._throughput['wav'].unit
@@ -69,7 +69,7 @@ class instrument:
 
     def set_name(self, name):
         self.__dict__ = {}  # clear parameters from previous instrument
-        config_filepath = 'instruments/'+name+'/instrument_config.yaml'
+        config_filepath = 'calculator/instruments/'+name+'/instrument_config.yaml'
         self._mount_config(config_filepath)
         self.name = name
 

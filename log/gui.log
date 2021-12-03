@@ -122,3 +122,210 @@ ValueError: root with 'reset_button' name not found
 2021-12-02 11:45:17,356 User authentication hooks NOT provided (default user enabled)
 2021-12-02 11:45:17,361 Bokeh app running at: http://localhost:8000/prototype
 2021-12-02 11:45:17,362 Starting Bokeh server with process id: 30461
+2021-12-02 12:30:26,627 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-02 12:30:26,629 User authentication hooks NOT provided (default user enabled)
+2021-12-02 12:30:26,635 Bokeh app running at: http://localhost:8000/prototype
+2021-12-02 12:30:26,635 Starting Bokeh server with process id: 31787
+2021-12-02 12:30:41,769 Error running application handler <bokeh.application.handlers.directory.DirectoryHandler object at 0x7fb379b39cd0>: No module named 'Instrument'
+File "ETC.py", line 2, in <module>:
+from Instrument import instrument Traceback (most recent call last):
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/application/handlers/code_runner.py", line 197, in run
+    exec(self._code, module.__dict__)
+  File "/usr/local/home/kblair/Documents/ETC/prototype/main.py", line 10, in <module>
+    from calculator.ETC import exposure_time_calculator
+  File "/usr/local/home/kblair/Documents/ETC/prototype/calculator/ETC.py", line 2, in <module>
+    from Instrument import instrument
+ModuleNotFoundError: No module named 'Instrument'
+ 
+2021-12-02 12:30:41,782 Uncaught exception GET /prototype (10.198.0.90)
+HTTPServerRequest(protocol='http', host='vm-internship:8000', method='GET', uri='/prototype', version='HTTP/1.1', remote_ip='10.198.0.90')
+Traceback (most recent call last):
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/tornado/web.py", line 1704, in _execute
+    result = await result
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/server/views/doc_handler.py", line 54, in get
+    page = server_html_page_for_session(session,
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/embed/server.py", line 238, in server_html_page_for_session
+    html = html_page_for_render_items(bundle, {}, [render_item], title,
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/embed/elements.py", line 126, in html_page_for_render_items
+    html = template.render(context)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/jinja2/environment.py", line 1090, in render
+    self.environment.handle_exception()
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/jinja2/environment.py", line 832, in handle_exception
+    reraise(*rewrite_traceback_stack(source=source))
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/jinja2/_compat.py", line 28, in reraise
+    raise value.with_traceback(tb)
+  File "/usr/local/home/kblair/Documents/ETC/prototype/templates/index.html", line 1, in top-level template code
+    {% extends base %}
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/core/_templates/file.html", line 40, in top-level template code
+    {% block body %}
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/core/_templates/file.html", line 42, in block "body"
+    {% block inner_body %}
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/core/_templates/file.html", line 43, in block "inner_body"
+    {% block contents %}
+  File "/usr/local/home/kblair/Documents/ETC/prototype/templates/index.html", line 40, in block "contents"
+    {{ embed(roots.reset_button) }}
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/jinja2/environment.py", line 471, in getattr
+    return getattr(obj, attribute)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/embed/util.py", line 244, in __getattr__
+    return self.__getitem__(key)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/embed/util.py", line 239, in __getitem__
+    raise ValueError("root with '%s' name not found" % key)
+ValueError: root with 'reset_button' name not found
+2021-12-02 12:30:41,785 500 GET /prototype (10.198.0.90) 438.52ms
+2021-12-02 12:30:41,854 404 GET /favicon.ico (10.198.0.90) 0.91ms
+2021-12-02 13:28:51,864 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-02 13:28:51,866 User authentication hooks NOT provided (default user enabled)
+2021-12-02 13:28:51,870 Bokeh app running at: http://localhost:8080/prototype
+2021-12-02 13:28:51,870 Starting Bokeh server with process id: 1471
+2021-12-02 13:28:54,883 Refusing websocket connection from Origin 'http://vm-internship:8080';                       use --allow-websocket-origin=vm-internship:8080 or set BOKEH_ALLOW_WS_ORIGIN=vm-internship:8080 to permit this; currently we allow origins {'localhost:8080'}
+2021-12-02 13:28:54,883 403 GET /prototype/ws (10.198.0.90) 0.91ms
+2021-12-02 13:31:35,966 Refusing websocket connection from Origin 'http://10.96.10.12:8080';                       use --allow-websocket-origin=10.96.10.12:8080 or set BOKEH_ALLOW_WS_ORIGIN=10.96.10.12:8080 to permit this; currently we allow origins {'localhost:8080'}
+2021-12-02 13:31:35,966 403 GET /prototype/ws (10.198.0.90) 0.97ms
+2021-12-02 13:31:45,573 Refusing websocket connection from Origin 'http://10.96.10.12:8080';                       use --allow-websocket-origin=10.96.10.12:8080 or set BOKEH_ALLOW_WS_ORIGIN=10.96.10.12:8080 to permit this; currently we allow origins {'localhost:8080'}
+2021-12-02 13:31:45,573 403 GET /prototype/ws (10.198.0.90) 0.74ms
+2021-12-02 13:34:31,539 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-02 13:34:31,540 User authentication hooks NOT provided (default user enabled)
+2021-12-02 13:34:31,543 Bokeh app running at: http://localhost:8080/prototype
+2021-12-02 13:34:31,544 Starting Bokeh server with process id: 1873
+2021-12-02 13:34:35,659 Refusing websocket connection from Origin 'http://10.96.10.12:8080';                       use --allow-websocket-origin=10.96.10.12:8080 or set BOKEH_ALLOW_WS_ORIGIN=10.96.10.12:8080 to permit this; currently we allow origins {'10.96.10.12 :8080'}
+2021-12-02 13:34:35,660 403 GET /prototype/ws (10.198.0.90) 0.88ms
+2021-12-02 13:35:19,833 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-02 13:35:19,834 Cannot start Bokeh server, port 8080 is already in use
+2021-12-02 13:45:32,521 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-02 13:45:32,522 Cannot start Bokeh server, port 8080 is already in use
+2021-12-02 13:45:35,206 Refusing websocket connection from Origin 'http://10.96.10.12:8080';                       use --allow-websocket-origin=10.96.10.12:8080 or set BOKEH_ALLOW_WS_ORIGIN=10.96.10.12:8080 to permit this; currently we allow origins {'10.96.10.12 :8080'}
+2021-12-02 13:45:35,206 403 GET /prototype/ws (10.198.0.90) 0.87ms
+2021-12-02 13:45:39,181 Refusing websocket connection from Origin 'http://10.96.10.12:8080';                       use --allow-websocket-origin=10.96.10.12:8080 or set BOKEH_ALLOW_WS_ORIGIN=10.96.10.12:8080 to permit this; currently we allow origins {'10.96.10.12 :8080'}
+2021-12-02 13:45:39,182 403 GET /prototype/ws (10.198.0.90) 0.71ms
+2021-12-02 13:46:08,582 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-02 13:46:08,583 Cannot start Bokeh server, port 8080 is already in use
+2021-12-02 13:48:29,760 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-02 13:48:29,761 User authentication hooks NOT provided (default user enabled)
+2021-12-02 13:48:29,765 Bokeh app running at: http://localhost:8080/prototype
+2021-12-02 13:48:29,765 Starting Bokeh server with process id: 2713
+2021-12-02 13:49:19,929 WebSocket connection opened
+2021-12-02 13:49:19,930 ServerConnection created
+2021-12-02 13:49:35,018 WebSocket connection closed: code=1001, reason=None
+2021-12-02 13:49:35,174 Refusing websocket connection from Origin 'http://vm-internship:8080';                       use --allow-websocket-origin=vm-internship:8080 or set BOKEH_ALLOW_WS_ORIGIN=vm-internship:8080 to permit this; currently we allow origins {'10.96.10.12:8080'}
+2021-12-02 13:49:35,175 403 GET /prototype/ws (10.198.0.90) 0.97ms
+2021-12-02 13:50:13,216 WebSocket connection opened
+2021-12-02 13:50:13,257 ServerConnection created
+2021-12-02 14:01:59,657 WebSocket connection closed: code=1001, reason=None
+2021-12-02 14:02:46,903 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-02 14:02:46,905 User authentication hooks NOT provided (default user enabled)
+2021-12-02 14:02:46,910 Bokeh app running at: http://localhost:8000/prototype
+2021-12-02 14:02:46,910 Starting Bokeh server with process id: 4079
+2021-12-02 14:02:49,802 WebSocket connection opened
+2021-12-02 14:02:49,802 ServerConnection created
+2021-12-02 14:03:11,692 WebSocket connection closed: code=1001, reason=None
+2021-12-02 14:03:11,829 WebSocket connection opened
+2021-12-02 14:03:11,829 ServerConnection created
+2021-12-02 14:09:05,586 WebSocket connection closed: code=1001, reason=None
+2021-12-02 14:09:05,787 WebSocket connection opened
+2021-12-02 14:09:05,788 ServerConnection created
+2021-12-02 16:45:01,057 Error running application handler <bokeh.application.handlers.directory.DirectoryHandler object at 0x7f50c094adf0>: [Errno 2] No such file or directory: 'static/etc_instructions.txt'
+File "main.py", line 424, in __init__:
+with open('static/gui_instructions.txt') as file: Traceback (most recent call last):
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/application/handlers/code_runner.py", line 197, in run
+    exec(self._code, module.__dict__)
+  File "/usr/local/home/kblair/Documents/ETC/prototype/main.py", line 823, in <module>
+    help = instruction_text()
+  File "/usr/local/home/kblair/Documents/ETC/prototype/main.py", line 424, in __init__
+    with open('static/gui_instructions.txt') as file:
+FileNotFoundError: [Errno 2] No such file or directory: 'static/etc_instructions.txt'
+ 
+2021-12-02 16:45:01,065 Uncaught exception GET /prototype (10.198.0.90)
+HTTPServerRequest(protocol='http', host='vm-internship:8000', method='GET', uri='/prototype', version='HTTP/1.1', remote_ip='10.198.0.90')
+Traceback (most recent call last):
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/tornado/web.py", line 1704, in _execute
+    result = await result
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/server/views/doc_handler.py", line 54, in get
+    page = server_html_page_for_session(session,
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/embed/server.py", line 238, in server_html_page_for_session
+    html = html_page_for_render_items(bundle, {}, [render_item], title,
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/embed/elements.py", line 126, in html_page_for_render_items
+    html = template.render(context)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/jinja2/environment.py", line 1090, in render
+    self.environment.handle_exception()
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/jinja2/environment.py", line 832, in handle_exception
+    reraise(*rewrite_traceback_stack(source=source))
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/jinja2/_compat.py", line 28, in reraise
+    raise value.with_traceback(tb)
+  File "/usr/local/home/kblair/Documents/ETC/prototype/templates/index.html", line 1, in top-level template code
+    {% extends base %}
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/core/_templates/file.html", line 40, in top-level template code
+    {% block body %}
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/core/_templates/file.html", line 42, in block "body"
+    {% block inner_body %}
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/core/_templates/file.html", line 43, in block "inner_body"
+    {% block contents %}
+  File "/usr/local/home/kblair/Documents/ETC/prototype/templates/index.html", line 43, in block "contents"
+    {{ embed(roots.instruments) }}
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/jinja2/environment.py", line 471, in getattr
+    return getattr(obj, attribute)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/embed/util.py", line 244, in __getattr__
+    return self.__getitem__(key)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/embed/util.py", line 239, in __getitem__
+    raise ValueError("root with '%s' name not found" % key)
+ValueError: root with 'instruments' name not found
+2021-12-02 16:45:01,068 500 GET /prototype (10.198.0.90) 26.92ms
+2021-12-02 16:45:05,630 Error running application handler <bokeh.application.handlers.directory.DirectoryHandler object at 0x7f50c094adf0>: [Errno 2] No such file or directory: 'static/etc_instructions.txt'
+File "main.py", line 424, in __init__:
+with open('static/gui_instructions.txt') as file: Traceback (most recent call last):
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/application/handlers/code_runner.py", line 197, in run
+    exec(self._code, module.__dict__)
+  File "/usr/local/home/kblair/Documents/ETC/prototype/main.py", line 823, in <module>
+    help = instruction_text()
+  File "/usr/local/home/kblair/Documents/ETC/prototype/main.py", line 424, in __init__
+    with open('static/gui_instructions.txt') as file:
+FileNotFoundError: [Errno 2] No such file or directory: 'static/etc_instructions.txt'
+ 
+2021-12-02 16:45:05,635 Uncaught exception GET /prototype (10.198.0.90)
+HTTPServerRequest(protocol='http', host='vm-internship:8000', method='GET', uri='/prototype', version='HTTP/1.1', remote_ip='10.198.0.90')
+Traceback (most recent call last):
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/tornado/web.py", line 1704, in _execute
+    result = await result
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/server/views/doc_handler.py", line 54, in get
+    page = server_html_page_for_session(session,
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/embed/server.py", line 238, in server_html_page_for_session
+    html = html_page_for_render_items(bundle, {}, [render_item], title,
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/embed/elements.py", line 126, in html_page_for_render_items
+    html = template.render(context)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/jinja2/environment.py", line 1090, in render
+    self.environment.handle_exception()
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/jinja2/environment.py", line 832, in handle_exception
+    reraise(*rewrite_traceback_stack(source=source))
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/jinja2/_compat.py", line 28, in reraise
+    raise value.with_traceback(tb)
+  File "/usr/local/home/kblair/Documents/ETC/prototype/templates/index.html", line 1, in top-level template code
+    {% extends base %}
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/core/_templates/file.html", line 40, in top-level template code
+    {% block body %}
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/core/_templates/file.html", line 42, in block "body"
+    {% block inner_body %}
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/core/_templates/file.html", line 43, in block "inner_body"
+    {% block contents %}
+  File "/usr/local/home/kblair/Documents/ETC/prototype/templates/index.html", line 43, in block "contents"
+    {{ embed(roots.instruments) }}
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/jinja2/environment.py", line 471, in getattr
+    return getattr(obj, attribute)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/embed/util.py", line 244, in __getattr__
+    return self.__getitem__(key)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/embed/util.py", line 239, in __getitem__
+    raise ValueError("root with '%s' name not found" % key)
+ValueError: root with 'instruments' name not found
+2021-12-02 16:45:05,635 500 GET /prototype (10.198.0.90) 20.12ms
+2021-12-02 16:45:26,529 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-02 16:45:26,531 User authentication hooks NOT provided (default user enabled)
+2021-12-02 16:45:26,534 Bokeh app running at: http://localhost:8000/prototype
+2021-12-02 16:45:26,534 Starting Bokeh server with process id: 10785
+2021-12-02 16:45:30,380 Refusing websocket connection from Origin 'http://vm-internship:8000';                       use --allow-websocket-origin=vm-internship:8000 or set BOKEH_ALLOW_WS_ORIGIN=vm-internship:8000 to permit this; currently we allow origins {'10.96.10.12:8000'}
+2021-12-02 16:45:30,380 403 GET /prototype/ws (10.198.0.90) 0.78ms
+2021-12-02 16:46:55,438 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-02 16:46:55,439 User authentication hooks NOT provided (default user enabled)
+2021-12-02 16:46:55,444 Bokeh app running at: http://localhost:8000/prototype
+2021-12-02 16:46:55,444 Starting Bokeh server with process id: 11026
+2021-12-02 16:46:58,607 Refusing websocket connection from Origin 'http://vm-internship:8000';                       use --allow-websocket-origin=vm-internship:8000 or set BOKEH_ALLOW_WS_ORIGIN=vm-internship:8000 to permit this; currently we allow origins {'10.96.10.12:8000'}
+2021-12-02 16:46:58,607 403 GET /prototype/ws (10.198.0.90) 0.87ms
+2021-12-02 16:48:09,890 WebSocket connection opened
+2021-12-02 16:48:09,891 ServerConnection created

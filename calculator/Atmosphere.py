@@ -10,7 +10,7 @@ from warnings import warn
 
 class atmosphere:
 
-    global _CONFIG_FILEPATH; _CONFIG_FILEPATH = 'sky_background/atmosphere_config.yaml'
+    global _CONFIG_FILEPATH; _CONFIG_FILEPATH = 'calculator/sky_background/atmosphere_config.yaml'
 
     def _mount_config(self, config_path):
         # From https://www.geeksforgeeks.org/convert-nested-python-dictionary-to-object/

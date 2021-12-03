@@ -11,7 +11,7 @@ from warnings import warn
 
 class source:
 
-    global _CONFIG_FILEPATH; _CONFIG_FILEPATH = 'source/source_config.yaml'
+    global _CONFIG_FILEPATH; _CONFIG_FILEPATH = 'calculator/source/source_config.yaml'
 
     def _mount_config(self, config_path):
         # From https://www.geeksforgeeks.org/convert-nested-python-dictionary-to-object/

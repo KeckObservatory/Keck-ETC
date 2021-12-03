@@ -1,13 +1,13 @@
 
 from bokeh.io import curdoc
 from bokeh.plotting import figure, gridplot
-from bokeh.models import ColumnDataSource, Panel, Select, Tabs, Spinner, Div, FileInput, Paragraph, CustomJS, Slider, Span, Button, Toolbar, PanTool
+from bokeh.models import ColumnDataSource, Panel, Select, Tabs, Spinner, Div, FileInput, Paragraph, CustomJS, Slider, Span, Button
 from bokeh.events import DocumentReady, Reset, MouseMove
 from bokeh.layouts import column, row
 
 # Import exposure time calculator
 import yaml
-from ETC import exposure_time_calculator
+from calculator.ETC import exposure_time_calculator
 from numpy import nanpercentile, linspace, round
 from astropy import units as u
 import pdb
@@ -39,7 +39,7 @@ def update_results():
             'dark_current': list(etc.dark_current_count_adu.value) * len(etc.wavelengths),
             'snr': etc.signal_noise_ratio[0].value,
             'nonlinear':[etc.instrument.nonlinear_depth.value] * len(etc.wavelengths),
-            'integration': [etc.total_exposure_time.to(u.s)[0].value] * len(etc.wavelengths),
+            'integration': [etc.integration_time.to(u.s)[0].value] * len(etc.wavelengths),
             'flux': etc.source_flux.to(u.erg / (u.Angstrom * u.cm**2 * u.s), equivalencies=u.spectral_density(etc.wavelengths)).value
         }
 
@@ -54,7 +54,7 @@ def update_results():
             'read_noise': etc.read_noise_count_adu[0].value,
             'dark_current': etc.dark_current_count_adu[0].value,
             'nonlinear': [etc.instrument.nonlinear_depth.value] * len(etc.wavelengths),
-            'integration': etc.total_exposure_time[0].to(u.s).value,
+            'integration': etc.integration_time[0].to(u.s).value,
             'flux': etc.source_flux.to(u.erg / (u.Angstrom * u.cm**2 * u.s), equivalencies=u.spectral_density(etc.wavelengths)).value
         }
 
@@ -421,7 +421,7 @@ class instruction_text:
 
     def __init__(self):
         self.contents = column(name='instructions', sizing_mode='scale_width')
-        with open('static/etc_instructions.txt') as file:
+        with open('static/gui_instructions.txt') as file:
             for line in file:
                 if len(line.strip()) > 0:
                     self.contents.children.append(Paragraph(text=line, sizing_mode='scale_width'))
@@ -456,9 +456,9 @@ class summary_panel:
                 'source flux')
             self.wav_label = big_number(f'{central_wavelength.to(u.um).value:.4} μm', 'wavelength')
             if etc.target == 'signal_noise_ratio':
-                self.time_label = big_number(f'{round(etc.total_exposure_time[0].value)} {etc.total_exposure_time.unit}', 'integration time')
+                self.time_label = big_number(f'{round(etc.integration_time[0].value)} {etc.integration_time.unit}', 'integration time')
             elif etc.target == 'exposure':
-                self.time_label = big_number(f'{round(etc.total_exposure_time[0][wavelength_index][0].value)} {etc.total_exposure_time.unit}', 'integration time')
+                self.time_label = big_number(f'{round(etc.integration_time[0][wavelength_index][0].value)} {etc.integration_time.unit}', 'integration time')
             
             self.clk_label = big_number('--- s', 'clock time')
             if etc.target == 'signal_noise_ratio':

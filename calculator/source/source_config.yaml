@@ -43,7 +43,7 @@ source_types:
     filename: seyfert2_template.txt
 
 # Path (absolute or relative) to directory containing source template files
-template_filepath: source/
+template_filepath: calculator/source/
 
 # Source for flux of vega, used to define mag(vega) as a unit
 vega_filename: vega_template.txt

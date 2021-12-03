@@ -4,39 +4,45 @@
 PROGRAM_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
 # Define script variables to default values
+version="0.0.1"
 port=5006
 printhelp=false
+printversion=false
 forcekill=false
 statusall=true
 server="none"
 action="none"
 usage=$(cat << END
-usage: $PROGRAM_DIR/etc {start,stop,status,restart} [-f] [-p port_number] [-h]
-    positional arguments: {start,stop,status,restart}
+Usage: $PROGRAM_DIR/etc {start,stop,status,restart,test} [-f] [-h] [-v] [-p port_number]
+    Positional arguments: {start,stop,status,restart,test}
         start           Begin running a server, requires additional argument 'gui' or 'api'
         stop            Stop running a server, requires additional argument 'gui' or 'api'
         status          Print server status, accepts optional argument 'gui' or 'api'
         restart         Restart a server, requires additional argument 'gui' or 'api'
+        test            Verify successful program installation
     Optional arguments:
-        -p, --port      Specifies port for server
+        -p, --port      Specifies port for server, defaults to 5006
         -f, --force     Force kill running server, use with 'stop' or 'restart'
+        -v, --version   Display program version
         -h, --help      Displays this message
 END
 )
 
 
 # Get command line arguments and set appropriate variables
+# TODO -- add test command to verify installation
 while [[ -n $1 ]]; do
     case $1 in
         gui | api ) server="$1";;
-        start | stop | status | restart ) action="$1";;
+        start | stop | status | restart | test ) action="$1";;
         -h | --help ) printhelp=true;;
+        -v | --version ) printversion=true;;
         -p | --port ) shift; port=$1; statusall=false;;
         -f | --force ) forcekill=true;;
         * ) 
             echo "Invalid option: $1"
             echo "$usage"
-            exit 0;;
+            exit -1;;
     esac
     shift
 done
@@ -47,14 +53,20 @@ if $printhelp; then
     exit 0
 fi
 
+# If version, print version
+if $printversion; then
+    echo "etc $version"
+    exit 0
+fi
+
 # Validate input
 if [ "$action" == "none" ]; then
-    echo "Missing required argument action" >&2
+    echo "Missing required positional argument {start,stop,status,restart}" >&2
     echo "$usage" >&2
     exit -1
 fi
 if [ "$action" != "status" ] && [ "$server" == "none" ]; then
-    echo "Missing required argument server" >&2
+    echo "Missing required additional argument 'gui' or 'api' for argument $action" >&2
     echo "$usage" >&2
     exit -1
 fi
@@ -69,7 +81,6 @@ cd $PROGRAM_DIR
 
 # If command is stop or restart, stop corresponding server
 if [ "$action" == "stop" ] || [ "$action" == "restart" ]; then
-    echo "Stopping $server server on port $port"
 
     pid="$(tac ./log/etc.log | grep -m1 "start $server $port" | awk '{print $NF}')"
     if $forcekill; then
@@ -79,7 +90,7 @@ if [ "$action" == "stop" ] || [ "$action" == "restart" ]; then
     fi
     # If an error exists, then print error message and exit
     if [[ ! -z $err ]]; then 
-        echo "$err \n Error killing $server server on port $port -- use 'status' to view current servers" >&2
+        printf "Error terminating $server server on port $port \n$err\n" >&2
         exit -1
     fi
     # If no error was detected, print success message and append to log
@@ -92,14 +103,17 @@ if [ "$action" == "start" ] || [ "$action" == "restart" ]; then
 
     echo "Starting $server server on port $port"
 
-    if [ "$server" == "gui" ]; then
+    # TODO -- check to make sure port is not in use, then verify that it worked and output success message
 
-        nohup bokeh serve . --port "$port" --log-file ./log/gui.log &>/dev/null &
+    if [ "$server" == "gui" ]; then
+        nohup bokeh serve . --port "$port" --log-file ./log/gui.log --allow-websocket-origin="$(hostname -I | sed -r 's/\s+//g'):$port" &>/dev/null &
         echo "$(date +"%Y-%m-%d %T") start $server $port $!" >> ./log/etc.log
 
     elif [ "$server" == "api" ]; then
 
-        echo ""
+        python3 API.py
+        echo "$(date +"%Y-%m-%d %T") start $server $port $!"
+
     fi
 fi
 
@@ -118,9 +132,9 @@ if [ "$action" == "status" ]; then
         log=($log)
         pid=${log[5]}
         if ps -p $pid > /dev/null; then
-            if [[ ${log[3]} == "gui" ]]; then
+            if [[ ${log[3]} == "gui" && "$(ps $pid)" == *"bokeh serve"* ]]; then
                 guiports+="${log[4]}, "
-            elif [[ ${log[3]} == "api" ]]; then
+            elif [[ ${log[3]} == "api" && "$(ps $pid)" == *"python3 API.py"* ]]; then
                 apiports+="${log[4]}, "
             fi
         fi

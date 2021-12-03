@@ -1,7 +1,7 @@
 from astropy import units as u
-from Instrument import instrument
-from Source import source
-from Atmosphere import atmosphere
+from calculator.Instrument import instrument
+from calculator.Source import source
+from calculator.Atmosphere import atmosphere
 import yaml
 from numpy import pi, linspace, zeros, array, arccos, sqrt, NaN
 from warnings import warn
@@ -9,7 +9,7 @@ from json import loads as json_loads
 
 class exposure_time_calculator:
 
-    global _CONFIG_FILEPATH; _CONFIG_FILEPATH = './config.yaml'
+    global _CONFIG_FILEPATH; _CONFIG_FILEPATH = './calculator/config.yaml'
 
     def _mount_config(self, config_path):
         # From https://www.geeksforgeeks.org/convert-nested-python-dictionary-to-object/
@@ -77,7 +77,7 @@ class exposure_time_calculator:
             self.read_noise_count_adu = ([read_noise / slit_size_pixels * number_exposures / self.instrument.gain] * len(self.exposure)) * (u.adu/u.pixel)
 
             # Save total integration time
-            self.total_exposure_time = [(number_exposures * exp) for exp in self.exposure] * u.s
+            self.integration_time = [(number_exposures * exp) for exp in self.exposure] * u.s
 
             # Get counts in e- over entire slit during exposure
             source_count_e = [source_rate * exp * number_exposures for exp in self.exposure] * u.electron
@@ -127,7 +127,7 @@ class exposure_time_calculator:
             self.dark_current_count_adu = [dark_current_rate / slit_size_pixels * exp * number_exposures / self.instrument.gain for exp in self.exposure] * (u.adu/u.pixel)
             self.read_noise_count_adu = ([[(read_noise / slit_size_pixels * number_exposures / self.instrument.gain).to(u.adu/u.pixel).value] * len(self.wavelengths)] * len(self.exposure)) * (u.adu/u.pixel)
             # Save total integration time
-            self.total_exposure_time = [(number_exposures * exp) for exp in self.exposure] * u.s
+            self.integration_time = [(number_exposures * exp) for exp in self.exposure] * u.s
 
 
         else:
@@ -162,9 +162,10 @@ class exposure_time_calculator:
 
         self._calculate()
 
-    def set_parameters(self, parameter_string):
+    def set_parameters(self, parameters):
         # TODO -- input validation
-        parameters = json_loads(parameter_string)
+        if isinstance(parameters, str):
+            parameters = json_loads(parameters)
         for key, val in parameters.items():
             self.set_parameter(key, val)
 
@@ -179,14 +180,16 @@ class exposure_time_calculator:
             self._set_atmosphere_parameter('.'.join(name.split('.')[1:]), value)
         else:
             if name == 'target':
-                if value != 'signal_noise_ratio' or value != 'exposure':
+                if value != 'signal_noise_ratio' and value != 'exposure':
                     raise ValueError('In ETC.set_parameter() -- target must be either "exposure" or "signal_noise_ratio"')
                 if value == 'exposure' and self.target == 'signal_noise_ratio':
                     self.signal_noise_ratio = [u.Quantity(x) for x in self.config.defaults.signal_noise_ratio] * u.dimensionless_unscaled
                 elif value == 'signal_noise_ratio' and self.target == 'exposure':
                     self.exposure = [u.Quantity(x) for x in self.config.defaults.exposure] * u.s
                 self.target = value
-            if name == 'exposure':
+            elif name == 'wavelengths':
+                self.wavelengths = [u.Quantity(x).to(u.angstrom) for x in value] * u.angstrom
+            elif name == 'exposure':
                 self.target = 'signal_noise_ratio'
                 self.exposure = [u.Quantity(x).to(u.s) for x in value] * u.s
             elif name == 'signal_noise_ratio':
