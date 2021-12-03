@@ -14,7 +14,7 @@ The remainder of this document contains instructions to download, install, and r
 
 ### Installation
 
-To install this program, download or clone this directory using `git clone https://github.com/Keaton-WMKO/etc-prototype.git`.
+To install this program, clone this directory using `git clone https://github.com/Keaton-WMKO/etc-prototype.git`.
 
 Next, ensure that all requirments are met. To install requirements, use
 ```

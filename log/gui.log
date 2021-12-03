@@ -329,3 +329,130 @@ ValueError: root with 'instruments' name not found
 2021-12-02 16:46:58,607 403 GET /prototype/ws (10.198.0.90) 0.87ms
 2021-12-02 16:48:09,890 WebSocket connection opened
 2021-12-02 16:48:09,891 ServerConnection created
+2021-12-03 08:41:03,933 WebSocket connection closed: code=1001, reason=None
+2021-12-03 08:41:04,228 WebSocket connection opened
+2021-12-03 08:41:04,229 ServerConnection created
+2021-12-03 09:45:52,744 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-03 09:45:52,746 User authentication hooks NOT provided (default user enabled)
+2021-12-03 09:45:52,752 Bokeh app running at: http://localhost:8000/prototype
+2021-12-03 09:45:52,752 Starting Bokeh server with process id: 28623
+2021-12-03 09:45:55,824 WebSocket connection opened
+2021-12-03 09:45:55,825 ServerConnection created
+2021-12-03 09:45:56,659 error handling message
+ message: Message 'PATCH-DOC' content: {'events': [{'kind': 'MessageSent', 'msg_type': 'bokeh_event', 'msg_data': {'event_name': 'document_ready', 'event_values': {}}}], 'references': []} 
+ error: AttributeError("'source' object has no attribute '_define_vegamag'")
+Traceback (most recent call last):
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/server/protocol_handler.py", line 90, in handle
+    work = await handler(message, connection)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/server/session.py", line 67, in _needs_document_lock_wrapper
+    result = func(self, *args, **kwargs)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/server/session.py", line 261, in _handle_patch
+    message.apply_to_document(self.document, self)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/protocol/messages/patch_doc.py", line 100, in apply_to_document
+    doc._with_self_as_curdoc(lambda: doc.apply_json_patch(self.content, setter))
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 1198, in _with_self_as_curdoc
+    return f()
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/protocol/messages/patch_doc.py", line 100, in <lambda>
+    doc._with_self_as_curdoc(lambda: doc.apply_json_patch(self.content, setter))
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 398, in apply_json_patch
+    self._trigger_on_message(event_json["msg_type"], event_json["msg_data"])
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 687, in _trigger_on_message
+    cb(msg_data)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 359, in apply_json_event
+    cb(event)
+  File "/usr/local/home/kblair/Documents/ETC/prototype/main.py", line 837, in load_contents
+    etc = exposure_time_calculator()
+  File "/usr/local/home/kblair/Documents/ETC/prototype/calculator/ETC.py", line 146, in __init__
+    self.source = source()
+  File "/usr/local/home/kblair/Documents/ETC/prototype/calculator/Source.py", line 192, in __init__
+    self._define_vegamag()
+AttributeError: 'source' object has no attribute '_define_vegamag'
+2021-12-03 09:46:34,330 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-03 09:46:34,332 User authentication hooks NOT provided (default user enabled)
+2021-12-03 09:46:34,337 Bokeh app running at: http://localhost:8000/prototype
+2021-12-03 09:46:34,337 Starting Bokeh server with process id: 28703
+2021-12-03 09:46:36,286 WebSocket connection opened
+2021-12-03 09:46:36,287 ServerConnection created
+2021-12-03 09:51:00,007 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-03 09:51:00,010 User authentication hooks NOT provided (default user enabled)
+2021-12-03 09:51:00,019 Bokeh app running at: http://localhost:8000/prototype
+2021-12-03 09:51:00,019 Starting Bokeh server with process id: 28887
+2021-12-03 09:51:02,914 WebSocket connection opened
+2021-12-03 09:51:02,915 ServerConnection created
+2021-12-03 09:52:43,943 error handling message
+ message: Message 'PATCH-DOC' content: {'events': [{'kind': 'ModelChanged', 'model': {'id': '1604'}, 'attr': 'value', 'new': 'deg_C'}], 'references': []} 
+ error: ValueError("failed to validate Spinner(id='1602', ...).step: expected a value of type Float in range [1e-16, inf], got -272.15")
+Traceback (most recent call last):
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/server/protocol_handler.py", line 90, in handle
+    work = await handler(message, connection)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/server/session.py", line 67, in _needs_document_lock_wrapper
+    result = func(self, *args, **kwargs)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/server/session.py", line 261, in _handle_patch
+    message.apply_to_document(self.document, self)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/protocol/messages/patch_doc.py", line 100, in apply_to_document
+    doc._with_self_as_curdoc(lambda: doc.apply_json_patch(self.content, setter))
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 1198, in _with_self_as_curdoc
+    return f()
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/protocol/messages/patch_doc.py", line 100, in <lambda>
+    doc._with_self_as_curdoc(lambda: doc.apply_json_patch(self.content, setter))
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 411, in apply_json_patch
+    patched_obj.set_from_json(attr, value, models=references, setter=setter)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/core/has_props.py", line 412, in set_from_json
+    descriptor.set_from_json(self, json, models, setter)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/core/property/descriptors.py", line 623, in set_from_json
+    return super().set_from_json(obj, self.property.from_json(json, models), models, setter)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/core/property/descriptors.py", line 327, in set_from_json
+    self._internal_set(obj, json, setter=setter)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/core/property/descriptors.py", line 786, in _internal_set
+    self._real_set(obj, old, value, hint=hint, setter=setter)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/core/property/descriptors.py", line 849, in _real_set
+    self._trigger(obj, old, value, hint=hint, setter=setter)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/core/property/descriptors.py", line 926, in _trigger
+    obj.trigger(self.name, old, value, hint, setter)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/model.py", line 682, in trigger
+    super().trigger(descriptor.name, old, new, hint=hint, setter=setter)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/util/callback_manager.py", line 163, in trigger
+    self._document._notify_change(self, attr, old, new, hint, setter, invoke)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 1090, in _notify_change
+    self._trigger_on_change(event)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 1180, in _trigger_on_change
+    self._with_self_as_curdoc(event.callback_invoker)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 1198, in _with_self_as_curdoc
+    return f()
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/util/callback_manager.py", line 161, in invoke
+    callback(attr, old, new)
+  File "/usr/local/home/kblair/Documents/ETC/prototype/main.py", line 94, in unit_callback
+    self.contents.children[0].step = (self.contents.children[0].step * unit_old).to(unit_mid).to(unit_new, equivalencies=self.equivalency).value
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/core/has_props.py", line 298, in __setattr__
+    super().__setattr__(name, value)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/core/property/descriptors.py", line 552, in __set__
+    self._internal_set(obj, value, setter=setter)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/core/property/descriptors.py", line 784, in _internal_set
+    value = self.property.prepare_value(obj, self.name, value)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/core/property/bases.py", line 350, in prepare_value
+    raise ValueError(f"failed to validate {obj_repr}.{name}: {error}")
+ValueError: failed to validate Spinner(id='1602', ...).step: expected a value of type Float in range [1e-16, inf], got -272.15
+2021-12-03 11:00:13,878 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-03 11:00:13,879 User authentication hooks NOT provided (default user enabled)
+2021-12-03 11:00:13,883 Bokeh app running at: http://localhost:8000/prototype
+2021-12-03 11:00:13,883 Starting Bokeh server with process id: 30263
+2021-12-03 11:00:15,815 WebSocket connection opened
+2021-12-03 11:00:15,815 ServerConnection created
+2021-12-03 11:04:12,898 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-03 11:04:12,899 User authentication hooks NOT provided (default user enabled)
+2021-12-03 11:04:12,903 Bokeh app running at: http://localhost:8000/prototype
+2021-12-03 11:04:12,903 Starting Bokeh server with process id: 30460
+2021-12-03 11:04:15,070 WebSocket connection opened
+2021-12-03 11:04:15,070 ServerConnection created
+2021-12-03 11:05:04,668 WebSocket connection closed: code=1001, reason=None
+2021-12-03 11:05:04,787 WebSocket connection opened
+2021-12-03 11:05:04,788 ServerConnection created
+2021-12-03 11:06:02,370 WebSocket connection closed: code=1001, reason=None
+2021-12-03 11:06:02,469 WebSocket connection opened
+2021-12-03 11:06:02,469 ServerConnection created
+2021-12-03 11:07:17,315 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-03 11:07:17,317 User authentication hooks NOT provided (default user enabled)
+2021-12-03 11:07:17,321 Bokeh app running at: http://localhost:8000/prototype
+2021-12-03 11:07:17,321 Starting Bokeh server with process id: 30596
+2021-12-03 11:07:19,787 WebSocket connection opened
+2021-12-03 11:07:19,788 ServerConnection created

@@ -10,7 +10,7 @@ serverPort = 8080
 # TODO -- initialize etc when beginning server, then reset it in between requests
 def process_request(query):
     if len(query) == 0:
-        return ''
+        return '', True
 
     try:
         if isinstance(query['return'], list):
@@ -47,6 +47,7 @@ class APIServer(BaseHTTPRequestHandler):
             for key, val in query.items():
                 if val.startswith('[') and val.endswith(']'):
                     query[key] = [x.strip() for x in val[1:-1].split(',')]
+            print(query)
         except:
             query = {}
         response, error = process_request(query)

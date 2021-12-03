@@ -125,13 +125,13 @@ class dropdown_input:
         etc.set_parameter(self.key, new)
         update_results()
 
-    def __init__(self, key, name, default, options, width=300):
+    def __init__(self, key, name, default, options, width=300, css_classes=[]):
         self.key = key
         self.name = name
         self.default = default
         self.options = options
 
-        self.contents = row(Select(title=self.name, value=self.default, options=self.options, width=width, sizing_mode='scale_width'), sizing_mode='scale_width')
+        self.contents = row(Select(title=self.name, value=self.default, options=self.options, width=width, sizing_mode='scale_width', css_classes=css_classes), sizing_mode='scale_width')
         self.contents.children[0].on_change('value', self.dropdown_callback)
 
 
@@ -260,7 +260,7 @@ class exposure_panel:
         self.dithers = quantity_input('dithers', 'Dithers:', etc.dithers.value, low=1, width=150)
         self.repeats = quantity_input('repeats', 'Repeats:', etc.repeats.value, low=1, width=150)
         self.coadds = quantity_input('coadds', 'Coadds:', etc.coadds.value, low=1, width=150)
-        self.reads = dropdown_input('reads', 'Reads:', str(etc.reads.value), [str(x) for x in etc.config.reads_options], width=150)
+        self.reads = dropdown_input('reads', 'Reads:', str(int(etc.reads.value)), [str(x) for x in etc.config.reads_options], width=150, css_classes=['reads_input'])
         
         if etc.target == 'signal_noise_ratio':
             self.contents.children = [
@@ -313,11 +313,14 @@ class source_panel:
         
         self.band = dropdown_input('source.wavelength_band', 'Band:', etc.source.wavelength_band,
                               list(vars(etc.source.config.wavelength_bands).keys()), width=100)
+
+        u.add_enabled_units([etc.source.flam, etc.source.photlam])
+
         self.brightness = quantity_input(
             key='source.brightness',
             name='Flux:',
             default=etc.source.brightness.value,
-            unit_options=['mag(AB)', 'mag(vega)', 'mag(ST)', 'Jy', 'erg / (Angstrom cm2 s)'],
+            unit_options=['mag(AB)', 'mag(vega)', 'mag(ST)', 'Jy', 'flam', 'photlam'],
             unit_default=str(etc.source.brightness.unit),
             equivalency=u.spectral_density(u.Quantity(vars(etc.source.config.wavelength_bands)[self.band.contents.children[0].value]))+
             etc.source.spectral_density_vega(u.Quantity(vars(etc.source.config.wavelength_bands)[self.band.contents.children[0].value])),

@@ -65,7 +65,7 @@ if [ "$action" == "none" ]; then
     echo "$usage" >&2
     exit -1
 fi
-if [ "$action" != "status" ] && [ "$server" == "none" ]; then
+if [ "$action" != "status" ] && [ "$action" != "test" ] && [ "$server" == "none" ]; then
     echo "Missing required additional argument 'gui' or 'api' for argument $action" >&2
     echo "$usage" >&2
     exit -1
@@ -111,7 +111,7 @@ if [ "$action" == "start" ] || [ "$action" == "restart" ]; then
 
     elif [ "$server" == "api" ]; then
 
-        python3 API.py
+        nohup python3 API.py >> ./log/api.log &>/dev/null &
         echo "$(date +"%Y-%m-%d %T") start $server $port $!"
 
     fi
@@ -145,7 +145,7 @@ if [ "$action" == "status" ]; then
         echo "Running $(echo $apiports | wc -w) API servers on ports ${apiports%??}"
     elif [[ $(echo $apiports | wc -w) -gt 0 ]]; then
         echo "Running $(echo $apiports | wc -w) API server on port ${apiports%??}"
-    else
+    elif [ "$server" != "gui" ]; then
         echo "No API servers running on port $port"
     fi
 
@@ -153,10 +153,52 @@ if [ "$action" == "status" ]; then
         echo "Running $(echo $guiports | wc -w) GUI servers on ports ${guiports%??}"
     elif [[ $(echo $guiports | wc -w) -gt 0 ]]; then
         echo "Running $(echo $guiports | wc -w) GUI server on port ${guiports%??}"
-    else
+    elif [ "$server" != "api" ]; then
         echo "No GUI servers running on port $port"
     fi
 
+
+fi
+
+
+if [ "$action" == "test" ]; then
+
+    if ! command -v git &> /dev/null; then
+        echo "Error verifying installation, git is not installed" >&2
+    fi
+
+    status="$(git status --porcelain)"
+
+    if [ "$status" == *"not a git repository"* ]; then
+        echo "Error: Can't check files against source because this is not a git repository" >&2
+    elif [ "$status" != "" ]; then
+        echo "Git has detected the following changes to your local files"
+        echo "$status"
+        exit 0
+    fi
+
+    if [ "$(python3 --version)" == *"command not found"* ]; then
+        echo "Python3 is not installed -- run 'sudo apt-get install python3' to correct"
+        exit 0
+    fi
+
+    if [ "$(echo "import astropy" | python3)" != "" ]; then
+        echo "Astropy is not installed -- run 'pip install astropy' to correct"
+        exit 0
+    fi
+
+    if [ "$(echo "import scipy" | python3)" != "" ]; then
+        echo "Scipy is not installed -- run 'pip install scipy' to correct"
+        exit 0
+    fi
+
+    if [ "$(bokeh --version)" == *"command not found"* ]; then
+        echo "Bokeh is not installed -- run 'pip install bokeh' to correct"
+        exit 0
+    fi
+
+    echo "No problems detected, succesful installation verified"
+    exit 0
 
 fi
 

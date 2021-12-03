@@ -54,13 +54,13 @@ class exposure_time_calculator:
         self.source_flux = self.source.get_flux(self.wavelengths) * self.atmosphere.get_transmission(self.wavelengths)
 
         source_rate = self.source_flux * self.instrument.get_throughput(self.wavelengths) * self.binning[0] * self.binning[1]  # Binning in the spectral direction
-        source_rate *= self.telescope_area * source_slit_ratio * (self.wavelengths / self.instrument.spectral_resolution) * self.reads  
+        source_rate *= self.telescope_area * source_slit_ratio * (self.wavelengths / self.instrument.spectral_resolution)
 
 
         background_rate = self.atmosphere.get_emission(self.wavelengths) * self.instrument.get_throughput(self.wavelengths) * self.binning[0] * self.binning[1]
-        background_rate *= self.telescope_area * slit_size * (self.wavelengths / self.instrument.spectral_resolution) * self.reads
+        background_rate *= self.telescope_area * slit_size * (self.wavelengths / self.instrument.spectral_resolution)
         # Divide reads by 2 because read noise is per CDS (2 reads)
-        read_noise = self.instrument.get_read_noise()**2 * (self.reads/2) * slit_size_pixels / self.binning[0]  # Binning in the spatial direction
+        read_noise = self.instrument.get_read_noise()**2 * slit_size_pixels / sqrt(self.reads) / self.binning[0]  # Binning in the spatial direction
 
         dark_current_rate = self.instrument.get_dark_current() * slit_size_pixels
         

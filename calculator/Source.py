@@ -99,8 +99,10 @@ class source:
                     raise ValueError('ERROR: In source_config.yaml -- invalid parameter for source type '+source_type.name)
 
 
-    def _define_vegamag(self):
+    def _define_units(self):
         self.vegamag = u.def_unit('mag(vega)', u.mag, format={'generic': 'mag(vega)', 'console': 'mag(vega)'})
+        self.flam = u.def_unit('flam', u.erg / (u.cm**2 * u.angstrom * u.s), format={'generic': 'flam', 'console': 'flam'})
+        self.photlam = u.def_unit('photlam', u.photon / (u.cm**2 * u.angstrom * u.s), format={'generic': 'photlam', 'console': 'photlam'})
 
         def define_data_scope(data):  # Wrapper function to narrow the scope of data and make sure each interpolation uses its own dataset
                     def shift_and_interpolate(w):  # TODO -- Figure out why each function is returning the same results...
@@ -187,7 +189,7 @@ class source:
 
         self._load_files()
 
-        self._define_vegamag()
+        self._define_units()
 
         self.set_type(self.type)
 

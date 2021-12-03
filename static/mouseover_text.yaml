@@ -28,4 +28,4 @@
 
   coadds_input: Placeholder
 
-  reads_input: Placeholder
+  reads_input: Number of CDS reads
