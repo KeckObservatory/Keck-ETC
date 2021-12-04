@@ -24,11 +24,27 @@ AVAILABLE PARAMETERS:
     repeats:                Number of repeats, must be > 0
     coadds:                 Number of coadds, must be > 0
     reads:                  Number of reads, possible values are 2, 4, 8, 16, 32, 64, 128
+    binning:                Binning in [spatial, spectral], i.e. [1,2] or [2,2]
     source.type:            Source template, possible values are emission, blackbody, power, flat, vega, qso, seyfert1, seyfert2
-    source.flux:            Source flux/magnitude with units, available units are mag(AB), mag(vega), mag(ST), Jy, erg / (Angstrom cm2 s)
+    source.flux:            Source flux/magnitude with units, available units are mag(AB), mag(vega), mag(ST), Jy, flam, photlam
     source.wavelength_band: Name of wavelength band, possible values are ...
     source.width:           Width of emission line, i.e. 200nm
     source.temperature:     Temperature of blackbody source, available units are K and deg_C
     source.index:           Index of power law source type, i.e. -1.0
-    atmosphere.seeing:      ...
+    atmosphere.seeing:      Seeing with units, available units are arcsec, arcmin
+    atmosphere.airmass:     Airmass, must be between 1.0 and 2.0 inclusive
+    atmosphere.water_vapor: Waver vapor with units of length, must be between 1.0 and 5.0 mm
+    instrument.name:        Instrument name, possible values are nires, deimos, lris, hires, nirc2, kcwi, esi
+    instrument.slit_width   Slit width with units of arcsec, must be a valid option for specified instrument
+    instrument.slit_height  Slid height with units of arcsec, must be a valid option for specified instrument
+    instrument.mode:        Instrument mode, available options are:
+                                NIRES: spectroscopic
+    instrument.grating:     Selected grating, available options are:
+                                DEIMOS: 600, 830, 900, 1200
+                                ...
+    instrument.filter:      Selected filter, available options are:
+                                DEIMOS: BAL12, GG400, GG455, GG495, OG550
+                                ...
+    instrument.grism:       Selected grism, available options are:
+                                ...
     ...

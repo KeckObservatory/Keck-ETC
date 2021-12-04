@@ -1,14 +1,14 @@
 
 from bokeh.io import curdoc
 from bokeh.plotting import figure, gridplot
-from bokeh.models import ColumnDataSource, Panel, Select, Tabs, Spinner, Div, FileInput, Paragraph, CustomJS, Slider, Span, Button
-from bokeh.events import DocumentReady, Reset, MouseMove
+from bokeh.models import ColumnDataSource, Panel, Select, Tabs, Spinner, Div, FileInput, Paragraph, CustomJS, Slider, Span, Button, Label, BoxAnnotation
+from bokeh.events import DocumentReady, Reset, MouseMove, Tap
 from bokeh.layouts import column, row
 
 # Import exposure time calculator
 import yaml
 from calculator.ETC import exposure_time_calculator
-from numpy import nanpercentile, linspace, round
+from numpy import nanpercentile, linspace, round, isnan
 from astropy import units as u
 import pdb
 
@@ -264,7 +264,7 @@ class exposure_panel:
         
         if etc.target == 'signal_noise_ratio':
             self.contents.children = [
-                self.title.contents, 
+                self.title.contents,
                 self.target,
                 self.exposure,
                 row(self.dithers.contents, self.repeats.contents, sizing_mode='scale_width'),
@@ -554,12 +554,11 @@ class summary_panel:
 class results_panel:
     # TODO -- Separate into individual graphs / sections!!
 
-    
 
     # Highly experimental code for using a second source to display snr vs. exp --!
-    def create_data(self, attr, old, new):
+    def create_data(self, event):
             wavelengths = etc.wavelengths.copy()
-            etc.set_parameter('wavelengths', [new * u.nm])
+            etc.set_parameter('wavelengths', [event.x * u.nm])
             if etc.target == 'signal_noise_ratio':
                 exposure = etc.exposure.copy()
                 etc.set_parameter('exposure', [str(item)+exp.units.value for item in self.new_source.data['x']])
@@ -588,9 +587,21 @@ class results_panel:
         # Vertical line to indicate & select wavelength
         self.wavelength = Span(location=etc.wavelengths[0].to(u.nm).value, dimension='height', line_color='black', line_dash='dashed')
         self.wavelength_js = CustomJS(args={'vline':self.wavelength}, code='vline.location=cb_obj.x;')
+        self.vs_wavelength = Span(location=self.wavelength.location, dimension='height', line_color='#000', line_dash='solid')
 
         # Define tools to use in plots -- TODO pick better order
         plot_tools = 'pan, box_zoom, wheel_zoom, undo, redo, reset, save, zoom_in, zoom_out, hover, help'
+
+        # Define vs. plot and annotations
+        self.vs_plot = figure(title=f'Wavelength: {int(self.wavelength.location)} nm', active_inspect='hover', tools=plot_tools,  tooltips=[('S/N', '$y{0.00}'), ('exp (s)', '$x{0}')], sizing_mode='scale_width')
+        self.vs_box = BoxAnnotation(left_units='screen', bottom_units='screen', bottom=0, left=0, fill_color="#FFF", fill_alpha=0.6)
+        self.vs_text = Label(x=0, y=0, text='Click on the plots above to set wavelength', text_align='center', 
+            text_baseline='middle', text_font_size='2.5em', text_alpha=0.7)
+        
+        self.vs_wavelength_js = CustomJS(args={'vline':self.vs_wavelength, 'box':self.vs_box, 'text':self.vs_text, 'plot':self.vs_plot}, 
+            code='box.visible=false;text.visible=false;vline.location=cb_obj.x;plot.title.text="Wavelength: "+Math.round(cb_obj.x)+"nm";')
+
+        
 
         # Plot snr vs. wavelength
         self.snr_plot = figure(title='Signal to Noise Ratio', active_inspect='hover', tools=plot_tools,
@@ -601,6 +612,7 @@ class results_panel:
         scatter = self.snr_plot.scatter(x='wavelengths', y='snr', source=results, alpha=0.5, size=6, legend_label='\u00A0')
         scatter.visible = False  # Initially start hidden
         self.snr_plot.line(x='wavelengths', y='snr', source=results, legend_label='')
+        self.snr_plot.add_layout(self.vs_wavelength)
         self.snr_plot.add_layout(self.wavelength)
         self.snr_plot.output_backend = 'svg'
         self.snr_plot.legend.label_height=10
@@ -609,16 +621,19 @@ class results_panel:
         self.snr_plot.legend.spacing = 5
         self.snr_plot.legend.click_policy = 'hide'
         self.snr_plot.js_on_event(MouseMove, self.wavelength_js)
+        self.snr_plot.js_on_event('tap', self.vs_wavelength_js)
+        self.snr_plot.on_event('tap', self.create_data)
         
 
         # Plot exp vs. wavelength
-        self.exp_plot = figure(title='Exposure Time', active_inspect='hover', tools=plot_tools,  sizing_mode='scale_width', width=500, height=100,
+        self.exp_plot = figure(title='Exposure Time', active_inspect='hover', tools=plot_tools,  sizing_mode='scale_width', width=500, height=100, name='exp_plot',
                tooltips=[('exp (s)', '$y{0}'), ('λ (nm)', '$x{0}')], y_range=(min(results.data['exposure'])*.8, nanpercentile(results.data['exposure'], 50)))
         self.exp_plot.xaxis.axis_label = 'wavelengths (nm)'
         self.exp_plot.yaxis.axis_label = 'exposure time (s)'
         self.exp_plot.scatter(x='wavelengths', y='exposure', source=results, alpha=0.5, size=6, legend_label='\u00A0')
         line = self.exp_plot.line(x='wavelengths', y='exposure', source=results, legend_label='')
         line.visible = False  # Initially start hidden
+        self.exp_plot.add_layout(self.vs_wavelength)
         self.exp_plot.add_layout(self.wavelength)
         self.exp_plot.output_backend = 'svg'
         self.exp_plot.legend.label_height=10
@@ -626,11 +641,15 @@ class results_panel:
         self.exp_plot.legend.label_text_font_size = '10px'
         self.exp_plot.legend.click_policy = 'hide'
         self.exp_plot.js_on_event(MouseMove, self.wavelength_js)
+        self.exp_plot.js_on_event('tap', self.vs_wavelength_js)
+        self.exp_plot.on_event('tap', self.create_data)
         # Custom JS callback for the plot reset button to ensure proper y_range handling
         js_reset_callback = '''
         const exp = src.data['exposure'].filter( value => !Number.isNaN(value) );
-        ax.start = Math.min(...exp) * 0.8;
-        ax.end = exp.sort((a, b) => a - b)[Math.floor(exp.length / 2)];
+        if (exp.length > 0){
+            ax.start = Math.min(...exp) * 0.8;
+            ax.end = exp.sort((a, b) => a - b)[Math.floor(exp.length / 2)];
+        }
         '''
         self.exp_plot.js_on_event(Reset, CustomJS(args={'src':results, 'ax':self.exp_plot.y_range}, code=js_reset_callback))
 
@@ -646,6 +665,7 @@ class results_panel:
         self.counts_plot.line(x='wavelengths', y='dark_current', source=results, legend_label='Dark Current', line_color='#000000')
         self.counts_plot.line(x='wavelengths', y='nonlinear', source=results, legend_label='Non-linearity', line_color='#D55E00', line_dash='dashed')
         #self.counts_plot.add_layout(self.counts_plot.legend[0], 'right')  # For moving legend outside plot
+        self.counts_plot.add_layout(self.vs_wavelength)
         self.counts_plot.add_layout(self.wavelength)
         self.counts_plot.legend.label_height=10
         self.counts_plot.legend.label_width=10
@@ -654,16 +674,21 @@ class results_panel:
         self.counts_plot.legend.spacing = 0  # Figure out whether or not this line helps!
         self.counts_plot.output_backend = 'svg'
         self.counts_plot.js_on_event(MouseMove, self.wavelength_js)
+        self.counts_plot.js_on_event('tap', self.vs_wavelength_js)
+        self.counts_plot.on_event('tap', self.create_data)
 
 
         # EXPERIMENTAL CODE !!! --- creating second data source with snr vs. exp
-        self.new_source = ColumnDataSource({'x':linspace(0, 7200, 100), 'y':[0]*100})
-        self.create_data('none', self.wavelength.location, self.wavelength.location)
-        self.vs_plot = figure(title='Exposure vs. SNR', active_inspect='hover', tools=plot_tools,  tooltips=[('y', '$y{0.00}'), ('x', '$x{0.00}')], sizing_mode='scale_width')
+        self.new_source = ColumnDataSource({'x':linspace(0, 7200, 25), 'y':[0]*25})
+        self.create_data(Tap(model=None, x=self.wavelength.location))
         self.vs_plot.xaxis.axis_label = 'exposure (s)'
         self.vs_plot.yaxis.axis_label = 'Signal to Noise Ratio'
         self.vs_plot.line(x='x', y='y', source=self.new_source)
         self.vs_plot.output_backend = 'svg'
+        self.vs_text.x = (self.new_source.data['x'][0]+self.new_source.data['x'][-1])/2
+        self.vs_text.y = (self.new_source.data['y'][0]+self.new_source.data['y'][-1])/2
+        self.vs_plot.add_layout(self.vs_box)
+        self.vs_plot.add_layout(self.vs_text)
 
 
         # Define grid of plots
@@ -684,24 +709,26 @@ class results_panel:
     def reload(self):
         if exp.target.value == 'signal to noise ratio':
             self.new_source.data = {'x': linspace(exp.exposure_min.value, exp.exposure_max.value, 100) if exp.exposure_max.value > exp.exposure_min.value else linspace(0, 7200, 100), 'y':[0]*100}
-            self.create_data('none', self.wavelength.location, self.wavelength.location)
+            self.create_data(Tap(model=None, x=self.wavelength.location))
             self.vs_plot.xaxis.axis_label = 'exposure (s)'
             self.vs_plot.yaxis.axis_label = 'Signal to Noise Ratio'
+            self.vs_plot.tools[-2].tooltips=[('S/N', '$y{0.00}'), ('exp (s)', '$x{0}')]  # Second to last tool = HoverTool
             if not self.snr_plot.visible:
                 self.exp_plot.visible = False
                 self.snr_plot.visible = True
                 page_loaded()
         elif exp.target.value == 'exposure':
             self.new_source.data = {'x': linspace(exp.snr_min.value, exp.snr_max.value, 25) if exp.snr_max.value > exp.snr_min.value else linspace(0, 20, 25), 'y': [0]*25}
-            self.create_data('none', self.wavelength.location, self.wavelength.location)
+            self.create_data(Tap(model=None, x=self.wavelength.location))
             self.vs_plot.xaxis.axis_label = 'Signal to Noise Ratio'
             self.vs_plot.yaxis.axis_label = 'exposure (s)'
-            
+            self.vs_plot.tools[-2].tooltips=[('exp (s)', '$y{0}'), ('S/N', '$x{0.00}')]
             if not self.exp_plot.visible:
                 self.snr_plot.visible = False
                 self.exp_plot.visible = True
-                self.exp_plot.y_range.start = min(etc.exposure[0].value)*.8
-                self.exp_plot.y_range.end = nanpercentile(etc.exposure[0].value, 50)
+                if not isnan(etc.exposure[0].value).all():
+                    self.exp_plot.y_range.start = min(etc.exposure[0].value)*.8
+                    self.exp_plot.y_range.end = nanpercentile(etc.exposure[0].value, 50)
                 page_loaded()
     
 

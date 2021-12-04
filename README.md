@@ -12,6 +12,8 @@ The calculator GUI can be found at <https://www2.keck.hawaii.edu/not-yet-release
 
 The remainder of this document contains instructions to download, install, and run the server on your own local machine.
 
+*Acknowledgments to gemini & others go here*
+
 ### Installation
 
 To install this program, clone this directory using `git clone https://github.com/Keaton-WMKO/etc-prototype.git`.

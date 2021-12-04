@@ -144,6 +144,7 @@ class exposure_time_calculator:
         self.instrument = instrument(self.config.defaults.instrument)
         self.atmosphere = atmosphere()
         self.source = source()
+        u.add_enabled_units([self.source.flam, self.source.photlam])
 
         # Initialize values
         self.telescope_area = u.Quantity(self.config.telescope_area)
@@ -188,7 +189,9 @@ class exposure_time_calculator:
                     self.exposure = [u.Quantity(x) for x in self.config.defaults.exposure] * u.s
                 self.target = value
             elif name == 'wavelengths':
+                print(value)
                 self.wavelengths = [u.Quantity(x).to(u.angstrom) for x in value] * u.angstrom
+                print(self.wavelengths)
             elif name == 'exposure':
                 self.target = 'signal_noise_ratio'
                 self.exposure = [u.Quantity(x).to(u.s) for x in value] * u.s

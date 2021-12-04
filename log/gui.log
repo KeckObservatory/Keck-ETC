@@ -456,3 +456,48 @@ ValueError: failed to validate Spinner(id='1602', ...).step: expected a value of
 2021-12-03 11:07:17,321 Starting Bokeh server with process id: 30596
 2021-12-03 11:07:19,787 WebSocket connection opened
 2021-12-03 11:07:19,788 ServerConnection created
+2021-12-03 15:12:14,642 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-03 15:12:14,644 User authentication hooks NOT provided (default user enabled)
+2021-12-03 15:12:14,650 Bokeh app running at: http://localhost:8000/prototype
+2021-12-03 15:12:14,650 Starting Bokeh server with process id: 2432
+2021-12-03 15:12:18,721 WebSocket connection opened
+2021-12-03 15:12:18,722 ServerConnection created
+2021-12-03 15:13:12,967 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-03 15:13:12,970 User authentication hooks NOT provided (default user enabled)
+2021-12-03 15:13:12,978 Bokeh app running at: http://localhost:8000/prototype
+2021-12-03 15:13:12,978 Starting Bokeh server with process id: 2516
+2021-12-03 15:13:15,564 WebSocket connection opened
+2021-12-03 15:13:15,565 ServerConnection created
+2021-12-03 15:16:07,754 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-03 15:16:07,756 User authentication hooks NOT provided (default user enabled)
+2021-12-03 15:16:07,761 Bokeh app running at: http://localhost:8000/prototype
+2021-12-03 15:16:07,761 Starting Bokeh server with process id: 2626
+2021-12-03 15:16:09,799 WebSocket connection opened
+2021-12-03 15:16:09,799 ServerConnection created
+2021-12-03 15:16:12,320 error handling message
+ message: Message 'PATCH-DOC' content: {'events': [{'kind': 'MessageSent', 'msg_type': 'bokeh_event', 'msg_data': {'event_name': 'document_ready', 'event_values': {}}}], 'references': []} 
+ error: TypeError('create_data() takes 2 positional arguments but 4 were given')
+Traceback (most recent call last):
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/server/protocol_handler.py", line 90, in handle
+    work = await handler(message, connection)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/server/session.py", line 67, in _needs_document_lock_wrapper
+    result = func(self, *args, **kwargs)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/server/session.py", line 261, in _handle_patch
+    message.apply_to_document(self.document, self)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/protocol/messages/patch_doc.py", line 100, in apply_to_document
+    doc._with_self_as_curdoc(lambda: doc.apply_json_patch(self.content, setter))
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 1198, in _with_self_as_curdoc
+    return f()
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/protocol/messages/patch_doc.py", line 100, in <lambda>
+    doc._with_self_as_curdoc(lambda: doc.apply_json_patch(self.content, setter))
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 398, in apply_json_patch
+    self._trigger_on_message(event_json["msg_type"], event_json["msg_data"])
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 687, in _trigger_on_message
+    cb(msg_data)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 359, in apply_json_event
+    cb(event)
+  File "/usr/local/home/kblair/Documents/ETC/prototype/main.py", line 859, in load_contents
+    res.load()
+  File "/usr/local/home/kblair/Documents/ETC/prototype/main.py", line 671, in load
+    self.create_data('none', self.wavelength.location, self.wavelength.location)
+TypeError: create_data() takes 2 positional arguments but 4 were given
