@@ -2,11 +2,11 @@
 
 # default values
 defaults:
-  grating: '600ZD'
+  grating: '600ZD'  # What should these defaults be?
   filter: 'GG400'
-  slit: 10 mm
+  slit_width: 0.5 arcsec  # What should these defaults be?
+  slit_length: 10 arcsec  # ?
   binning: '1x1'
-  amplifier: '1B'
   mode: 'spectral'
 
 # grating options
@@ -22,9 +22,16 @@ binnings: ['1x1', '1x2', '2x1', '2x2']
 # operation modes
 modes: ['spectral', 'direct']
 
+# Slit available options
+slits: [ ]  # No pre-set slit options available
+# Are custom slits available?
+custom_slits: true
+
 # available amplifiers
 amplifiers: [1A, 1B, 2A, 2B, 3A, 3B, 4A, 4B, 5B, 6B, 7B, 8B]
 
+
+# The following are per detector, check w/ Sherry, but assuming use worse case value?
 read_noise:
   direct:
     1A: 2.582 electron
@@ -47,7 +54,6 @@ read_noise:
 
 dark_current:
   direct:
-    # No data for 1A, 2A, etc... what should I do?
     1B: 4.19 electron / (pixel * hour)
     2B: 3.46 electron / (pixel * hour)
     3B: 4.03 electron / (pixel * hour)
@@ -61,5 +67,3 @@ dark_current:
     6B: 3.80 electron / (pixel * hour)
     7B: 3.30 electron / (pixel * hour)
     8B: 3.70 electron / (pixel * hour)
-
-# Slit options, could be any number... how to represent in config file?

@@ -189,9 +189,10 @@ class exposure_time_calculator:
                     self.exposure = [u.Quantity(x) for x in self.config.defaults.exposure] * u.s
                 self.target = value
             elif name == 'wavelengths':
-                print(value)
+                # TODO -- fix bug with setting wavelengths
+                #print(value)
                 self.wavelengths = [u.Quantity(x).to(u.angstrom) for x in value] * u.angstrom
-                print(self.wavelengths)
+                #print(self.wavelengths)
             elif name == 'exposure':
                 self.target = 'signal_noise_ratio'
                 self.exposure = [u.Quantity(x).to(u.s) for x in value] * u.s

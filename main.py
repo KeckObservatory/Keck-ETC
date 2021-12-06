@@ -9,6 +9,7 @@ from bokeh.layouts import column, row
 import yaml
 from calculator.ETC import exposure_time_calculator
 from numpy import nanpercentile, linspace, round, isnan
+from pathlib import Path
 from astropy import units as u
 import pdb
 
@@ -591,20 +592,19 @@ class results_panel:
 
         # Define tools to use in plots -- TODO pick better order
         plot_tools = 'pan, box_zoom, wheel_zoom, undo, redo, reset, save, zoom_in, zoom_out, hover, help'
-
-        # Define vs. plot and annotations
-        self.vs_plot = figure(title=f'Wavelength: {int(self.wavelength.location)} nm', active_inspect='hover', tools=plot_tools,  tooltips=[('S/N', '$y{0.00}'), ('exp (s)', '$x{0}')], sizing_mode='scale_width')
-        self.vs_box = BoxAnnotation(left_units='screen', bottom_units='screen', bottom=0, left=0, fill_color="#FFF", fill_alpha=0.6)
-        self.vs_text = Label(x=0, y=0, text='Click on the plots above to set wavelength', text_align='center', 
-            text_baseline='middle', text_font_size='2.5em', text_alpha=0.7)
         
-        self.vs_wavelength_js = CustomJS(args={'vline':self.vs_wavelength, 'box':self.vs_box, 'text':self.vs_text, 'plot':self.vs_plot}, 
-            code='box.visible=false;text.visible=false;vline.location=cb_obj.x;plot.title.text="Wavelength: "+Math.round(cb_obj.x)+"nm";')
+        # Define vs. plot
+        self.vs_plot = figure(title=f'Wavelength: {int(self.wavelength.location)} nm', active_inspect='hover', tools=plot_tools, width=500, height=100, tooltips=[('S/N', '$y{0.00}'), ('exp (s)', '$x{0}')], sizing_mode='scale_width', name='vs_plot')
+        
+
+        self.vs_wavelength_js = CustomJS(args={'vline':self.vs_wavelength, 'plot':self.vs_plot}, 
+            code='plot.select_one("text").visible=false;plot.select_one("box").visible=false;vline.location=cb_obj.x;plot.title.text="Wavelength: "+Math.round(cb_obj.x)+"nm";')
+            #code='vline.location=cb_obj.x;plot.title.text="Wavelength: "+Math.round(cb_obj.x)+"nm";')
 
         
 
         # Plot snr vs. wavelength
-        self.snr_plot = figure(title='Signal to Noise Ratio', active_inspect='hover', tools=plot_tools,
+        self.snr_plot = figure(title='Signal to Noise Ratio', active_inspect='hover', tools=plot_tools, width=500, height=100,
                tooltips=[('S/N', '$y{0.0}'), ('λ (nm)', '$x{0}')], sizing_mode='scale_both')
         self.snr_plot.sizing_mode = 'scale_both'
         self.snr_plot.xaxis.axis_label = 'wavelengths (nm)'
@@ -655,7 +655,7 @@ class results_panel:
 
 
         # Plot 2
-        self.counts_plot = figure(title='Counts', active_inspect='hover', tools=plot_tools,  tooltips=[('count (ADU/px)', '$y{0}'), ('λ (nm)', '$x{0}')], y_axis_type='log', sizing_mode='scale_width')
+        self.counts_plot = figure(title='Counts', active_inspect='hover', tools=plot_tools, width=500, height=100, tooltips=[('count (ADU/px)', '$y{0}'), ('λ (nm)', '$x{0}')], y_axis_type='log', sizing_mode='scale_width')
         self.counts_plot.xaxis.axis_label = 'wavelengths (nm)'
         self.counts_plot.yaxis.axis_label = 'Counts (ADU/px)'
 
@@ -681,15 +681,18 @@ class results_panel:
         # EXPERIMENTAL CODE !!! --- creating second data source with snr vs. exp
         self.new_source = ColumnDataSource({'x':linspace(0, 7200, 25), 'y':[0]*25})
         self.create_data(Tap(model=None, x=self.wavelength.location))
+        self.vs_box = BoxAnnotation(left_units='screen', bottom_units='screen', bottom=0, left=0, fill_color="#FFF", fill_alpha=0.6, name='box')
+        self.vs_text = Label(x=0, y=0, x_units='screen', y_units='screen', text='Click on the plots above to set wavelength', text_align='center', 
+            text_baseline='middle', text_font_size='2.5em', text_alpha=0.7, name='text')
         self.vs_plot.xaxis.axis_label = 'exposure (s)'
         self.vs_plot.yaxis.axis_label = 'Signal to Noise Ratio'
         self.vs_plot.line(x='x', y='y', source=self.new_source)
         self.vs_plot.output_backend = 'svg'
-        self.vs_text.x = (self.new_source.data['x'][0]+self.new_source.data['x'][-1])/2
-        self.vs_text.y = (self.new_source.data['y'][0]+self.new_source.data['y'][-1])/2
+        #self.vs_text.x = (self.new_source.data['x'][0]+self.new_source.data['x'][-1])/2
+        #self.vs_text.y = (self.new_source.data['y'][0]+self.new_source.data['y'][-1])/2
         self.vs_plot.add_layout(self.vs_box)
         self.vs_plot.add_layout(self.vs_text)
-
+        
 
         # Define grid of plots
         self.plots = gridplot([[self.snr_plot], [self.exp_plot], [self.counts_plot], [self.vs_plot]], 
@@ -698,11 +701,10 @@ class results_panel:
             plot_width=500,
             plot_height=100,
         )
-        if etc.target == 'signal_noise_ratio':
-            self.exp_plot.visible = False
-        elif etc.target == 'exposure':
-            self.snr_plot.visible = False
-
+        if etc.target == 'exposure':
+            del self.plots.children[-1].children[0]
+        elif etc.target == 'signal_noise_ratio':
+            del self.plots.children[-1].children[1]
 
         self.contents.children = [self.plots]
 
@@ -713,9 +715,8 @@ class results_panel:
             self.vs_plot.xaxis.axis_label = 'exposure (s)'
             self.vs_plot.yaxis.axis_label = 'Signal to Noise Ratio'
             self.vs_plot.tools[-2].tooltips=[('S/N', '$y{0.00}'), ('exp (s)', '$x{0}')]  # Second to last tool = HoverTool
-            if not self.snr_plot.visible:
-                self.exp_plot.visible = False
-                self.snr_plot.visible = True
+            if not self.plots.children[-1].children[0] == (self.snr_plot, 0, 0):
+                self.plots.children[-1].children[0] = (self.snr_plot, 0, 0)
                 page_loaded()
         elif exp.target.value == 'exposure':
             self.new_source.data = {'x': linspace(exp.snr_min.value, exp.snr_max.value, 25) if exp.snr_max.value > exp.snr_min.value else linspace(0, 20, 25), 'y': [0]*25}
@@ -723,9 +724,8 @@ class results_panel:
             self.vs_plot.xaxis.axis_label = 'Signal to Noise Ratio'
             self.vs_plot.yaxis.axis_label = 'exposure (s)'
             self.vs_plot.tools[-2].tooltips=[('exp (s)', '$y{0}'), ('S/N', '$x{0.00}')]
-            if not self.exp_plot.visible:
-                self.snr_plot.visible = False
-                self.exp_plot.visible = True
+            if not self.plots.children[-1].children[0] == (self.exp_plot, 0, 0):
+                self.plots.children[-1].children[0] = (self.exp_plot, 0, 0)
                 if not isnan(etc.exposure[0].value).all():
                     self.exp_plot.y_range.start = min(etc.exposure[0].value)*.8
                     self.exp_plot.y_range.end = nanpercentile(etc.exposure[0].value, 50)
@@ -776,31 +776,9 @@ curdoc().add_root(cookie_container)
 cookie_container.js_on_change('tags', cookie_handler)
 def set_cookies(obj):
     cookie_container.tags = [obj]
+
 # Define DOM object to trigger resize event after contents have been loaded, because otherwise responsive elements won't size properly
-page_loaded_js = '''
-window.dispatchEvent(new Event("resize"));
-for(const title in titles){
-    if (document.querySelectorAll('.'+title+' label[data-tooltip]').length > 0){
-        continue;
-    }
-    document.querySelectorAll('.'+title+' label, .'+title+' p, .'+title+' div.bk-slider-title').forEach( (label) =>{
-        const info = document.createElement('label');
-        info.setAttribute('data-tooltip', titles[title]);
-        //info.classList.add('info');
-        info.appendChild(document.createTextNode('\U0001F6C8'));
-        const line = document.createElement('div');
-        line.classList.add('label-container');
-        if (label.nodeName == 'P'){
-            label.parentElement.classList.add('label-container');
-            label.parentElement.parentElement.classList.add('paragraph-row');
-        }
-        label.parentElement.insertBefore(line, label);
-        line.appendChild(label);
-        line.appendChild(info);
-        info.classList.add('info');
-    });
-};
-'''
+page_loaded_js = Path('static/js/page_loaded.js').read_text()
 page_loaded_callback = CustomJS(args={'titles':yaml.safe_load(open('static/mouseover_text.yaml'))}, code=page_loaded_js)
 page_loaded_container = Div(name='page_loaded_container', visible=False)
 curdoc().add_root(page_loaded_container)

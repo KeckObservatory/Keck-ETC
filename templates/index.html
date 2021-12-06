@@ -8,7 +8,7 @@
         {% include 'styles.css' %}
     </style>
     <meta name="viewport" content="width=device-width,initial-scale=1" id="viewport-meta" />
-    <meta charset='utf-8'>
+    <meta charset='utf-16'>
     <script>
         const errorHandler = (e) => {
             if (e.message.includes('not connected')) {                  
@@ -22,12 +22,22 @@
         };
         window.addEventListener('error', errorHandler, {once:true});  // Set once to true to prevent duplicate js alerts before reloading page
         const resizeHandler = (e) => {
+            // If page is resized, reset contents to size appropriately
             if (e.isTrusted && typeof window.Bokeh.documents[0] != 'undefined') {
                 const reset = window.Bokeh.documents[0].get_model_by_name('reset_contents_container');
                 if (reset.tags[0] === false){
                     reset.tags = [true];
                 }
             }
+            // Handle position of text for plotting overlay, ensure that it's centered
+            if (typeof window.Bokeh.documents[0] != 'undefined') {
+                const plot = window.Bokeh.documents[0].get_model_by_name('vs_plot');
+                if (typeof plot != 'undefined' && plot.select_one('text').visible){
+                    plot.select_one('text').x = plot.inner_width/2;
+                    plot.select_one('text').y = plot.inner_height/2;
+                }
+            }
+
         };
         window.addEventListener('resize', resizeHandler);
     </script>

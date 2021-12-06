@@ -178,7 +178,7 @@ label.info:hover::after{
 /* Mobile / vertical tablet modes, stack sections */
 /* TODO -- Stack plots for maximum size, figure out something to do with sidebar! */
 @media (max-width: 900px) {
-  .panel, .input_panels .panel, .panel.first, .panel.last, .instrument-menu, h2 {
+  .panel, .input_panels .panel, .panel.first, .panel.last, .instrument-menu, .title-bar {
     display: block;
     width: 90%;
     margin: 10px auto;
@@ -187,5 +187,14 @@ label.info:hover::after{
   .row {
     flex-direction: column;
   }
+
+  div.bk.hrule {
+    width: 98% !important;
+  }
+
+  .bk.section-title, .bk.bk-tab, h2 {
+    font-size: 2vw !important;
+  }
+
 }
 

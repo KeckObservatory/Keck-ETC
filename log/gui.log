@@ -501,3 +501,5 @@ Traceback (most recent call last):
   File "/usr/local/home/kblair/Documents/ETC/prototype/main.py", line 671, in load
     self.create_data('none', self.wavelength.location, self.wavelength.location)
 TypeError: create_data() takes 2 positional arguments but 4 were given
+2021-12-06 09:25:32,844 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-06 09:29:31,264 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)

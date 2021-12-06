@@ -52,10 +52,24 @@
         <script>
             cookieButtonClicked = () => {
                 document.querySelector('div.cookie-message').classList.add('closed');
+                const exp_date = new Date( new Date().getTime() + 7 * 24 * 60 * 60 );  // Add a week to current date
+                document.cookie = 'acceptcookies=true; expires=' + exp_date.toUTCString();
+    
+            }
+            
+            checkCookiesAccepted = () => {
+                // If cookie message has already been accepted, don't display it
+                const cookies = document.cookie.split(';');
+                for (i in cookies) {
+                    const cookie = cookies[i].trim().split('=');
+                    if (cookie[0] === 'acceptcookies' && cookie[1] === 'true'){
+                        document.querySelector('div.cookie-message').style.display = 'none';
+                    }
+                }
             }
         </script>
     </head>
-    <body>
+    <body onload='checkCookiesAccepted()'>
         <div class='cookie-message'>
         <p>This page uses cookies to save your actions across multiple sessions. By continuing to use this site, you are consenting to our use of cookies.</p>
         <button type='button' onclick='cookieButtonClicked();'><b>Accept</b></button>
