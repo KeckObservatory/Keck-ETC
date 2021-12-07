@@ -170,26 +170,40 @@ class atmosphere:
         return result
 
 
-    def get_transmission(self, wavelengths):  # TODO -- replace out-of-bounds wavelengths with np.NaN instead of discarding
+    def get_transmission(self, wavelengths):
+
+        results = np.zeros(len(wavelengths))
 
         # Check for and remove out-of-bounds wavelengths to avoid RegularGridInterpolator throwing errors
         wavelengths_trim = wavelengths[(self._wavelength_index[0] <= wavelengths) & (wavelengths <= self._wavelength_index[-1])]
+        # If results are outside the wavelength bounds, return 0
+        results[(self._wavelength_index[0] > wavelengths) | (wavelengths > self._wavelength_index[-1])] = 0
         if len(wavelengths_trim) != len(wavelengths):
             warn('In atmosphere.get_transmission() -- some or all provided wavelengths are outside the current bounds of [' +
-            str(self._wavelength_index[0])+', '+str(self._wavelength_index[-1])+'], discarding invalid values', RuntimeWarning)
+            str(self._wavelength_index[0])+', '+str(self._wavelength_index[-1])+'], returning zero', RuntimeWarning)
 
         # Perform trilinear interpolation to find transmission values
         interpolation = RegularGridInterpolator( (self._airmass_index, self._water_vapor_index, self._wavelength_index), self._transmission )
-        return interpolation([[self.airmass.value, self.water_vapor.to(u.mm).value, λ] for λ in wavelengths_trim.to(u.angstrom).value]) * u.Unit('')
+        interpolation = interpolation([[self.airmass.value, self.water_vapor.to(u.mm).value, λ] for λ in wavelengths_trim.to(u.angstrom).value])
+        # Save interpolation values to results
+        results[(self._wavelength_index[0] <= wavelengths) & (wavelengths <= self._wavelength_index[-1])] = interpolation
+        return results * u.Unit('')
 
 
-    def get_emission(self, wavelengths):  # TODO -- replace out-of-bounds wavelengths with np.NaN instead of discarding
+    def get_emission(self, wavelengths):
+        results = np.zeros(len(wavelengths))
+
         # Check for and remove out-of-bounds wavelengths to avoid RegularGridInterpolator throwing errors
         wavelengths_trim = wavelengths[(self._wavelength_index[0] <= wavelengths) & (wavelengths <= self._wavelength_index[-1])]
+        # If results are outside the wavelength bounds, return NaN
+        results[(self._wavelength_index[0] > wavelengths) | (wavelengths > self._wavelength_index[-1])] = np.NaN
         if len(wavelengths_trim) != len(wavelengths):
             warn('WARNING: In atmosphere.get_emission() -- some or all provided wavelengths are outside the current bounds of [' +
-            str(self._wavelength_index[0])+', '+str(self._wavelength_index[-1])+'], discarding invalid values', RuntimeWarning)
+            str(self._wavelength_index[0])+', '+str(self._wavelength_index[-1])+'], returning NaN', RuntimeWarning)
 
         # Perform trilinear interpolation to find emission values
         interpolation = RegularGridInterpolator( (self._airmass_index, self._water_vapor_index, self._wavelength_index), self._emission )
-        return interpolation([[self.airmass.value, self.water_vapor.to(u.mm).value, λ] for λ in wavelengths_trim.to(u.angstrom).value]) * u.Unit('photon/(s arcsec^2 nm m^2)')
+        interpolation = interpolation([[self.airmass.value, self.water_vapor.to(u.mm).value, λ] for λ in wavelengths_trim.to(u.angstrom).value])
+        # Save interpolation values to results
+        results[(self._wavelength_index[0] <= wavelengths) & (wavelengths <= self._wavelength_index[-1])] = interpolation
+        return results * u.Unit('photon/(s arcsec^2 nm m^2)')

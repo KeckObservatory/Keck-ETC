@@ -503,3 +503,346 @@ Traceback (most recent call last):
 TypeError: create_data() takes 2 positional arguments but 4 were given
 2021-12-06 09:25:32,844 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
 2021-12-06 09:29:31,264 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-06 13:59:25,409 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-06 13:59:25,410 User authentication hooks NOT provided (default user enabled)
+2021-12-06 13:59:25,414 Bokeh app running at: http://localhost:8000/prototype
+2021-12-06 13:59:25,414 Starting Bokeh server with process id: 5420
+2021-12-06 13:59:29,039 WebSocket connection opened
+2021-12-06 13:59:29,039 ServerConnection created
+2021-12-06 13:59:32,901 WebSocket connection closed: code=1001, reason=None
+2021-12-06 13:59:33,081 WebSocket connection opened
+2021-12-06 13:59:33,082 ServerConnection created
+2021-12-06 14:00:29,122 WebSocket connection closed: code=1001, reason=None
+2021-12-06 14:00:29,285 WebSocket connection opened
+2021-12-06 14:00:29,285 ServerConnection created
+2021-12-06 14:00:33,738 WebSocket connection closed: code=1001, reason=None
+2021-12-06 14:00:33,878 WebSocket connection opened
+2021-12-06 14:00:33,879 ServerConnection created
+2021-12-06 14:01:06,163 WebSocket connection closed: code=1001, reason=None
+2021-12-06 14:01:06,335 WebSocket connection opened
+2021-12-06 14:01:06,336 ServerConnection created
+2021-12-06 14:01:20,038 WebSocket connection closed: code=1001, reason=None
+2021-12-06 14:01:20,188 WebSocket connection opened
+2021-12-06 14:01:20,189 ServerConnection created
+2021-12-06 14:01:45,528 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-06 14:01:45,530 User authentication hooks NOT provided (default user enabled)
+2021-12-06 14:01:45,534 Bokeh app running at: http://localhost:8000/prototype
+2021-12-06 14:01:45,534 Starting Bokeh server with process id: 5612
+2021-12-06 14:01:47,898 WebSocket connection opened
+2021-12-06 14:01:47,898 ServerConnection created
+2021-12-06 14:03:33,586 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-06 14:03:33,587 User authentication hooks NOT provided (default user enabled)
+2021-12-06 14:03:33,591 Bokeh app running at: http://localhost:8000/prototype
+2021-12-06 14:03:33,591 Starting Bokeh server with process id: 5708
+2021-12-06 14:03:35,342 WebSocket connection opened
+2021-12-06 14:03:35,342 ServerConnection created
+2021-12-06 14:03:54,978 WebSocket connection closed: code=1001, reason=None
+2021-12-06 14:03:55,250 WebSocket connection opened
+2021-12-06 14:03:55,251 ServerConnection created
+2021-12-06 14:05:14,467 WebSocket connection closed: code=1001, reason=None
+2021-12-06 14:05:14,649 WebSocket connection opened
+2021-12-06 14:05:14,650 ServerConnection created
+2021-12-06 14:05:25,654 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-06 14:05:25,656 User authentication hooks NOT provided (default user enabled)
+2021-12-06 14:05:25,660 Bokeh app running at: http://localhost:8000/prototype
+2021-12-06 14:05:25,661 Starting Bokeh server with process id: 5824
+2021-12-06 14:05:28,472 WebSocket connection opened
+2021-12-06 14:05:28,473 ServerConnection created
+2021-12-06 14:09:52,437 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-06 14:09:52,439 User authentication hooks NOT provided (default user enabled)
+2021-12-06 14:09:52,444 Bokeh app running at: http://localhost:8000/prototype
+2021-12-06 14:09:52,444 Starting Bokeh server with process id: 5976
+2021-12-06 14:09:54,931 WebSocket connection opened
+2021-12-06 14:09:54,932 ServerConnection created
+2021-12-06 14:10:28,119 Failed sending message as connection was closed
+2021-12-06 14:10:28,119 Failed sending message as connection was closed
+2021-12-06 14:10:28,119 Failed sending message as connection was closed
+2021-12-06 14:10:28,119 Failed sending message as connection was closed
+2021-12-06 14:10:28,120 Failed sending message as connection was closed
+2021-12-06 14:10:28,120 Failed sending message as connection was closed
+2021-12-06 14:10:28,121 WebSocket connection closed: code=None, reason=None
+2021-12-06 14:10:28,121 WebSocket connection opened
+2021-12-06 14:10:28,122 ServerConnection created
+2021-12-06 14:11:01,554 WebSocket connection closed: code=1001, reason=None
+2021-12-06 14:11:01,722 WebSocket connection opened
+2021-12-06 14:11:01,722 ServerConnection created
+2021-12-06 14:11:19,690 WebSocket connection closed: code=1001, reason=None
+2021-12-06 14:11:19,855 WebSocket connection opened
+2021-12-06 14:11:19,855 ServerConnection created
+2021-12-06 14:11:27,130 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-06 14:11:27,131 User authentication hooks NOT provided (default user enabled)
+2021-12-06 14:11:27,135 Bokeh app running at: http://localhost:8000/prototype
+2021-12-06 14:11:27,135 Starting Bokeh server with process id: 6099
+2021-12-06 14:11:31,762 WebSocket connection opened
+2021-12-06 14:11:31,763 ServerConnection created
+2021-12-06 14:11:53,440 WebSocket connection closed: code=1001, reason=None
+2021-12-06 14:11:53,636 WebSocket connection opened
+2021-12-06 14:11:53,636 ServerConnection created
+2021-12-06 14:13:17,480 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-06 14:13:17,481 User authentication hooks NOT provided (default user enabled)
+2021-12-06 14:13:17,485 Bokeh app running at: http://localhost:8000/prototype
+2021-12-06 14:13:17,485 Starting Bokeh server with process id: 6459
+2021-12-06 14:13:19,946 WebSocket connection opened
+2021-12-06 14:13:19,947 ServerConnection created
+2021-12-06 14:14:39,729 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-06 14:14:39,731 User authentication hooks NOT provided (default user enabled)
+2021-12-06 14:14:39,734 Bokeh app running at: http://localhost:8000/prototype
+2021-12-06 14:14:39,734 Starting Bokeh server with process id: 6552
+2021-12-06 14:14:42,524 WebSocket connection opened
+2021-12-06 14:14:42,524 ServerConnection created
+2021-12-06 14:15:18,121 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-06 14:15:18,123 User authentication hooks NOT provided (default user enabled)
+2021-12-06 14:15:18,127 Bokeh app running at: http://localhost:8000/prototype
+2021-12-06 14:15:18,127 Starting Bokeh server with process id: 6624
+2021-12-06 14:15:21,575 WebSocket connection opened
+2021-12-06 14:15:21,576 ServerConnection created
+2021-12-06 14:15:44,900 WebSocket connection closed: code=1001, reason=None
+2021-12-06 14:15:45,036 WebSocket connection opened
+2021-12-06 14:15:45,036 ServerConnection created
+2021-12-06 14:16:14,300 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-06 14:16:14,301 User authentication hooks NOT provided (default user enabled)
+2021-12-06 14:16:14,305 Bokeh app running at: http://localhost:8000/prototype
+2021-12-06 14:16:14,305 Starting Bokeh server with process id: 6712
+2021-12-06 14:16:16,405 WebSocket connection opened
+2021-12-06 14:16:16,406 ServerConnection created
+2021-12-06 14:16:28,587 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-06 14:16:28,588 User authentication hooks NOT provided (default user enabled)
+2021-12-06 14:16:28,594 Bokeh app running at: http://localhost:8000/prototype
+2021-12-06 14:16:28,594 Starting Bokeh server with process id: 6785
+2021-12-06 14:16:31,105 WebSocket connection opened
+2021-12-06 14:16:31,106 ServerConnection created
+2021-12-06 14:17:16,272 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-06 14:17:16,273 User authentication hooks NOT provided (default user enabled)
+2021-12-06 14:17:16,277 Bokeh app running at: http://localhost:8000/prototype
+2021-12-06 14:17:16,277 Starting Bokeh server with process id: 6860
+2021-12-06 14:17:18,028 WebSocket connection opened
+2021-12-06 14:17:18,028 ServerConnection created
+2021-12-06 14:17:30,812 WebSocket connection closed: code=1001, reason=None
+2021-12-06 14:17:30,972 WebSocket connection opened
+2021-12-06 14:17:30,973 ServerConnection created
+2021-12-06 14:18:21,882 WebSocket connection closed: code=1001, reason=None
+2021-12-06 14:18:22,088 WebSocket connection opened
+2021-12-06 14:18:22,089 ServerConnection created
+2021-12-06 14:18:26,797 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-06 14:18:26,799 User authentication hooks NOT provided (default user enabled)
+2021-12-06 14:18:26,805 Bokeh app running at: http://localhost:8000/prototype
+2021-12-06 14:18:26,805 Starting Bokeh server with process id: 6948
+2021-12-06 14:18:28,979 WebSocket connection opened
+2021-12-06 14:18:28,981 ServerConnection created
+2021-12-06 14:18:57,334 WebSocket connection closed: code=1001, reason=None
+2021-12-06 14:18:57,457 WebSocket connection opened
+2021-12-06 14:18:57,457 ServerConnection created
+2021-12-06 14:19:20,954 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-06 14:19:20,956 User authentication hooks NOT provided (default user enabled)
+2021-12-06 14:19:20,960 Bokeh app running at: http://localhost:8000/prototype
+2021-12-06 14:19:20,960 Starting Bokeh server with process id: 7029
+2021-12-06 14:19:23,190 WebSocket connection opened
+2021-12-06 14:19:23,190 ServerConnection created
+2021-12-06 14:20:49,419 WebSocket connection closed: code=1001, reason=None
+2021-12-06 14:20:49,557 WebSocket connection opened
+2021-12-06 14:20:49,558 ServerConnection created
+2021-12-06 14:20:56,354 error handling message
+ message: Message 'PATCH-DOC' content: {'events': [{'kind': 'MessageSent', 'msg_type': 'bokeh_event', 'msg_data': {'event_name': 'tap', 'event_values': {'sx': 75.953125, 'sy': 88.578125, 'x': 502.83228612879657, 'y': 9530.253729291002}}}], 'references': []} 
+ error: ValueError('could not broadcast input array from shape (0,) into shape (1,)')
+Traceback (most recent call last):
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/server/protocol_handler.py", line 90, in handle
+    work = await handler(message, connection)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/server/session.py", line 67, in _needs_document_lock_wrapper
+    result = func(self, *args, **kwargs)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/server/session.py", line 261, in _handle_patch
+    message.apply_to_document(self.document, self)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/protocol/messages/patch_doc.py", line 100, in apply_to_document
+    doc._with_self_as_curdoc(lambda: doc.apply_json_patch(self.content, setter))
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 1198, in _with_self_as_curdoc
+    return f()
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/protocol/messages/patch_doc.py", line 100, in <lambda>
+    doc._with_self_as_curdoc(lambda: doc.apply_json_patch(self.content, setter))
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 398, in apply_json_patch
+    self._trigger_on_message(event_json["msg_type"], event_json["msg_data"])
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 687, in _trigger_on_message
+    cb(msg_data)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 356, in apply_json_event
+    model._trigger_event(event)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/util/callback_manager.py", line 91, in _trigger_event
+    self._document._with_self_as_curdoc(invoke)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 1198, in _with_self_as_curdoc
+    return f()
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/util/callback_manager.py", line 80, in invoke
+    callback(event)
+  File "/usr/local/home/kblair/Documents/ETC/prototype/main.py", line 562, in create_data
+    etc.set_parameter('wavelengths', [event.x * u.nm])
+  File "/usr/local/home/kblair/Documents/ETC/prototype/calculator/ETC.py", line 204, in set_parameter
+    self._calculate()
+  File "/usr/local/home/kblair/Documents/ETC/prototype/calculator/ETC.py", line 119, in _calculate
+    self.exposure[idx, :] = exposure.real.to(u.s)
+ValueError: could not broadcast input array from shape (0,) into shape (1,)
+2021-12-06 14:20:56,855 error handling message
+ message: Message 'PATCH-DOC' content: {'events': [{'kind': 'MessageSent', 'msg_type': 'bokeh_event', 'msg_data': {'event_name': 'tap', 'event_values': {'sx': 152.953125, 'sy': 93.578125, 'x': 628.9701546181375, 'y': 8946.654004229464}}}], 'references': []} 
+ error: ValueError('could not broadcast input array from shape (0,) into shape (1,)')
+Traceback (most recent call last):
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/server/protocol_handler.py", line 90, in handle
+    work = await handler(message, connection)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/server/session.py", line 67, in _needs_document_lock_wrapper
+    result = func(self, *args, **kwargs)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/server/session.py", line 261, in _handle_patch
+    message.apply_to_document(self.document, self)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/protocol/messages/patch_doc.py", line 100, in apply_to_document
+    doc._with_self_as_curdoc(lambda: doc.apply_json_patch(self.content, setter))
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 1198, in _with_self_as_curdoc
+    return f()
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/protocol/messages/patch_doc.py", line 100, in <lambda>
+    doc._with_self_as_curdoc(lambda: doc.apply_json_patch(self.content, setter))
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 398, in apply_json_patch
+    self._trigger_on_message(event_json["msg_type"], event_json["msg_data"])
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 687, in _trigger_on_message
+    cb(msg_data)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 356, in apply_json_event
+    model._trigger_event(event)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/util/callback_manager.py", line 91, in _trigger_event
+    self._document._with_self_as_curdoc(invoke)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 1198, in _with_self_as_curdoc
+    return f()
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/util/callback_manager.py", line 80, in invoke
+    callback(event)
+  File "/usr/local/home/kblair/Documents/ETC/prototype/main.py", line 562, in create_data
+    etc.set_parameter('wavelengths', [event.x * u.nm])
+  File "/usr/local/home/kblair/Documents/ETC/prototype/calculator/ETC.py", line 204, in set_parameter
+    self._calculate()
+  File "/usr/local/home/kblair/Documents/ETC/prototype/calculator/ETC.py", line 119, in _calculate
+    self.exposure[idx, :] = exposure.real.to(u.s)
+ValueError: could not broadcast input array from shape (0,) into shape (1,)
+2021-12-06 14:20:59,381 error handling message
+ message: Message 'PATCH-DOC' content: {'events': [{'kind': 'MessageSent', 'msg_type': 'bokeh_event', 'msg_data': {'event_name': 'tap', 'event_values': {'sx': 108.953125, 'sy': 126.578125, 'x': 556.8913726242284, 'y': 5094.895818823312}}}], 'references': []} 
+ error: ValueError('could not broadcast input array from shape (0,) into shape (1,)')
+Traceback (most recent call last):
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/server/protocol_handler.py", line 90, in handle
+    work = await handler(message, connection)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/server/session.py", line 67, in _needs_document_lock_wrapper
+    result = func(self, *args, **kwargs)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/server/session.py", line 261, in _handle_patch
+    message.apply_to_document(self.document, self)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/protocol/messages/patch_doc.py", line 100, in apply_to_document
+    doc._with_self_as_curdoc(lambda: doc.apply_json_patch(self.content, setter))
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 1198, in _with_self_as_curdoc
+    return f()
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/protocol/messages/patch_doc.py", line 100, in <lambda>
+    doc._with_self_as_curdoc(lambda: doc.apply_json_patch(self.content, setter))
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 398, in apply_json_patch
+    self._trigger_on_message(event_json["msg_type"], event_json["msg_data"])
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 687, in _trigger_on_message
+    cb(msg_data)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 356, in apply_json_event
+    model._trigger_event(event)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/util/callback_manager.py", line 91, in _trigger_event
+    self._document._with_self_as_curdoc(invoke)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 1198, in _with_self_as_curdoc
+    return f()
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/util/callback_manager.py", line 80, in invoke
+    callback(event)
+  File "/usr/local/home/kblair/Documents/ETC/prototype/main.py", line 562, in create_data
+    etc.set_parameter('wavelengths', [event.x * u.nm])
+  File "/usr/local/home/kblair/Documents/ETC/prototype/calculator/ETC.py", line 204, in set_parameter
+    self._calculate()
+  File "/usr/local/home/kblair/Documents/ETC/prototype/calculator/ETC.py", line 119, in _calculate
+    self.exposure[idx, :] = exposure.real.to(u.s)
+ValueError: could not broadcast input array from shape (0,) into shape (1,)
+2021-12-06 14:21:02,387 error handling message
+ message: Message 'PATCH-DOC' content: {'events': [{'kind': 'ModelChanged', 'model': {'id': '44039'}, 'attr': 'value', 'new': 'signal to noise ratio'}], 'references': []} 
+ error: IndexError('boolean index did not match indexed array along dimension 0; dimension is 0 but corresponding boolean dimension is 1')
+Traceback (most recent call last):
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/server/protocol_handler.py", line 90, in handle
+    work = await handler(message, connection)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/server/session.py", line 67, in _needs_document_lock_wrapper
+    result = func(self, *args, **kwargs)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/server/session.py", line 261, in _handle_patch
+    message.apply_to_document(self.document, self)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/protocol/messages/patch_doc.py", line 100, in apply_to_document
+    doc._with_self_as_curdoc(lambda: doc.apply_json_patch(self.content, setter))
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 1198, in _with_self_as_curdoc
+    return f()
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/protocol/messages/patch_doc.py", line 100, in <lambda>
+    doc._with_self_as_curdoc(lambda: doc.apply_json_patch(self.content, setter))
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 411, in apply_json_patch
+    patched_obj.set_from_json(attr, value, models=references, setter=setter)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/core/has_props.py", line 412, in set_from_json
+    descriptor.set_from_json(self, json, models, setter)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/core/property/descriptors.py", line 623, in set_from_json
+    return super().set_from_json(obj, self.property.from_json(json, models), models, setter)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/core/property/descriptors.py", line 327, in set_from_json
+    self._internal_set(obj, json, setter=setter)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/core/property/descriptors.py", line 786, in _internal_set
+    self._real_set(obj, old, value, hint=hint, setter=setter)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/core/property/descriptors.py", line 849, in _real_set
+    self._trigger(obj, old, value, hint=hint, setter=setter)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/core/property/descriptors.py", line 926, in _trigger
+    obj.trigger(self.name, old, value, hint, setter)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/model.py", line 682, in trigger
+    super().trigger(descriptor.name, old, new, hint=hint, setter=setter)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/util/callback_manager.py", line 163, in trigger
+    self._document._notify_change(self, attr, old, new, hint, setter, invoke)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 1090, in _notify_change
+    self._trigger_on_change(event)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 1180, in _trigger_on_change
+    self._with_self_as_curdoc(event.callback_invoker)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 1198, in _with_self_as_curdoc
+    return f()
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/util/callback_manager.py", line 161, in invoke
+    callback(attr, old, new)
+  File "/usr/local/home/kblair/Documents/ETC/prototype/main.py", line 215, in target_callback
+    update_results()
+  File "/usr/local/home/kblair/Documents/ETC/prototype/main.py", line 63, in update_results
+    summary.load()
+  File "/usr/local/home/kblair/Documents/ETC/prototype/main.py", line 459, in load
+    f'{etc.source_flux[wavelength_index][0].to("erg / (cm^2 s Angstrom)", equivalencies=u.spectral_density(central_wavelength)).value:.1} flam',
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/astropy/units/quantity.py", line 1045, in __getitem__
+    out = super().__getitem__(key)
+IndexError: boolean index did not match indexed array along dimension 0; dimension is 0 but corresponding boolean dimension is 1
+2021-12-06 14:21:06,334 error handling message
+ message: Message 'PATCH-DOC' content: {'events': [{'kind': 'ModelChanged', 'model': {'id': '44039'}, 'attr': 'value', 'new': 'exposure'}], 'references': []} 
+ error: ValueError('could not broadcast input array from shape (0,) into shape (1,)')
+Traceback (most recent call last):
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/server/protocol_handler.py", line 90, in handle
+    work = await handler(message, connection)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/server/session.py", line 67, in _needs_document_lock_wrapper
+    result = func(self, *args, **kwargs)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/server/session.py", line 261, in _handle_patch
+    message.apply_to_document(self.document, self)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/protocol/messages/patch_doc.py", line 100, in apply_to_document
+    doc._with_self_as_curdoc(lambda: doc.apply_json_patch(self.content, setter))
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 1198, in _with_self_as_curdoc
+    return f()
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/protocol/messages/patch_doc.py", line 100, in <lambda>
+    doc._with_self_as_curdoc(lambda: doc.apply_json_patch(self.content, setter))
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 411, in apply_json_patch
+    patched_obj.set_from_json(attr, value, models=references, setter=setter)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/core/has_props.py", line 412, in set_from_json
+    descriptor.set_from_json(self, json, models, setter)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/core/property/descriptors.py", line 623, in set_from_json
+    return super().set_from_json(obj, self.property.from_json(json, models), models, setter)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/core/property/descriptors.py", line 327, in set_from_json
+    self._internal_set(obj, json, setter=setter)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/core/property/descriptors.py", line 786, in _internal_set
+    self._real_set(obj, old, value, hint=hint, setter=setter)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/core/property/descriptors.py", line 849, in _real_set
+    self._trigger(obj, old, value, hint=hint, setter=setter)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/core/property/descriptors.py", line 926, in _trigger
+    obj.trigger(self.name, old, value, hint, setter)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/model.py", line 682, in trigger
+    super().trigger(descriptor.name, old, new, hint=hint, setter=setter)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/util/callback_manager.py", line 163, in trigger
+    self._document._notify_change(self, attr, old, new, hint, setter, invoke)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 1090, in _notify_change
+    self._trigger_on_change(event)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 1180, in _trigger_on_change
+    self._with_self_as_curdoc(event.callback_invoker)
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/document/document.py", line 1198, in _with_self_as_curdoc
+    return f()
+  File "/usr/local/anaconda3/lib/python3.8/site-packages/bokeh/util/callback_manager.py", line 161, in invoke
+    callback(attr, old, new)
+  File "/usr/local/home/kblair/Documents/ETC/prototype/main.py", line 201, in target_callback
+    etc.set_parameter('signal_noise_ratio', etc.config.defaults.signal_noise_ratio)
+  File "/usr/local/home/kblair/Documents/ETC/prototype/calculator/ETC.py", line 204, in set_parameter
+    self._calculate()
+  File "/usr/local/home/kblair/Documents/ETC/prototype/calculator/ETC.py", line 119, in _calculate
+    self.exposure[idx, :] = exposure.real.to(u.s)
+ValueError: could not broadcast input array from shape (0,) into shape (1,)

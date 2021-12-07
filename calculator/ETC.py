@@ -108,6 +108,7 @@ class exposure_time_calculator:
                 b = - snr**2 * (background_rate + dark_current_rate + source_rate) + 0j
                 c = [(read_noise * snr**2).to(u.electron**2).value] * len(self.wavelengths) * u.electron**2 + 0j
 
+
                 # Quadratic formula
                 exposure = ( -b + (b**2 - 4*a*c)**(1/2) ) / (2 * a)
                 #exposure_neg = ( -b - (b**2 - 4*a*c)**(1/2) ) / (2 * a)
@@ -189,10 +190,8 @@ class exposure_time_calculator:
                     self.exposure = [u.Quantity(x) for x in self.config.defaults.exposure] * u.s
                 self.target = value
             elif name == 'wavelengths':
-                # TODO -- fix bug with setting wavelengths
-                #print(value)
+                # TODO -- only allow wavelengths within bounds
                 self.wavelengths = [u.Quantity(x).to(u.angstrom) for x in value] * u.angstrom
-                #print(self.wavelengths)
             elif name == 'exposure':
                 self.target = 'signal_noise_ratio'
                 self.exposure = [u.Quantity(x).to(u.s) for x in value] * u.s

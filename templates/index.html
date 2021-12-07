@@ -32,7 +32,7 @@
             // Handle position of text for plotting overlay, ensure that it's centered
             if (typeof window.Bokeh.documents[0] != 'undefined') {
                 const plot = window.Bokeh.documents[0].get_model_by_name('vs_plot');
-                if (typeof plot != 'undefined' && plot.select_one('text').visible){
+                if (plot != null && plot.select_one('text').visible){
                     plot.select_one('text').x = plot.inner_width/2;
                     plot.select_one('text').y = plot.inner_height/2;
                 }

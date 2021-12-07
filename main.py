@@ -60,7 +60,6 @@ def update_results():
         }
 
     set_cookies(etc.get_parameters())
-    summary.load()
 
 
 
@@ -183,7 +182,6 @@ class exposure_panel:
         self.exposure_max.value = (self.exposure_max.value * u.Unit(old)).to(new).value
         self.exposure_slider.value = (self.exposure_slider.value * u.Unit(old)).to(new).value
         self.exposure_slider.title = 'Exposure ['+new+']'
-        summary.load()
         res.reload()
         self.exposure_active_flag = True
 
@@ -212,9 +210,9 @@ class exposure_panel:
             self.exposure_max.value = (2*u.hr).to(self.units.value).value#etc.exposure[-1].value
             self.exposure_slider.value = etc.exposure[0].to(self.units.value).value
             self.contents.children = new_contents
-        update_results()
-        res.reload()
-        page_loaded()
+        #update_results()
+        # res.reload()
+        #page_loaded()
 
 
     def __init__(self):
@@ -443,13 +441,10 @@ class summary_panel:
     def reset(self):
         self.contents.children = [Div(css_classes=['loading-symbol'])]
         
-
+    
     def load(self):
         # Quick ~hacky check to make sure everything else is loaded first, switch to boolean flag for clarity later
         if len(atm.contents.children) > 1:
-            # central_wavelength = u.Quantity(
-            #     vars(etc.source.config.wavelength_bands)[src.band.contents.children[0].value])
-
 
             central_wavelength = res.wavelength.location * u.nm
             wavelength_index = abs(etc.wavelengths - central_wavelength.to(etc.wavelengths.unit)) == min(
@@ -482,62 +477,18 @@ class summary_panel:
 
             # Download button, code from https://stackoverflow.com/questions/49388511/send-file-from-server-to-client-on-bokeh
             self.download_button = Button(label="Download Data", button_type="default", width=100, sizing_mode='scale_width', css_classes=['center', 'input_section'])
-            download_js_code="""
-            function table_to_csv(source) {
-                const columns = Object.keys(source.data)
-                const nrows = source.get_length()
-                const lines = [columns.join(',')]
-
-                for (let i = 0; i < nrows; i++) {
-                    let row = [];
-                    for (let j = 0; j < columns.length; j++) {
-                        const column = columns[j]
-                        row.push(source.data[column][i].toString())
-                    }
-                    lines.push(row.join(','))
-                }
-                return lines.join('\\n').concat('\\n')
-            }
-
-
-            const filename = 'etc_results.csv'
-            var filetext = table_to_csv(source)
-            const blob = new Blob([filetext], { type: 'text/csv;charset=utf-8;' })
-
-            //addresses IE
-            if (navigator.msSaveBlob) {
-                navigator.msSaveBlob(blob, filename)
-            } else {
-                const link = document.createElement('a')
-                link.href = URL.createObjectURL(blob)
-                link.download = filename
-                link.target = '_blank'
-                link.style.visibility = 'hidden'
-                link.dispatchEvent(new MouseEvent('click'))
-            }
-            """
+            download_js_code=Path('static/js/download_button.js').read_text()
             self.download_button.js_on_click(CustomJS(args=dict(source=results),code=download_js_code))
 
             self.contents.children = [self.title.contents]
+            
             self.contents.children = [self.title.contents, column(self.exp_label.contents, self.snr_label.contents,
                                                                         self.wav_label.contents, self.flux_label.contents,
                                                                         self.time_label.contents, self.clk_label.contents, self.download_button,
                                                                         css_classes=['sidebar-container'])]
             
             # TODO -- Change to sci. notation if number is too large
-            self.update_js = '''
-            const wavelength = cb_obj.x;
-            const closest = source.data['wavelengths'].reduce(function(prev, curr) {
-                return (Math.abs(curr - wavelength) < Math.abs(prev - wavelength) ? curr : prev);
-            });
-
-            const index = source.data['wavelengths'].indexOf(closest);
-            exp.text = String(source.data.exposure[index].toFixed(0))+' s';
-            snr.text = String(source.data.snr[index].toFixed(2));
-            wav.text = String((source.data.wavelengths[index]/1000).toFixed(3))+' μm';
-            flux.text = String(source.data.flux[index].toExponential(0))+' flam';
-            time.text = String(source.data.integration[index].toFixed(0))+' s';
-            '''
+            self.update_js = Path('static/js/update_summary.js').read_text()
             self.update = CustomJS(args={
                 'time': self.time_label.contents.children[0],
                 'exp': self.exp_label.contents.children[0],
@@ -550,6 +501,7 @@ class summary_panel:
             res.snr_plot.js_on_event(MouseMove, self.update)
             res.exp_plot.js_on_event(MouseMove, self.update)
             res.counts_plot.js_on_event(MouseMove, self.update)
+            results.js_on_change('data', self.update)
 
 
 class results_panel:
@@ -561,19 +513,18 @@ class results_panel:
             wavelengths = etc.wavelengths.copy()
             etc.set_parameter('wavelengths', [event.x * u.nm])
             if etc.target == 'signal_noise_ratio':
-                exposure = etc.exposure.copy()
-                etc.set_parameter('exposure', [str(item)+exp.units.value for item in self.new_source.data['x']])
-                y = etc.signal_noise_ratio.flatten().value
-                self.new_source.data['y'] = y
-                etc.exposure = exposure
+                 exposure = etc.exposure.copy()
+                 etc.set_parameter('exposure', [str(item)+exp.units.value for item in self.new_source.data['x']])
+                 y = etc.signal_noise_ratio.flatten().value
+                 self.new_source.data['y'] = y
+                 etc.exposure = exposure
             elif etc.target == 'exposure':
-                snr = etc.signal_noise_ratio.copy()
-                etc.set_parameter('signal_noise_ratio', self.new_source.data['x'])
-                y = etc.exposure.to(u.s).flatten().value
-                self.new_source.data['y'] = y
-                etc.signal_noise_ratio = snr
+                 snr = etc.signal_noise_ratio.copy()
+                 etc.set_parameter('signal_noise_ratio', self.new_source.data['x'])
+                 y = etc.exposure.to(u.s).flatten().value
+                 self.new_source.data['y'] = y
+                 etc.signal_noise_ratio = snr
             etc.set_parameter('wavelengths', wavelengths)
-            summary.load()
 
     def __init__(self):
         self.contents = column(Div(css_classes=['loading-symbol']), name='results', sizing_mode='scale_both', css_classes=['input_section'])
@@ -716,8 +667,11 @@ class results_panel:
             self.vs_plot.yaxis.axis_label = 'Signal to Noise Ratio'
             self.vs_plot.tools[-2].tooltips=[('S/N', '$y{0.00}'), ('exp (s)', '$x{0}')]  # Second to last tool = HoverTool
             if not self.plots.children[-1].children[0] == (self.snr_plot, 0, 0):
+                print(vars(self.snr_plot.xaxis))
+                pdb.set_trace()
                 self.plots.children[-1].children[0] = (self.snr_plot, 0, 0)
-                page_loaded()
+                print('bye')
+                #page_loaded()
         elif exp.target.value == 'exposure':
             self.new_source.data = {'x': linspace(exp.snr_min.value, exp.snr_max.value, 25) if exp.snr_max.value > exp.snr_min.value else linspace(0, 20, 25), 'y': [0]*25}
             self.create_data(Tap(model=None, x=self.wavelength.location))
@@ -725,11 +679,14 @@ class results_panel:
             self.vs_plot.yaxis.axis_label = 'exposure (s)'
             self.vs_plot.tools[-2].tooltips=[('exp (s)', '$y{0}'), ('S/N', '$x{0.00}')]
             if not self.plots.children[-1].children[0] == (self.exp_plot, 0, 0):
+                print('hi')
+                pdb.set_trace()
                 self.plots.children[-1].children[0] = (self.exp_plot, 0, 0)
-                if not isnan(etc.exposure[0].value).all():
-                    self.exp_plot.y_range.start = min(etc.exposure[0].value)*.8
-                    self.exp_plot.y_range.end = nanpercentile(etc.exposure[0].value, 50)
-                page_loaded()
+                print('bye')
+                # if not isnan(etc.exposure[0].value).all():
+                #     self.exp_plot.y_range.start = min(etc.exposure[0].value)*.8
+                #     self.exp_plot.y_range.end = nanpercentile(etc.exposure[0].value, 50)
+                #page_loaded()
     
 
 class instrument_menu:
