@@ -116,9 +116,6 @@ class source:
         # Define astropy equivalency
         def spectral_density_vega(w):
 
-            photlam = u.photon/(u.cm**2 * u.s * u.angstrom)
-            flam = u.erg/(u.cm**2 * u.s * u.angstrom)
-
             def converter_photlam(x):
                 return -2.5 * log10(x / self.vega_flux(w).value)
 
@@ -126,33 +123,33 @@ class source:
                 return self.vega_flux(w).value * 10**(-0.4*x)
 
             def converter_flam(x):
-                return converter_photlam((x*flam).to(photlam, equivalencies=u.spectral_density(w)).value)
+                return converter_photlam((x*self.flam).to(self.photlam, equivalencies=u.spectral_density(w)).value)
 
             def iconverter_flam(x):
-                return (iconverter_photlam(x)*photlam).to(flam, equivalencies=u.spectral_density(w)).value
+                return (iconverter_photlam(x)*self.photlam).to(self.flam, equivalencies=u.spectral_density(w)).value
 
             def converter_jy(x):
-                return converter_photlam((x*u.Jy).to(photlam, equivalencies=u.spectral_density(w)).value)
+                return converter_photlam((x*u.Jy).to(self.photlam, equivalencies=u.spectral_density(w)).value)
 
             def iconverter_jy(x):
-                return (iconverter_photlam(x)*photlam).to(u.Jy, equivalencies=u.spectral_density(w)).value
+                return (iconverter_photlam(x)*self.photlam).to(u.Jy, equivalencies=u.spectral_density(w)).value
 
             def converter_ab(x):
-                return converter_photlam(u.Quantity(x, u.AB).to(photlam, equivalencies=u.spectral_density(w)).value)
+                return converter_photlam(u.Quantity(x, u.AB).to(self.photlam, equivalencies=u.spectral_density(w)).value)
 
             def iconverter_ab(x):
-                return (iconverter_photlam(x)*photlam).to(u.AB, equivalencies=u.spectral_density(w)).value
+                return (iconverter_photlam(x)*self.photlam).to(u.AB, equivalencies=u.spectral_density(w)).value
 
             def converter_st(x):
-                return converter_photlam(u.Quantity(x, u.ST).to(photlam, equivalencies=u.spectral_density(w)).value)
+                return converter_photlam(u.Quantity(x, u.ST).to(self.photlam, equivalencies=u.spectral_density(w)).value)
 
             def iconverter_st(x):
-                return u.Quantity(iconverter_photlam(x), photlam).to(u.ST, equivalencies=u.spectral_density(w)).value
+                return u.Quantity(iconverter_photlam(x), self.photlam).to(u.ST, equivalencies=u.spectral_density(w)).value
 
 
             return [
-                    (photlam, self.vegamag, converter_photlam, iconverter_photlam),
-                    (flam, self.vegamag, converter_flam, iconverter_flam),
+                    (self.photlam, self.vegamag, converter_photlam, iconverter_photlam),
+                    (self.flam, self.vegamag, converter_flam, iconverter_flam),
                     (u.AB, self.vegamag, converter_ab, iconverter_ab),
                     (u.Jy, self.vegamag, converter_jy, iconverter_jy),
                     (u.ST, self.vegamag, converter_st, iconverter_st),
@@ -170,10 +167,6 @@ class source:
         if self.type in vars(self.config.source_types).keys() and 'parameters' in vars(vars(self.config.source_types)[self.type]).keys():
             self.__dict__.update({key: u.Quantity(val) for key, val in vars(vars(self.config.source_types)[self.type].parameters).items()})
             self.active_parameters += list(vars(vars(self.config.source_types)[self.type].parameters).keys())
-        if self.type == 'blackbody':
-            # Blackbody functions solely off of temperature!
-            self.active_parameters.remove('brightness')
-            self.active_parameters.remove('wavelength_band')
 
 
     def __init__(self):
@@ -199,26 +192,26 @@ class source:
         # TODO -- Replace area / sqrt(2pi) σ w/ amplitude (brightness, unless we're keeping central wavelength and mag. band separate)
         central_wavelength = u.Quantity(vars(self.config.wavelength_bands)[self.wavelength_band])
         sigma = self.width / (2 * sqrt(2 * log(2) ))
-        flux = self.brightness.to(u.photon / (u.cm**3 * u.s), equivalencies=u.spectral_density(wavelengths.to(u.angstrom)) + self.spectral_density_vega(wavelengths.to(u.angstrom))) / exp( (wavelengths - central_wavelength)**2/(2*sigma**2) )
+        flux = self.brightness.to(self.photlam, equivalencies=u.spectral_density(wavelengths.to(u.angstrom)) + self.spectral_density_vega(wavelengths.to(u.angstrom))) / exp( (wavelengths - central_wavelength)**2/(2*sigma**2) )
         return flux
 
 
     def _blackbody(self, wavelengths):
-        # TODO -- Ask Sherry about whether users should specify temp, mag, or give the option of either?
         # From https://pysynphot.readthedocs.io/en/latest/spectrum.html
-        flux = (2*h*c**2 / wavelengths**5) / (exp(h*c/(wavelengths*self.temperature*k_B)) - 1) #/ u.steradian
-        # Multiply by proper angle in order to remove the per steradian, hooowww?? Check with Sherry, easiest just to scale to given mag/flux, but is that what users will assume?
-
-        return flux.to(u.photon / (u.cm**3 * u.s), equivalencies=u.spectral_density(wavelengths.to(u.angstrom)) + self.spectral_density_vega(wavelengths.to(u.angstrom)))
+        flux = (2*h*c**2 / wavelengths**5) / (exp(h*c/(wavelengths*self.temperature*k_B)) - 1)
+        # Scale flux by the given mag / wavelength
+        central_wavelength = u.Quantity(vars(self.config.wavelength_bands)[self.wavelength_band])  # Get central wavelength of passband
+        flux = flux / interpolate(central_wavelength, wavelengths, flux) * self.brightness.to(self.photlam, equivalencies=u.spectral_density(central_wavelength) + self.spectral_density_vega(central_wavelength.to(u.angstrom)))  # Scale source by given mag/flux
+        return flux
 
 
     def _flat(self, wavelengths):
-        return ([self.brightness] * len(wavelengths) * self.brightness.unit).to(u.photon / (u.cm**3 * u.s), equivalencies=u.spectral_density(wavelengths.to(u.angstrom)) + self.spectral_density_vega(wavelengths.to(u.angstrom)))
+        return ([self.brightness] * len(wavelengths) * self.brightness.unit).to(self.photlam, equivalencies=u.spectral_density(wavelengths.to(u.angstrom)) + self.spectral_density_vega(wavelengths.to(u.angstrom)))
 
 
     def _power_law(self, wavelengths):
         central_wavelength = u.Quantity(vars(self.config.wavelength_bands)[self.wavelength_band])
-        flux = self.brightness.to(u.photon / (u.cm**3 * u.s), equivalencies=u.spectral_density(wavelengths.to(u.angstrom)) + self.spectral_density_vega(wavelengths.to(u.angstrom))) * (wavelengths / central_wavelength) ** self.index
+        flux = self.brightness.to(self.photlam, equivalencies=u.spectral_density(wavelengths.to(u.angstrom)) + self.spectral_density_vega(wavelengths.to(u.angstrom))) * (wavelengths / central_wavelength) ** self.index
         return flux
 
     

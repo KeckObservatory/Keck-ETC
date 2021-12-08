@@ -52,8 +52,8 @@
         <script>
             cookieButtonClicked = () => {
                 document.querySelector('div.cookie-message').classList.add('closed');
-                const exp_date = new Date( new Date().getTime() + 7 * 24 * 60 * 60 );  // Add a week to current date
-                document.cookie = 'acceptcookies=true; expires=' + exp_date.toUTCString();
+                const exp_date = new Date( new Date().getTime() + 7 * 24 * 60 * 60 * 1000 );  // Add a week to current date
+                document.cookie = 'acceptcookies=true; expires=' + exp_date.toUTCString() + '; SameSite=Strict;';
     
             }
             

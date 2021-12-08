@@ -59,6 +59,7 @@ def update_results():
             'flux': etc.source_flux.to(u.erg / (u.Angstrom * u.cm**2 * u.s), equivalencies=u.spectral_density(etc.wavelengths)).value
         }
 
+
     set_cookies(etc.get_parameters())
 
 
@@ -182,7 +183,6 @@ class exposure_panel:
         self.exposure_max.value = (self.exposure_max.value * u.Unit(old)).to(new).value
         self.exposure_slider.value = (self.exposure_slider.value * u.Unit(old)).to(new).value
         self.exposure_slider.title = 'Exposure ['+new+']'
-        res.reload()
         self.exposure_active_flag = True
 
     def slider_callback(self, attr, old, new):
@@ -196,23 +196,28 @@ class exposure_panel:
         if new == 'exposure':
             new_contents = [self.snr if item==self.exposure else item for item in self.contents.children]
             self.contents.children = [Div(css_classes=['loading-symbol'])]
-            etc.set_parameter('signal_noise_ratio', etc.config.defaults.signal_noise_ratio)
-            self.snr_min.value = 5#etc.signal_noise_ratio[0].value
-            self.snr_max.value = 15#etc.signal_noise_ratio[-1].value
+            etc.set_parameter('target', 'exposure')
+            #etc.set_parameter('signal_noise_ratio', etc.config.defaults.signal_noise_ratio)
+            #self.snr_min.value = 5#etc.signal_noise_ratio[0].value
+            #self.snr_max.value = 15#etc.signal_noise_ratio[-1].value
+            self.snr_min.value = 0
+            self.snr_max.value = etc.signal_noise_ratio[0].value * 2
             self.snr_slider.value = etc.signal_noise_ratio[0].value
             self.contents.children = new_contents
 
         if new == 'signal to noise ratio':
             new_contents = [self.exposure if item==self.snr else item for item in self.contents.children]
             self.contents.children = [Div(css_classes=['loading-symbol'])]
-            etc.set_parameter('exposure', etc.config.defaults.exposure)
-            self.exposure_min.value = 0#etc.exposure[0].value
-            self.exposure_max.value = (2*u.hr).to(self.units.value).value#etc.exposure[-1].value
+            # etc.set_parameter('exposure', etc.config.defaults.exposure)
+            # self.exposure_min.value = 0#etc.exposure[0].value
+            # self.exposure_max.value = (2*u.hr).to(self.units.value).value#etc.exposure[-1].value
+            etc.set_parameter('target', 'signal_noise_ratio')
+            self.exposure_min.value = 0
+            self.exposure_max.value = etc.exposure[0].to(self.units.value).value * 2
             self.exposure_slider.value = etc.exposure[0].to(self.units.value).value
             self.contents.children = new_contents
         update_results()
         res.reload()
-        page_loaded()
 
 
     def __init__(self):
@@ -224,18 +229,19 @@ class exposure_panel:
     def load(self):
         self.exposure_active_flag = True
         self.title = section_title('Exposure')
-        #self.exposure_label = Paragraph(text='Exposure:', margin=(5, 5, 0, 5), css_classes=['exposure_input'])
-        self.exposure_min = Spinner(title='Min:', value=0, low=0, width=100, sizing_mode='scale_width')  # value=etc.exposure[0].value
-        self.exposure_max = Spinner(title='Max:', value=7200, low=0, width=100, sizing_mode='scale_width')  # value=etc.exposure[-1].value
+        self.exposure_min = Spinner(title='Min:', value=0, low=0, width=100, sizing_mode='scale_width')
+        self.exposure_max = Spinner(title='Max:', value=1, low=0, width=100, sizing_mode='scale_width')
         self.units = Select(title='\u00A0', value=str(etc.exposure.unit), options=['ms', 's', 'min', 'hr'], width=100, sizing_mode='scale_width')
+        self.exposure_slider = Slider(start=0, end=1, step=1, value=0, title='Exposure ['+str(etc.exposure.unit)+']', width=100, sizing_mode='scale_width', css_classes=['exposure_input'])
+        if etc.target == 'signal_noise_ratio':
+            self.exposure_max.value = etc.exposure[0].value * 2
+            self.exposure_slider.end = self.exposure_max.value
+            self.exposure_slider.step = self.exposure_max.value / 100
+            self.exposure_slider.value = etc.exposure[0].value
         self.exposure_min.on_change('value', self.exposure_callback)
         self.exposure_max.on_change('value', self.exposure_callback)
         self.units.on_change('value', self.unit_callback)
-        self.exposure_slider = Slider(start=exp.exposure_min.value, end=exp.exposure_max.value, step=(exp.exposure_max.value - exp.exposure_min.value)/100, value=exp.exposure_min.value, title='Exposure ['+str(etc.exposure.unit)+']', width=100, sizing_mode='scale_width', css_classes=['exposure_input'])
-        if etc.target == 'signal_noise_ratio':
-            self.exposure_slider.value = etc.exposure[0].value
         self.exposure_slider.on_change('value_throttled', self.slider_callback)
-        #self.exposure_slider.js_on_change('value', page_loaded_callback)
         self.exposure = column(self.exposure_slider, row(self.exposure_min, self.exposure_max, self.units, sizing_mode='scale_width'), sizing_mode='scale_width')
 
         # Create dropdown for selecting whether to calculate snr or exp
@@ -245,13 +251,16 @@ class exposure_panel:
         self.target.on_change('value', self.target_callback)
 
         # Create elements to calculate snr
-        self.snr_min = Spinner(title='Min:', value=0, low=0, width=100, sizing_mode='scale_width', step=5)  # Default to 0 because exp is initially active
-        self.snr_max = Spinner(title='Max:', value=200, low=0, width=100, sizing_mode='scale_width', step=5)
+        self.snr_min = Spinner(title='Min:', value=0, low=0, width=100, sizing_mode='scale_width', step=5)
+        self.snr_max = Spinner(title='Max:', value=1, low=0, width=100, sizing_mode='scale_width', step=5)
+        self.snr_slider = Slider(start=0, end=1, value=0, step=1, title='Signal to Noise Ratio', width=100, sizing_mode='scale_width')
+        if etc.target == 'exposure':
+            self.snr_max.value = etc.signal_noise_ratio[0].value * 2
+            self.snr_slider.end = self.snr_max.value
+            self.snr_slider.step = self.snr_max.value / 100
+            self.snr_slider.value = etc.signal_noise_ratio[0].value
         self.snr_min.on_change('value', self.exposure_callback)
         self.snr_max.on_change('value', self.exposure_callback)
-        self.snr_slider = Slider(start=self.snr_min.value, end=self.snr_max.value, value=self.snr_min.value, step=1, title='Signal to Noise Ratio', width=100, sizing_mode='scale_width')
-        if etc.target == 'exposure':
-            self.snr_slider.value = etc.signal_noise_ratio[0].value
         self.snr_slider.on_change('value_throttled', self.slider_callback)
         self.snr = column(self.snr_slider, row(self.snr_min, self.snr_max, sizing_mode='scale_width'), sizing_mode = 'scale_width')
 
@@ -443,65 +452,59 @@ class summary_panel:
         
     
     def load(self):
-        # Quick ~hacky check to make sure everything else is loaded first, switch to boolean flag for clarity later
-        if len(atm.contents.children) > 1:
 
-            central_wavelength = res.wavelength.location * u.nm
-            wavelength_index = abs(etc.wavelengths - central_wavelength.to(etc.wavelengths.unit)) == min(
-                abs(etc.wavelengths - central_wavelength.to(etc.wavelengths.unit)))
-            self.title = section_title('Results')
-            self.flux_label = big_number(
-                f'{etc.source_flux[wavelength_index][0].to("erg / (cm^2 s Angstrom)", equivalencies=u.spectral_density(central_wavelength)).value:.1} flam',
-                'source flux')
-            self.wav_label = big_number(f'{central_wavelength.to(u.um).value:.4} μm', 'wavelength')
-            if etc.target == 'signal_noise_ratio':
-                self.time_label = big_number(f'{round(etc.integration_time[0].value)} {etc.integration_time.unit}', 'integration time')
-            elif etc.target == 'exposure':
-                self.time_label = big_number(f'{round(etc.integration_time[0][wavelength_index][0].value)} {etc.integration_time.unit}', 'integration time')
-            
-            self.clk_label = big_number('--- s', 'clock time')
-            if etc.target == 'signal_noise_ratio':
-                if exp.units.value == 's':
-                    self.exp_label = big_number(f'{round(exp.exposure_slider.value)} {exp.units.value}', 'exposure')
-                else:
-                    self.exp_label = big_number(f'{float(exp.exposure_slider.value):.3} {exp.units.value}', 'exposure')
-                self.snr_label = big_number(f'{etc.signal_noise_ratio[0][wavelength_index][0]:.4}', 'S/N')
-            elif etc.target == 'exposure':
-                if etc.exposure[0][wavelength_index][0].to(u.s).value < 60:
-                    self.exp_label = big_number(f'{etc.exposure[0][wavelength_index][0].to(u.s).value:.3} s', 'exposure')
-                elif etc.exposure[0][wavelength_index][0].to(u.min).value < 60:
-                    self.exp_label = big_number(f'{etc.exposure[0][wavelength_index][0].to(u.min).value:.3} min', 'exposure')
-                else:
-                    self.exp_label = big_number(f'{etc.exposure[0][wavelength_index][0].to(u.hr).value:.3} hr', 'exposure')
-                self.snr_label = big_number(f'{float(etc.signal_noise_ratio[0].value):.4}', 'S/N')
+        # Define summary contents
+        self.title = section_title('Results')  # Title
+        # Empty text labels for each 
+        self.flux_label = big_number('--- flam', 'source flux')
+        self.wav_label = big_number('--- μm', 'wavelength')
+        self.time_label = big_number('--- s', 'integration time')
+        self.clk_label = big_number('--- s', 'clock time')
+        self.exp_label = big_number('--- s', 'exposure')
+        self.snr_label = big_number('---', 'S/N')
 
-            # Download button, code from https://stackoverflow.com/questions/49388511/send-file-from-server-to-client-on-bokeh
-            self.download_button = Button(label="Download Data", button_type="default", width=100, sizing_mode='scale_width', css_classes=['center', 'input_section'])
-            download_js_code=Path('static/js/download_button.js').read_text()
-            self.download_button.js_on_click(CustomJS(args=dict(source=results),code=download_js_code))
+        # Download button, code from https://stackoverflow.com/questions/49388511/send-file-from-server-to-client-on-bokeh
+        self.download_button = Button(label="Download Data", button_type="default", width=100, sizing_mode='scale_width', css_classes=['center', 'input_section'])
+        download_js_code=Path('static/js/download_button.js').read_text()
+        self.download_button.js_on_click(CustomJS(args=dict(source=results),code=download_js_code))
 
-            self.contents.children = [self.title.contents]
-            
-            self.contents.children = [self.title.contents, column(self.exp_label.contents, self.snr_label.contents,
-                                                                        self.wav_label.contents, self.flux_label.contents,
-                                                                        self.time_label.contents, self.clk_label.contents, self.download_button,
-                                                                        css_classes=['sidebar-container'])]
-            
-            # TODO -- Change to sci. notation if number is too large
-            self.update_js = Path('static/js/update_summary.js').read_text()
-            self.update = CustomJS(args={
-                'time': self.time_label.contents.children[0],
-                'exp': self.exp_label.contents.children[0],
-                'snr': self.snr_label.contents.children[0],
-                'flux': self.flux_label.contents.children[0],
-                'wav': self.wav_label.contents.children[0],
-                'source': results
-            }, code=self.update_js)
-            # Add callback to appropriate plots to trigger update
-            res.snr_plot.js_on_event(MouseMove, self.update)
-            res.exp_plot.js_on_event(MouseMove, self.update)
-            res.counts_plot.js_on_event(MouseMove, self.update)
-            results.js_on_change('data', self.update)
+        # For sizing issues, add title first
+        self.contents.children = [self.title.contents]
+        
+        # Next, add the rest of contents
+        self.contents.children = [self.title.contents, 
+            column(
+                self.exp_label.contents,
+                self.snr_label.contents,
+                self.wav_label.contents,
+                self.flux_label.contents,
+                self.time_label.contents,
+                self.clk_label.contents,
+                self.download_button,
+                css_classes=['sidebar-container']
+            )
+        ]
+        
+        # Define javascript to update this panel
+        self.update_js = Path('static/js/update_summary.js').read_text()
+        self.update = CustomJS(args={
+            'time': self.time_label.contents.children[0],
+            'exp': self.exp_label.contents.children[0],
+            'snr': self.snr_label.contents.children[0],
+            'flux': self.flux_label.contents.children[0],
+            'wav': self.wav_label.contents.children[0],
+            'source': results,
+            'input': res.wavelength
+        }, code=self.update_js)
+
+        # Add callback to appropriate plots to trigger update
+        res.snr_plot.js_on_event(MouseMove, self.update)
+        res.exp_plot.js_on_event(MouseMove, self.update)
+        res.counts_plot.js_on_event(MouseMove, self.update)
+        results.js_on_change('data', self.update)
+        
+        # Replace data to manually trigger callback to finish loading
+        results.data = dict(results.data)
 
 
 class results_panel:
@@ -545,18 +548,35 @@ class results_panel:
         plot_tools = 'pan, box_zoom, zoom_in, zoom_out, wheel_zoom, undo, redo, reset, save, hover, help'
         
         # Define vs. plot
-        self.vs_plot = figure(title=f'Wavelength: {int(self.wavelength.location)} nm', active_inspect='hover', tools=plot_tools, width=500, height=100, tooltips=[('S/N', '$y{0.00}'), ('exp (s)', '$x{0}')], sizing_mode='scale_width', name='vs_plot')
+        self.vs_plot = figure(
+            title=f'Wavelength: {int(self.vs_wavelength.location)} nm', 
+            active_inspect='hover', 
+            tools=plot_tools, 
+            toolbar_location=None,
+            width=500, 
+            height=100, 
+            tooltips=[('S/N', '$y{0.00}'), ('exp (s)', '$x{0}')], 
+            sizing_mode='scale_width',
+            name='vs_plot'
+        )
         
 
         self.vs_wavelength_js = CustomJS(args={'vline':self.vs_wavelength, 'plot':self.vs_plot}, 
             code='plot.select_one("text").visible=false;plot.select_one("box").visible=false;vline.location=cb_obj.x;plot.title.text="Wavelength: "+Math.round(cb_obj.x)+"nm";')
-            #code='vline.location=cb_obj.x;plot.title.text="Wavelength: "+Math.round(cb_obj.x)+"nm";')
 
         
 
         # Plot snr vs. wavelength
-        self.snr_plot = figure(title='Signal to Noise Ratio', active_inspect='hover', tools=plot_tools, width=500, height=100,
-               tooltips=[('S/N', '$y{0.0}'), ('λ (nm)', '$x{0}')], sizing_mode='scale_both')
+        self.snr_plot = figure(
+            title='Signal to Noise Ratio',
+            toolbar_location='above', 
+            toolbar_sticky=False, 
+            width=450, 
+            height=100,
+            tooltips=[('S/N', '$y{0.0}'), ('λ (nm)', '$x{0}')], 
+            sizing_mode='scale_both'
+        )
+        self.snr_plot.toolbar = self.vs_plot.toolbar  # TESTING!
         self.snr_plot.sizing_mode = 'scale_both'
         self.snr_plot.xaxis.axis_label = 'wavelengths (nm)'
         self.snr_plot.yaxis.axis_label = 'signal to noise ratio'
@@ -577,8 +597,19 @@ class results_panel:
         
 
         # Plot exp vs. wavelength
-        self.exp_plot = figure(title='Exposure Time', active_inspect='hover', tools=plot_tools,  sizing_mode='scale_width', width=500, height=100, name='exp_plot',
-               tooltips=[('exp (s)', '$y{0}'), ('λ (nm)', '$x{0}')], y_range=(min(results.data['exposure'])*.8, nanpercentile(results.data['exposure'], 50)))
+        self.exp_plot = figure(
+            title='Exposure Time',
+            toolbar_location='above', 
+            toolbar_sticky=False,
+            sizing_mode='scale_width', 
+            width=450, 
+            height=100, 
+            name='exp_plot',
+            tooltips=[('exp (s)', '$y{0}'), ('λ (nm)', '$x{0}')], 
+            y_range=(min(results.data['exposure'])*.8, 
+            nanpercentile(results.data['exposure'], 50))
+        )
+        self.exp_plot.toolbar = self.vs_plot.toolbar  # TESTING!
         self.exp_plot.xaxis.axis_label = 'wavelengths (nm)'
         self.exp_plot.yaxis.axis_label = 'exposure time (s)'
         self.exp_plot.scatter(x='wavelengths', y='exposure', source=results, alpha=0.5, size=6, legend_label='\u00A0')
@@ -606,7 +637,16 @@ class results_panel:
 
 
         # Plot 2
-        self.counts_plot = figure(title='Counts', active_inspect='hover', tools=plot_tools, width=500, height=100, tooltips=[('count (ADU/px)', '$y{0}'), ('λ (nm)', '$x{0}')], y_axis_type='log', sizing_mode='scale_width')
+        self.counts_plot = figure(
+            title='Counts',
+            toolbar_location=None,
+            width=500, 
+            height=100, 
+            tooltips=[('count (ADU/px)', '$y{0}'), ('λ (nm)', '$x{0}')], 
+            y_axis_type='log', 
+            sizing_mode='scale_width'
+        )
+        self.counts_plot.toolbar = self.vs_plot.toolbar  # TESTING!
         self.counts_plot.xaxis.axis_label = 'wavelengths (nm)'
         self.counts_plot.yaxis.axis_label = 'Counts (ADU/px)'
 
@@ -627,11 +667,14 @@ class results_panel:
         self.counts_plot.js_on_event(MouseMove, self.wavelength_js)
         self.counts_plot.js_on_event('tap', self.vs_wavelength_js)
         self.counts_plot.on_event('tap', self.create_data)
+        # Share toolbar test -- !
+        self.counts_plot.js_link('toolbar', self.snr_plot, 'toolbar')
+        self.snr_plot.js_link('toolbar', self.counts_plot, 'toolbar')
 
 
         # EXPERIMENTAL CODE !!! --- creating second data source with snr vs. exp
         self.new_source = ColumnDataSource({'x':linspace(0, 7200, 25), 'y':[0]*25})
-        self.create_data(Tap(model=None, x=self.wavelength.location))
+        self.create_data(Tap(model=None, x=self.vs_wavelength.location))
         self.vs_box = BoxAnnotation(left_units='screen', bottom_units='screen', bottom=0, left=0, fill_color="#FFF", fill_alpha=0.6, name='box')
         self.vs_text = Label(x=0, y=0, x_units='screen', y_units='screen', text='Click on the plots above to set wavelength', text_align='center', 
             text_baseline='middle', text_font_size='2.5em', text_alpha=0.7, name='text')
@@ -645,42 +688,39 @@ class results_panel:
         self.vs_plot.add_layout(self.vs_text)
         
 
-        # Define grid of plots
-        self.plots = gridplot([[self.snr_plot], [self.exp_plot], [self.counts_plot], [self.vs_plot]], 
-            merge_tools=True, 
-            sizing_mode='scale_width',
-            plot_width=500,
-            plot_height=100,
-        )
+        self.contents.children = [self.exp_plot, self.snr_plot, self.counts_plot, self.vs_plot]
         if etc.target == 'exposure':
-            del self.plots.children[-1].children[0]
+            self.snr_plot.visible = False
         elif etc.target == 'signal_noise_ratio':
-            del self.plots.children[-1].children[1]
+            self.exp_plot.visible = False
 
-        self.contents.children = [self.plots]
+        # CURRENTLY BROKEN (x doesn't update) -- FIX!!
+        #res.create_data(Tap(model=None, x=res.wavelength.location))
+        results.on_change('data', lambda attr, old, new: self.create_data(Tap(model=None, x=self.vs_wavelength.location)))
+
 
     def reload(self):
         if exp.target.value == 'signal to noise ratio':
             self.new_source.data = {'x': linspace(exp.exposure_min.value, exp.exposure_max.value, 100) if exp.exposure_max.value > exp.exposure_min.value else linspace(0, 7200, 100), 'y':[0]*100}
-            self.create_data(Tap(model=None, x=self.wavelength.location))
+            self.create_data(Tap(model=None, x=self.vs_wavelength.location))
             self.vs_plot.xaxis.axis_label = 'exposure (s)'
             self.vs_plot.yaxis.axis_label = 'Signal to Noise Ratio'
             self.vs_plot.tools[-2].tooltips=[('S/N', '$y{0.00}'), ('exp (s)', '$x{0}')]  # Second to last tool = HoverTool
-            if not self.plots.children[-1].children[0] == (self.snr_plot, 0, 0):
-                self.plots.children[-1].children[0] = (self.snr_plot, 0, 0)
-                page_loaded()
+            self.exp_plot.visible = False
+            self.snr_plot.visible = True
+            page_loaded()
         elif exp.target.value == 'exposure':
             self.new_source.data = {'x': linspace(exp.snr_min.value, exp.snr_max.value, 25) if exp.snr_max.value > exp.snr_min.value else linspace(0, 20, 25), 'y': [0]*25}
-            self.create_data(Tap(model=None, x=self.wavelength.location))
+            self.create_data(Tap(model=None, x=self.vs_wavelength.location))
             self.vs_plot.xaxis.axis_label = 'Signal to Noise Ratio'
             self.vs_plot.yaxis.axis_label = 'exposure (s)'
             self.vs_plot.tools[-2].tooltips=[('exp (s)', '$y{0}'), ('S/N', '$x{0.00}')]
-            if not self.plots.children[-1].children[0] == (self.exp_plot, 0, 0):
-                self.plots.children[-1].children[0] = (self.exp_plot, 0, 0)
-                if not isnan(etc.exposure[0].value).all():
-                    self.exp_plot.y_range.start = min(etc.exposure[0].value)*.8
-                    self.exp_plot.y_range.end = nanpercentile(etc.exposure[0].value, 50)
-                page_loaded()
+            if self.exp_plot.visible and not isnan(etc.exposure[0].value).all():
+                self.exp_plot.y_range.start = min(etc.exposure[0].value)*.8
+                self.exp_plot.y_range.end = nanpercentile(etc.exposure[0].value, 50)
+            self.snr_plot.visible = False
+            self.exp_plot.visible = True
+            page_loaded()
     
 
 class instrument_menu:
@@ -717,8 +757,8 @@ def show_alert(msg):
 # Define DOM object to call js and set cookies from python
 cookie_handler = CustomJS(args={}, code='''
 if (cb_obj.tags.length > 0) {
-    const exp_date = new Date( new Date().getTime() + 7 * 24 * 60 * 60 );  // Add a week to current date
-    const cookie_string = 'etcsettings=' + JSON.stringify(cb_obj.tags[0]) + '; expires=' + exp_date.toUTCString() + ';';
+    const exp_date = new Date( new Date().getTime() + 7 * 24 * 60 * 60 * 1000 );  // Add a week to current date
+    const cookie_string = 'etcsettings=' + JSON.stringify(cb_obj.tags[0]) + '; expires=' + exp_date.toUTCString() + '; SameSite=Strict;';
     document.cookie = cookie_string;
     cb_obj.tags=[]; }
 ''')
