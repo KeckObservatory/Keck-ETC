@@ -9,6 +9,6 @@ const closest = source.data['wavelengths'].reduce(function(prev, curr) {
 const index = source.data['wavelengths'].indexOf(closest);
 exp.text = String(source.data.exposure[index].toFixed(0))+' s';
 snr.text = String(source.data.snr[index].toFixed(2));
-wav.text = String((source.data.wavelengths[index]/1000).toFixed(3))+' μm';
+wav.text = String((source.data.wavelengths[index]/1000).toFixed(3))+' \u03BCm';
 flux.text = String(source.data.flux[index].toExponential(0))+' flam';
 time.text = String(source.data.integration[index].toFixed(0))+' s';

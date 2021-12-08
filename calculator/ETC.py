@@ -98,28 +98,33 @@ class exposure_time_calculator:
                 warn('In ETC -- signal_noise_ratio is not defined, defaulting to '+str(self.signal_noise_ratio), RuntimeWarning)
 
             # Initialize exposure array for output
-            self.exposure = zeros([len(self.signal_noise_ratio), len(self.wavelengths)])
+            self.integration_time = zeros([len(self.signal_noise_ratio), len(self.wavelengths)])
 
             for idx, snr in enumerate(self.signal_noise_ratio.value * u.electron**(1/2)):
 
                 # Define a, b, c for quadratic formula
                 # Adding 0j to avoid generating RuntimeWarning for sqrt(-1)
-                a = self.dithers * source_rate**2 + 0j
-                b = - snr**2 * (background_rate + dark_current_rate + source_rate) + 0j
-                c = [(read_noise * snr**2).to(u.electron**2).value] * len(self.wavelengths) * u.electron**2 + 0j
+                a = source_rate**2 + 0j
+                b = - snr**2 * (background_rate + dark_current_rate + source_rate) / number_exposures + 0j
+                c = [ (-read_noise * snr**2 / number_exposures).to(u.electron**2).value ] * len(self.wavelengths) * u.electron**2 + 0j
 
 
                 # Quadratic formula
-                exposure = ( -b + (b**2 - 4*a*c)**(1/2) ) / (2 * a)
-                #exposure_neg = ( -b - (b**2 - 4*a*c)**(1/2) ) / (2 * a)
+                exposure_pos = ( -b + (b**2 - 4*a*c)**(1/2) ) / (2 * a)
+                exposure_neg = ( -b - (b**2 - 4*a*c)**(1/2) ) / (2 * a)
+                
                 # This statement is broken, iter() needs to be moved outside because it reinitializes every time
-                #exposure = [next(iter(exposure_pos)) if check else next(iter(exposure_neg)) for check in (exposure_pos.real >= 0) & (exposure_pos.imag == 0)] * u.s
+                iter_exp_pos = iter(exposure_pos)
+                iter_exp_neg = iter(exposure_neg)
+                exposure = [next(iter_exp_pos) if check else next(iter_exp_neg) for check in (exposure_pos.real >= 0) & (exposure_pos.imag == 0)] * u.s
                 if ((exposure.real < 0) | (exposure.imag != 0)).any():
                     exposure[(exposure.real < 0) | (exposure.imag != 0)] = NaN
                     warn('In ETC -- Some/all solutions do not exist for S/N = '+str(snr.value)+', returning exposure = NaN', RuntimeWarning)
-                self.exposure[idx, :] = exposure.real.to(u.s)
+                self.integration_time[idx, :] = exposure.real.to(u.s)
 
-            self.exposure = u.Quantity(self.exposure, u.s)  # Convert ndarray to quantity
+            self.integration_time = u.Quantity(self.integration_time, u.s)  # Convert ndarray to quantity
+            # Get length of single exposure
+            self.exposure = [(t / number_exposures) for t in self.integration_time] * u.s
 
             # Calculate and save counts based on calculatred exposure = f(λ)
             # TODO -- convert to list of lists instead of list, this will break for multiple snr!!!
@@ -127,8 +132,7 @@ class exposure_time_calculator:
             self.background_count_adu = [background_rate / slit_size * self.instrument.pixel_size * exp * number_exposures / self.instrument.gain for exp in self.exposure] * (u.adu/u.pixel)
             self.dark_current_count_adu = [dark_current_rate / slit_size_pixels * exp * number_exposures / self.instrument.gain for exp in self.exposure] * (u.adu/u.pixel)
             self.read_noise_count_adu = ([[(read_noise / slit_size_pixels * number_exposures / self.instrument.gain).to(u.adu/u.pixel).value] * len(self.wavelengths)] * len(self.exposure)) * (u.adu/u.pixel)
-            # Save total integration time
-            self.integration_time = [(number_exposures * exp) for exp in self.exposure] * u.s
+
 
 
         else:

@@ -1,8 +1,5 @@
-from Instrument import instrument
-from Atmosphere import atmosphere
-from Source import source
 import astropy.units as u
-from ETC import exposure_time_calculator
+from calculator.ETC import exposure_time_calculator as etc
 from numpy.random import random
 
 
@@ -51,37 +48,9 @@ if __name__ == '__main__':
     # print(test.read_noise_count)
     # test.set_parameter('signal_noise_ratio', snr * u.dimensionless_unscaled)
     # print(test.exposure)
-    
-    photlam = u.photon/(u.cm**2 * u.s * u.angstrom)
-    flam = u.erg/(u.cm**2 * u.s * u.angstrom)
-    s = source()
-    # TEST FLAM
-    t = (1*flam).to(s.vegamag, equivalencies=s.spectral_density_vega(1*u.um))
-    it = t.to(flam, equivalencies=s.spectral_density_vega(1*u.um))
-    print(1*flam, t, it)
-    t = (1*s.vegamag).to(flam, equivalencies=s.spectral_density_vega(1*u.um))
-    it = t.to(s.vegamag, equivalencies=s.spectral_density_vega(1*u.um))
-    print(1*s.vegamag, t, it)
-    # TEST JANKSY
-    t = (1*u.Jy).to(s.vegamag, equivalencies=s.spectral_density_vega(1*u.um))
-    it = t.to(u.Jy, equivalencies=s.spectral_density_vega(1*u.um))
-    print(1*u.Jy, t, it)
-    t = (1*s.vegamag).to(u.Jy, equivalencies=s.spectral_density_vega(1*u.um))
-    it = t.to(s.vegamag, equivalencies=s.spectral_density_vega(1*u.um))
-    print(1*s.vegamag, t, it)
-    # TEST STMAG
-    t = (1*s.vegamag).to(u.ST, equivalencies=s.spectral_density_vega(1*u.um))
-    it = t.to(s.vegamag, equivalencies=s.spectral_density_vega(1*u.um))
-    print(1*s.vegamag, t, it)
-    t = (1*u.STmag).to(u.ST).to(s.vegamag, equivalencies=s.spectral_density_vega(1*u.um))
-    it = t.to(u.STmag, equivalencies=s.spectral_density_vega(1*u.um))
-    print(1*u.STmag, t, it)
-    # TEST ABMAG
-    t = (1*u.ABmag).to(s.vegamag, equivalencies=s.spectral_density_vega(1*u.um))
-    it = t.to(u.ABmag, equivalencies=s.spectral_density_vega(1*u.um))
-    print(1*u.ABmag, t, it)
-    t = (1*s.vegamag).to(u.ABmag, equivalencies=s.spectral_density_vega(1*u.um))
-    it = t.to(s.vegamag, equivalencies=s.spectral_density_vega(1*u.um))
-    print(1*s.vegamag, t, it)
-    
-    
+    t = etc()
+    t.set_parameter('wavelengths', [1]*u.um)
+    t.set_parameter('exposure', [33333333] * u.s)
+    snr = t.signal_noise_ratio[0][0].value
+    t.set_parameter('signal_noise_ratio', [snr])
+    print(t.exposure)

@@ -210,9 +210,9 @@ class exposure_panel:
             self.exposure_max.value = (2*u.hr).to(self.units.value).value#etc.exposure[-1].value
             self.exposure_slider.value = etc.exposure[0].to(self.units.value).value
             self.contents.children = new_contents
-        #update_results()
-        # res.reload()
-        #page_loaded()
+        update_results()
+        res.reload()
+        page_loaded()
 
 
     def __init__(self):
@@ -542,7 +542,7 @@ class results_panel:
         self.vs_wavelength = Span(location=self.wavelength.location, dimension='height', line_color='#000', line_dash='solid')
 
         # Define tools to use in plots -- TODO pick better order
-        plot_tools = 'pan, box_zoom, wheel_zoom, undo, redo, reset, save, zoom_in, zoom_out, hover, help'
+        plot_tools = 'pan, box_zoom, zoom_in, zoom_out, wheel_zoom, undo, redo, reset, save, hover, help'
         
         # Define vs. plot
         self.vs_plot = figure(title=f'Wavelength: {int(self.wavelength.location)} nm', active_inspect='hover', tools=plot_tools, width=500, height=100, tooltips=[('S/N', '$y{0.00}'), ('exp (s)', '$x{0}')], sizing_mode='scale_width', name='vs_plot')
@@ -667,11 +667,8 @@ class results_panel:
             self.vs_plot.yaxis.axis_label = 'Signal to Noise Ratio'
             self.vs_plot.tools[-2].tooltips=[('S/N', '$y{0.00}'), ('exp (s)', '$x{0}')]  # Second to last tool = HoverTool
             if not self.plots.children[-1].children[0] == (self.snr_plot, 0, 0):
-                print(vars(self.snr_plot.xaxis))
-                pdb.set_trace()
                 self.plots.children[-1].children[0] = (self.snr_plot, 0, 0)
-                print('bye')
-                #page_loaded()
+                page_loaded()
         elif exp.target.value == 'exposure':
             self.new_source.data = {'x': linspace(exp.snr_min.value, exp.snr_max.value, 25) if exp.snr_max.value > exp.snr_min.value else linspace(0, 20, 25), 'y': [0]*25}
             self.create_data(Tap(model=None, x=self.wavelength.location))
@@ -679,14 +676,11 @@ class results_panel:
             self.vs_plot.yaxis.axis_label = 'exposure (s)'
             self.vs_plot.tools[-2].tooltips=[('exp (s)', '$y{0}'), ('S/N', '$x{0.00}')]
             if not self.plots.children[-1].children[0] == (self.exp_plot, 0, 0):
-                print('hi')
-                pdb.set_trace()
                 self.plots.children[-1].children[0] = (self.exp_plot, 0, 0)
-                print('bye')
-                # if not isnan(etc.exposure[0].value).all():
-                #     self.exp_plot.y_range.start = min(etc.exposure[0].value)*.8
-                #     self.exp_plot.y_range.end = nanpercentile(etc.exposure[0].value, 50)
-                #page_loaded()
+                if not isnan(etc.exposure[0].value).all():
+                    self.exp_plot.y_range.start = min(etc.exposure[0].value)*.8
+                    self.exp_plot.y_range.end = nanpercentile(etc.exposure[0].value, 50)
+                page_loaded()
     
 
 class instrument_menu:
