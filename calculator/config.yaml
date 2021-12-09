@@ -15,12 +15,8 @@ defaults:
   reads: 1
   repeats: 1
   coadds: 1
-  binning: [1, 1]
   
 telescope_area: 75.76 m^2
 
 # Options for number of reads
 reads_options: [1, 2, 4, 8, 16, 32, 64]
-
-# Options for ccd binning [spatial, spectral]
-binning_options: [ [1,1], [1,2], [2,1], [2,2] ]

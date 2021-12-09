@@ -8,6 +8,7 @@ defaults:
   slit_length: 18 arcsec
   pixel_size: 0.0225 arcsec^2/pixel  # Check w/ Sherry, in her code this was s^2/px^2 but I think that's a typo... ?
   mode: spectroscopic
+  binning: [1, 1]
 
   
 dark_current: 0.13 electron / (pixel s)
@@ -28,3 +29,6 @@ modes: [spectroscopic]
 gain: 3.8 electron / adu
 
 nonlinear_depth: 30000 adu  # Confirm number with Sherry
+
+# Options for binning [spatial, spectral]
+binning_options: [ [1,1], [1,2], [2,1], [2,2] ]

@@ -83,6 +83,11 @@ cd $PROGRAM_DIR
 if [ "$action" == "stop" ] || [ "$action" == "restart" ]; then
 
     pid="$(tac ./log/etc.log | grep -m1 "start $server $port" | awk '{print $NF}')"
+    if [[ -z $pid ]]; then
+        echo "Error: could not find $server server running on port $port" >&2
+        exit -1
+    fi
+
     if $forcekill; then
         err="$(kill -SIGKILL $pid 2>&1)"
     else
@@ -106,15 +111,19 @@ if [ "$action" == "start" ] || [ "$action" == "restart" ]; then
     # TODO -- check to make sure port is not in use, then verify that it worked and output success message
 
     if [ "$server" == "gui" ]; then
-        nohup bokeh serve . --port "$port" --log-file ./log/gui.log --allow-websocket-origin="$(hostname -I | sed -r 's/\s+//g'):$port" &>/dev/null &
-        echo "$(date +"%Y-%m-%d %T") start $server $port $!" >> ./log/etc.log
+        nohup bokeh serve . --port "$port" --log-file ./log/gui.log --allow-websocket-origin="*" &>/dev/null &
+        pid="$!"
 
     elif [ "$server" == "api" ]; then
 
-        nohup python3 API.py >> ./log/api.log &>/dev/null &
-        echo "$(date +"%Y-%m-%d %T") start $server $port $!"
+        nohup python3 -u API.py &>./log/api.log &
+        pid="$!"
 
     fi
+
+    # HERE, check that $pid is running and matches either "API.py" or "bokeh serve" before logging and outputting confirmation message
+    echo "$(date +"%Y-%m-%d %T") start $server $port $pid" >> ./log/etc.log
+
 fi
 
 if [ "$action" == "status" ]; then

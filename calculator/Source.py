@@ -269,3 +269,16 @@ class source:
                 self.brightness = conversion[0]
         else:
             raise ValueError('ERROR: In source.set_brightness -- Brightness is not an astropy quantity or string')
+
+    def set_parameter(self, name, value):
+        # TODO -- input validation
+        if name == 'type':
+            self.set_type(value)
+        elif name == 'wavelength_band':
+            self.wavelength_band = str(value)
+        elif name == 'brightness':
+            self.set_brightness(value)
+        elif name == 'temperature':
+            self.temperature = u.Quantity(value).to(u.K, equivalencies=u.temperature())
+        else:
+            vars(self)[name] = u.Quantity(value)

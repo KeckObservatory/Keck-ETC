@@ -18,7 +18,7 @@
             } else {
                 alert('Unexpected '+e.message+'\nPlease refresh page');
             }
-            location.reload();
+            //location.reload();
         };
         window.addEventListener('error', errorHandler, {once:true});  // Set once to true to prevent duplicate js alerts before reloading page
         const resizeHandler = (e) => {

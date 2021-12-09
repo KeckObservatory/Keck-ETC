@@ -11,6 +11,8 @@ from calculator.ETC import exposure_time_calculator
 from numpy import nanpercentile, linspace, round, isnan
 from pathlib import Path
 from astropy import units as u
+from urllib.parse import urlparse
+from re import sub
 import pdb
 
 
@@ -19,17 +21,6 @@ import pdb
 def update_results():
 
     if etc.target == 'signal_noise_ratio':
-        """Below code is for computing multiple exposures...
-        results.data = {
-            'wavelengths': list(etc.wavelengths.to(u.nm).value) * len(etc.exposure),
-            'exposure': [x for exp in etc.exposure.to(u.s).value for x in [exp]*len(etc.wavelengths)],
-            'source': etc.source_count.flatten().value,
-            'background': etc.background_count.flatten().value,
-            'read_noise': [x for rnc in etc.read_noise_count.value for x in [rnc]*len(etc.wavelengths)],
-            'dark_current': [x for dcc in etc.dark_current_count.value for x in [dcc]*len(etc.wavelengths)],
-            'snr': etc.signal_noise_ratio.flatten().value
-        }
-        """
         # FOR SINGLE EXPOSURE, ASSUMED TO BE FIRST EXPOSURE...
         results.data = {
             'wavelengths': etc.wavelengths.to(u.nm).value,
@@ -43,7 +34,6 @@ def update_results():
             'integration': [etc.integration_time.to(u.s)[0].value] * len(etc.wavelengths),
             'flux': etc.source_flux.to(u.erg / (u.Angstrom * u.cm**2 * u.s), equivalencies=u.spectral_density(etc.wavelengths)).value
         }
-
 
     elif etc.target == 'exposure':
         results.data = {
@@ -60,7 +50,7 @@ def update_results():
         }
 
 
-    set_cookies(etc.get_parameters())
+    js.set_cookies(etc.get_parameters())
 
 
 
@@ -75,9 +65,9 @@ class quantity_input:
                 etc.set_parameter(self.key, parameter)
             except (RecursionError, ValueError) as e:
                 if self.error_text is not None:
-                    show_alert(self.error_text)
+                    js.show_alert(self.error_text)
                 else:
-                    show_alert('Error: '+str(e))
+                    js.show_alert('Error: '+str(e))
                 self.value_callback_active = False
                 self.contents.children[0].value = old
                 self.value_callback_active = True
@@ -197,9 +187,6 @@ class exposure_panel:
             new_contents = [self.snr if item==self.exposure else item for item in self.contents.children]
             self.contents.children = [Div(css_classes=['loading-symbol'])]
             etc.set_parameter('target', 'exposure')
-            #etc.set_parameter('signal_noise_ratio', etc.config.defaults.signal_noise_ratio)
-            #self.snr_min.value = 5#etc.signal_noise_ratio[0].value
-            #self.snr_max.value = 15#etc.signal_noise_ratio[-1].value
             self.snr_min.value = 0
             self.snr_max.value = etc.signal_noise_ratio[0].value * 2
             self.snr_slider.value = etc.signal_noise_ratio[0].value
@@ -208,9 +195,6 @@ class exposure_panel:
         if new == 'signal to noise ratio':
             new_contents = [self.exposure if item==self.snr else item for item in self.contents.children]
             self.contents.children = [Div(css_classes=['loading-symbol'])]
-            # etc.set_parameter('exposure', etc.config.defaults.exposure)
-            # self.exposure_min.value = 0#etc.exposure[0].value
-            # self.exposure_max.value = (2*u.hr).to(self.units.value).value#etc.exposure[-1].value
             etc.set_parameter('target', 'signal_noise_ratio')
             self.exposure_min.value = 0
             self.exposure_max.value = etc.exposure[0].to(self.units.value).value * 2
@@ -294,7 +278,7 @@ class source_panel:
         try:
             etc.source.add_template(self.upload.children[1].value, self.upload.children[1].filename)
         except:
-            show_alert('Error: uploaded source spectrum is not valid')
+            js.show_alert('Error: uploaded source spectrum is not valid')
             self.contents.children.remove(self.upload)  # Resets text label to "No file chosen"
         self.types.options =  [vars(etc.source.config.source_types)[source].name for source in etc.source.available_types]
         self.set_content_visibility()
@@ -365,7 +349,7 @@ class source_panel:
         # In order to size properly, first set to []
         self.contents.children = []
         self.contents.children = new_contents
-        page_loaded()
+        js.page_loaded()
 
 
 class atmosphere_panel:
@@ -393,7 +377,7 @@ class atmosphere_panel:
 class instrument_panel:
 
     def binning_callback(self, attr, old, new):
-        etc.set_parameter('binning', [int(new[0]), int(new[-1])])
+        etc.set_parameter('instrument.binning', [int(new[0]), int(new[-1])])
         update_results()
 
     def __init__(self):
@@ -412,7 +396,7 @@ class instrument_panel:
         # TODO -- add slit functionality, including "custom" option in dropdown (for appropriate instruments), which opens up a input row with "width" "length" and "unit"
         self.mode = dropdown_input('mode', 'Mode:', etc.instrument.mode, etc.instrument.config.modes)
         # TODO -- add grating, grism, and filter dependent on etc.instrument!
-        self.binning = Select(title='CCD Binning:', value=f'{int(etc.binning[0].value)}x{int(etc.binning[1].value)}', options=[f'{int(b[0])}x{int(b[1])}' for b in etc.config.binning_options], width=300, sizing_mode='scale_width')
+        self.binning = Select(title='CCD Binning:', value=f'{int(etc.instrument.binning[0].value)}x{int(etc.instrument.binning[1].value)}', options=[f'{int(b[0])}x{int(b[1])}' for b in etc.instrument.config.binning_options], width=300, sizing_mode='scale_width')
         self.binning.on_change('value', self.binning_callback)
         self.contents.children = [self.title.contents, self.mode.contents, self.slit, self.binning]
 
@@ -542,7 +526,7 @@ class results_panel:
         # Vertical line to indicate & select wavelength
         self.wavelength = Span(location=etc.wavelengths[0].to(u.nm).value, dimension='height', line_color='black', line_dash='dashed')
         self.wavelength_js = CustomJS(args={'vline':self.wavelength}, code='vline.location=cb_obj.x;')
-        self.vs_wavelength = Span(location=self.wavelength.location, dimension='height', line_color='#000', line_dash='solid')
+        self.vs_wavelength = Span(location=self.wavelength.location, dimension='height', line_color='#333', line_dash='solid')
 
         # Define tools to use in plots -- TODO pick better order
         plot_tools = 'pan, box_zoom, zoom_in, zoom_out, wheel_zoom, undo, redo, reset, save, hover, help'
@@ -708,7 +692,7 @@ class results_panel:
             self.vs_plot.tools[-2].tooltips=[('S/N', '$y{0.00}'), ('exp (s)', '$x{0}')]  # Second to last tool = HoverTool
             self.exp_plot.visible = False
             self.snr_plot.visible = True
-            page_loaded()
+            #page_loaded()
         elif exp.target.value == 'exposure':
             self.new_source.data = {'x': linspace(exp.snr_min.value, exp.snr_max.value, 25) if exp.snr_max.value > exp.snr_min.value else linspace(0, 20, 25), 'y': [0]*25}
             self.create_data(Tap(model=None, x=self.vs_wavelength.location))
@@ -720,7 +704,7 @@ class results_panel:
                 self.exp_plot.y_range.end = nanpercentile(etc.exposure[0].value, 50)
             self.snr_plot.visible = False
             self.exp_plot.visible = True
-            page_loaded()
+            #page_loaded()
     
 
 class instrument_menu:
@@ -730,7 +714,7 @@ class instrument_menu:
             etc.set_parameter('instrument.name', etc.config.instruments[new])
             update_results()
         except Exception as e:
-            show_alert('This instrument has not yet been added, and is only here because it looks good :)')
+            js.show_alert('This instrument has not yet been added, and is only here because it looks good :)')
             self.contents.active = old
 
     def __init__(self):
@@ -744,71 +728,124 @@ class instrument_menu:
         self.contents.on_change('active', self.callback)
 
 
+class py2js:
+    
+    def show_alert(self, msg):
+        self.alert_container.tags = [msg]
+
+    def set_cookies(self, obj):
+        self.cookie_container.tags = [obj]
+
+    def page_loaded(self):
+        self.page_loaded_container.tags = [True] if self.page_loaded_container.tags != [True] else [False]
+
+    def reset_contents_callback(self, attr, old, new):
+        if attr == 'tags' and old == [False] and new == [True]:
+            exp.reset()
+            res.reset()
+            src.reset()
+            atm.reset()
+            instr.reset()
+            summary.reset()
+            menu.load()
+            exp.load()
+            res.load()
+            src.load()
+            atm.load()
+            instr.load()
+            summary.load()
+            self.page_loaded()
+            self.reset_contents_container.tags = [False]
+
+
+    def __init__(self):
+        # Load javascript and define CustomJS callback
+        js_code = Path('static/js/python_js_communication.js').read_text()
+        titles = yaml.safe_load(open('static/mouseover_text.yaml'))
+        js_callback = CustomJS(args={'titles':titles}, code=js_code)
+
+
+        # Define DOM objects
+        self.alert_container = Div(name='alert_container', visible=False)
+        self.cookie_container = Div(name='cookie_container', visible=False)
+        self.page_loaded_container = Div(name='page_loaded_container', visible=False)
+        self.reset_contents_container = Div(name='reset_contents_container', tags=[False], visible=False)
+
+        # Assingn js callbacks
+        self.alert_container.js_on_change('tags', js_callback)
+        self.cookie_container.js_on_change('tags', js_callback)
+        self.page_loaded_container.js_on_change('tags', js_callback)
+        self.reset_contents_container.on_change('tags', self.reset_contents_callback)
+
+
+class reset_button():
+
+    def __init__(self):
+
+        self.reset_js = CustomJS(code=Path('static/js/reset_button.js').read_text())
+        self.contents = Button(label='Reset Calculator', button_type='default', name='reset_button', width_policy='min')
+        self.contents.js_on_click(self.reset_js)
+        
+
+# FUNCTION DEFINITIONS
+
+def load_query(etc):
+    try:
+        query = urlparse(curdoc().session_context.request.uri).query
+        whitelist_regex = r'[^a-zA-Z0-9\.\=\[\]\-()&+_,]'  # Allowed characters are alphanumerics and . = [ ] - ( ) & + _ ,
+        query = sub(whitelist_regex,'', query)  # Remove all non-allowed characters from query string
+        if len(query) > 0:
+            query = dict(qc.split("=") for qc in query.split("&"))
+            # Convert any lists from string
+            for key, val in query.items():
+                if val.startswith('[') and val.endswith(']'):
+                    query[key] = [x.strip() for x in val[1:-1].split(',')]
+        # Set parameters from query
+        if len(query) > 0:
+            etc.set_parameters(query)
+            return True
+    except Exception as e:
+        js.show_alert(f'Error processing url query:\n{e}')
+        
+    return False
+
+
+def load_cookie(etc):
+    if 'Cookie' in curdoc().session_context.request.headers.keys():
+        cookies = curdoc().session_context.request.headers['Cookie'].split(';')
+        settings = [cookie for cookie in cookies if cookie.strip().startswith('etcsettings=')]
+        if settings:
+            try:
+                etc.set_parameters(settings[0].replace('etcsettings=',''))
+            except Exception as e:
+                print(f"Invalid cookie value -- {e}")
+
+
+def load_contents(event):
+    # Initialize ETC
+    global etc
+    etc = exposure_time_calculator()
+    # Set ETC parameters based on url query, if present
+    query = load_query(etc)
+    # Otherwise, set ETC parameters based on stored cookies
+    if not query:
+        load_cookie(etc)
+    
+    # Load app contents
+    update_results()
+    menu.load()
+    exp.load()
+    res.load()
+    src.load()
+    atm.load()
+    instr.load()
+    summary.load()
+    js.page_loaded()
 
 
 
-# Define DOM object to call js alerts from python (for errors & out of bounds info)
-alert_handler = CustomJS(args={}, code='if (cb_obj.tags.length > 0) { alert(cb_obj.tags[0]); cb_obj.tags=[]; }')
-alert_container = Div(name='alert_container', visible=False)
-curdoc().add_root(alert_container)
-alert_container.js_on_change('tags', alert_handler)
-def show_alert(msg):
-    alert_container.tags = [msg]
-# Define DOM object to call js and set cookies from python
-cookie_handler = CustomJS(args={}, code='''
-if (cb_obj.tags.length > 0) {
-    const exp_date = new Date( new Date().getTime() + 7 * 24 * 60 * 60 * 1000 );  // Add a week to current date
-    const cookie_string = 'etcsettings=' + JSON.stringify(cb_obj.tags[0]) + '; expires=' + exp_date.toUTCString() + '; SameSite=Strict;';
-    document.cookie = cookie_string;
-    cb_obj.tags=[]; }
-''')
-cookie_container = Div(name='cookie_container', visible=False)
-curdoc().add_root(cookie_container)
-cookie_container.js_on_change('tags', cookie_handler)
-def set_cookies(obj):
-    cookie_container.tags = [obj]
 
-# Define DOM object to trigger resize event after contents have been loaded, because otherwise responsive elements won't size properly
-page_loaded_js = Path('static/js/page_loaded.js').read_text()
-page_loaded_callback = CustomJS(args={'titles':yaml.safe_load(open('static/mouseover_text.yaml'))}, code=page_loaded_js)
-page_loaded_container = Div(name='page_loaded_container', visible=False)
-curdoc().add_root(page_loaded_container)
-page_loaded_container.js_on_change('tags', page_loaded_callback)
-def page_loaded():
-    page_loaded_container.tags = [True] if page_loaded_container.tags != [True] else [False]
-# Define DOM object to trigger reset python contents from javascript
-def reset_contents_callback(attr, old, new):
-    if attr == 'tags' and old == [False] and new == [True]:
-        exp.reset()
-        res.reset()
-        src.reset()
-        atm.reset()
-        instr.reset()
-        summary.reset()
-        menu.load()
-        exp.load()
-        res.load()
-        src.load()
-        atm.load()
-        instr.load()
-        summary.load()
-        page_loaded()
-        reset_contents_container.tags = [False]
-reset_contents_container = Div(name='reset_contents_container', tags=[False], visible=False)
-curdoc().add_root(reset_contents_container)
-reset_contents_container.on_change('tags', reset_contents_callback)
-
-
-# Testing reset button, probably move to separate class/method eventually
-reset_js = CustomJS(code='document.cookie="etcsettings={}";location.reload();')
-reset_button = Button(label='Reset Calculator', button_type='default', name='reset_button', width_policy='min')
-reset_button.js_on_click(reset_js)
-curdoc().add_root(reset_button)
-
-
-
-
-# START INITIALIZATION HERE
+# Initialize objects
 global etc
 etc = None
 results = ColumnDataSource()
@@ -820,6 +857,8 @@ res = results_panel()
 summary = summary_panel()
 instr = instrument_panel()
 help = instruction_text()
+reset = reset_button()
+js = py2js()
 curdoc().add_root(res.contents)
 curdoc().add_root(menu.contents)
 curdoc().add_root(exp.contents)
@@ -828,25 +867,15 @@ curdoc().add_root(src.contents)
 curdoc().add_root(summary.contents)
 curdoc().add_root(instr.contents)
 curdoc().add_root(help.contents)
+curdoc().add_root(reset.contents)
+curdoc().add_root(js.alert_container)
+curdoc().add_root(js.cookie_container)
+curdoc().add_root(js.page_loaded_container)
+curdoc().add_root(js.reset_contents_container)
 curdoc().title = 'WMKO ETC'
 
-
-def load_contents(event):
-    global etc
-    etc = exposure_time_calculator()
-    if 'Cookie' in curdoc().session_context.request.headers.keys():
-        cookies = curdoc().session_context.request.headers['Cookie'].split(';')
-        settings = [cookie for cookie in cookies if cookie.strip().startswith('etcsettings=')]
-        if settings:
-            etc.set_parameters(settings[0].replace('etcsettings=',''))
-    update_results()
-    menu.load()
-    exp.load()
-    res.load()
-    src.load()
-    atm.load()
-    instr.load()
-    summary.load()
-    page_loaded()
-
+# Once initial loading screen is present, load app
 curdoc().on_event(DocumentReady, load_contents)
+
+if __name__ == '__main__':
+    print('hi')

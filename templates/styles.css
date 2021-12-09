@@ -95,6 +95,14 @@ input[type='file'] {
   font-weight: bold;
 }
 
+@media (max-width: 1200px) {
+  .bk.section-title, .bk.bk-tab, h2 {
+    font-size: 100% !important;
+  }
+}
+
+
+
 h2 {
   font-size: 1.8vw;
   margin-block-end: 0.5em;
@@ -109,6 +117,7 @@ div.title-bar {
 
 body {
     font-family: 'Helvetica', 'Arial', sans-serif;
+    min-width: 560px;
 }
 
 .sidebar-big p {
@@ -153,7 +162,7 @@ label.info::after{
   display: none;
   position: absolute;
   width: max-content;
-  max-width: 100%;
+  max-width: 20vw;
   overflow-wrap: normal;
   text-overflow: ellipsis;
   white-space: normal;
@@ -175,8 +184,7 @@ label.info:hover::after{
 }
 
 
-/* Mobile / vertical tablet modes, stack sections */
-/* TODO -- Stack plots for maximum size, figure out something to do with sidebar! */
+/* For mobile & vertical tablet, stack sections */
 @media (max-width: 900px) {
   .panel, .input_panels .panel, .panel.first, .panel.last, .instrument-menu, .title-bar {
     display: block;
@@ -192,9 +200,9 @@ label.info:hover::after{
     width: 98% !important;
   }
 
-  .bk.section-title, .bk.bk-tab, h2 {
-    font-size: 2vw !important;
+  label.info::after{
+    max-width: 80vw;
+    margin: auto;
   }
 
 }
-

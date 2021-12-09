@@ -3,6 +3,7 @@ from astropy.table import Table
 import astropy.units as u
 from numpy import interp, NaN, isnan
 from warnings import warn
+from re import split
 
 class instrument:
 
@@ -79,6 +80,7 @@ class instrument:
         self.gain = u.Quantity(self.config.gain)
         self.slit_width = u.Quantity(self.config.defaults.slit_width)
         self.slit_length = u.Quantity(self.config.defaults.slit_length)
+        self.binning = u.Quantity(self.config.defaults.binning)
         self.pixel_size = u.Quantity(self.config.defaults.pixel_size)
         self._dark_current = u.Quantity(self.config.dark_current)
         self._read_noise = u.Quantity(self.config.read_noise)
@@ -86,5 +88,23 @@ class instrument:
         self.nonlinear_depth = u.Quantity(self.config.nonlinear_depth)
         self.mode = self.config.defaults.mode  # Currently does nothing, TODO -- support for different modes
         self.active_parameters = ['name', 'slit_width', 'slit_length', 'mode']  # TODO -- adjust based on gratings, grism, filter, etc.
+        
 
         self._read_throughput()
+
+    def set_parameter(self, name, value):
+        # TODO -- input validation
+        if name == 'name':
+            self.set_name(value)
+        elif name == 'mode':
+            self.mode = str(value)
+        elif name == 'binning':
+            if isinstance(value, str):
+                value = [int(x) for x in split('x|,', value)]
+            elif isinstance(value, list):
+                value = [int(x) for x in value]
+            if value not in self.config.binning_options or not isinstance(value, list):
+                raise ValueError(f'In ETC._set_instrument_parameter() -- "{value}" is not a valid binning value')
+            self.binning = u.Quantity(value)
+        else:
+            vars(self)[name] = u.Quantity(value)

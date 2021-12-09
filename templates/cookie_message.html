@@ -7,7 +7,7 @@
                 margin: 0;
                 bottom: 0;
                 left: 0;
-                width: 100vw;
+                width: 100%;
                 background-color: rgba(255,255,255,.9);
                 z-index: 1;
                 box-shadow: 0 -1px 10px rgba(0,0,0,.2);
@@ -48,11 +48,19 @@
                 background-color: #165a88;
                 top: 2px;
             }
+            @media (max-width: 1250px) {
+                div.cookie-message p, div.cookie-message button {
+                    font-size: 1.2vw;
+                }
+                div.cookie-message button b {
+                    font-weight: normal;
+                }
+            }
         </style>
         <script>
             cookieButtonClicked = () => {
                 document.querySelector('div.cookie-message').classList.add('closed');
-                const exp_date = new Date( new Date().getTime() + 7 * 24 * 60 * 60 * 1000 );  // Add a week to current date
+                const exp_date = new Date( new Date().getTime() + 30 * 24 * 60 * 60 * 1000 );  // Add a month to current date
                 document.cookie = 'acceptcookies=true; expires=' + exp_date.toUTCString() + '; SameSite=Strict;';
     
             }
@@ -72,7 +80,7 @@
     <body onload='checkCookiesAccepted()'>
         <div class='cookie-message'>
         <p>This page uses cookies to save your actions across multiple sessions. By continuing to use this site, you are consenting to our use of cookies.</p>
-        <button type='button' onclick='cookieButtonClicked();'><b>Accept</b></button>
+        <button type='button' onclick='cookieButtonClicked();'><b>I understand</b></button>
         </div>
     </body>
 </html>

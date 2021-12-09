@@ -846,3 +846,159 @@ Traceback (most recent call last):
   File "/usr/local/home/kblair/Documents/ETC/prototype/calculator/ETC.py", line 119, in _calculate
     self.exposure[idx, :] = exposure.real.to(u.s)
 ValueError: could not broadcast input array from shape (0,) into shape (1,)
+2021-12-08 09:31:58,449 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-08 09:31:58,451 User authentication hooks NOT provided (default user enabled)
+2021-12-08 09:31:58,456 Bokeh app running at: http://localhost:8000/prototype
+2021-12-08 09:31:58,456 Starting Bokeh server with process id: 24721
+2021-12-08 09:32:02,468 WebSocket connection opened
+2021-12-08 09:32:02,469 ServerConnection created
+2021-12-08 09:38:40,575 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-08 09:38:40,576 User authentication hooks NOT provided (default user enabled)
+2021-12-08 09:38:40,579 Bokeh app running at: http://localhost:8000/prototype
+2021-12-08 09:38:40,580 Starting Bokeh server with process id: 24981
+2021-12-08 09:40:01,771 WebSocket connection opened
+2021-12-08 09:40:01,772 ServerConnection created
+2021-12-08 11:12:18,512 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-08 11:12:18,513 User authentication hooks NOT provided (default user enabled)
+2021-12-08 11:12:18,517 Bokeh app running at: http://localhost:8000/prototype
+2021-12-08 11:12:18,517 Starting Bokeh server with process id: 28143
+2021-12-08 11:12:21,490 WebSocket connection opened
+2021-12-08 11:12:21,490 ServerConnection created
+2021-12-08 11:12:46,859 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-08 11:12:46,861 User authentication hooks NOT provided (default user enabled)
+2021-12-08 11:12:46,864 Bokeh app running at: http://localhost:8000/prototype
+2021-12-08 11:12:46,865 Starting Bokeh server with process id: 28218
+2021-12-08 11:12:49,937 WebSocket connection opened
+2021-12-08 11:12:49,937 ServerConnection created
+2021-12-08 11:14:34,051 WebSocket connection closed: code=1001, reason=None
+2021-12-08 11:14:34,275 WebSocket connection opened
+2021-12-08 11:14:34,276 ServerConnection created
+2021-12-08 11:17:48,659 WebSocket connection closed: code=1001, reason=None
+2021-12-08 11:17:48,884 WebSocket connection opened
+2021-12-08 11:17:48,885 ServerConnection created
+2021-12-08 11:23:37,570 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-08 11:23:37,572 User authentication hooks NOT provided (default user enabled)
+2021-12-08 11:23:37,575 Bokeh app running at: http://localhost:8000/prototype
+2021-12-08 11:23:37,575 Starting Bokeh server with process id: 28507
+2021-12-08 11:23:39,234 WebSocket connection opened
+2021-12-08 11:23:39,234 ServerConnection created
+2021-12-08 11:24:01,851 WebSocket connection closed: code=1001, reason=None
+2021-12-08 11:24:02,055 WebSocket connection opened
+2021-12-08 11:24:02,056 ServerConnection created
+2021-12-08 11:24:05,362 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-08 11:24:05,363 User authentication hooks NOT provided (default user enabled)
+2021-12-08 11:24:05,367 Bokeh app running at: http://localhost:8000/prototype
+2021-12-08 11:24:05,367 Starting Bokeh server with process id: 28581
+2021-12-08 11:24:06,980 WebSocket connection opened
+2021-12-08 11:24:06,981 ServerConnection created
+2021-12-08 11:24:30,222 WebSocket connection closed: code=1001, reason=None
+2021-12-08 11:24:30,414 WebSocket connection opened
+2021-12-08 11:24:30,415 ServerConnection created
+2021-12-08 11:24:52,053 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-08 11:24:52,054 User authentication hooks NOT provided (default user enabled)
+2021-12-08 11:24:52,058 Bokeh app running at: http://localhost:8000/prototype
+2021-12-08 11:24:52,058 Starting Bokeh server with process id: 28656
+2021-12-08 11:24:56,602 WebSocket connection opened
+2021-12-08 11:24:56,602 ServerConnection created
+2021-12-08 11:25:11,350 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-08 11:25:11,351 User authentication hooks NOT provided (default user enabled)
+2021-12-08 11:25:11,355 Bokeh app running at: http://localhost:8000/prototype
+2021-12-08 11:25:11,355 Starting Bokeh server with process id: 28720
+2021-12-08 11:25:13,199 WebSocket connection opened
+2021-12-08 11:25:13,199 ServerConnection created
+2021-12-08 11:25:21,521 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-08 11:25:21,523 User authentication hooks NOT provided (default user enabled)
+2021-12-08 11:25:21,526 Bokeh app running at: http://localhost:8000/prototype
+2021-12-08 11:25:21,526 Starting Bokeh server with process id: 28775
+2021-12-08 11:25:23,905 WebSocket connection opened
+2021-12-08 11:25:23,905 ServerConnection created
+2021-12-08 11:25:33,696 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-08 11:25:33,698 User authentication hooks NOT provided (default user enabled)
+2021-12-08 11:25:33,702 Bokeh app running at: http://localhost:8000/prototype
+2021-12-08 11:25:33,702 Starting Bokeh server with process id: 28846
+2021-12-08 11:25:35,917 WebSocket connection opened
+2021-12-08 11:25:35,917 ServerConnection created
+2021-12-08 11:26:30,983 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-08 11:26:30,985 User authentication hooks NOT provided (default user enabled)
+2021-12-08 11:26:30,988 Bokeh app running at: http://localhost:8000/prototype
+2021-12-08 11:26:30,988 Starting Bokeh server with process id: 28930
+2021-12-08 11:26:32,581 WebSocket connection opened
+2021-12-08 11:26:32,582 ServerConnection created
+2021-12-08 11:27:00,838 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-08 11:27:00,839 User authentication hooks NOT provided (default user enabled)
+2021-12-08 11:27:00,843 Bokeh app running at: http://localhost:8000/prototype
+2021-12-08 11:27:00,844 Starting Bokeh server with process id: 28987
+2021-12-08 11:27:02,717 WebSocket connection opened
+2021-12-08 11:27:02,718 ServerConnection created
+2021-12-08 11:27:34,922 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-08 11:27:34,923 User authentication hooks NOT provided (default user enabled)
+2021-12-08 11:27:34,927 Bokeh app running at: http://localhost:8000/prototype
+2021-12-08 11:27:34,927 Starting Bokeh server with process id: 29059
+2021-12-08 11:27:36,617 WebSocket connection opened
+2021-12-08 11:27:36,617 ServerConnection created
+2021-12-08 11:27:52,159 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-08 11:27:52,160 User authentication hooks NOT provided (default user enabled)
+2021-12-08 11:27:52,164 Bokeh app running at: http://localhost:8000/prototype
+2021-12-08 11:27:52,164 Starting Bokeh server with process id: 29117
+2021-12-08 11:27:54,165 WebSocket connection opened
+2021-12-08 11:27:54,166 ServerConnection created
+2021-12-08 11:28:12,926 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-08 11:28:12,928 User authentication hooks NOT provided (default user enabled)
+2021-12-08 11:28:12,932 Bokeh app running at: http://localhost:8000/prototype
+2021-12-08 11:28:12,932 Starting Bokeh server with process id: 29182
+2021-12-08 11:28:15,176 WebSocket connection opened
+2021-12-08 11:28:15,177 ServerConnection created
+2021-12-08 11:30:19,058 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-08 11:30:19,059 User authentication hooks NOT provided (default user enabled)
+2021-12-08 11:30:19,063 Bokeh app running at: http://localhost:8000/prototype
+2021-12-08 11:30:19,063 Starting Bokeh server with process id: 29292
+2021-12-08 11:30:20,793 WebSocket connection opened
+2021-12-08 11:30:20,793 ServerConnection created
+2021-12-08 11:31:03,196 WebSocket connection closed: code=1001, reason=None
+2021-12-08 11:31:03,293 WebSocket connection opened
+2021-12-08 11:31:03,294 ServerConnection created
+2021-12-08 11:31:25,730 WebSocket connection closed: code=1001, reason=None
+2021-12-08 11:31:25,829 WebSocket connection opened
+2021-12-08 11:31:25,829 ServerConnection created
+2021-12-08 11:31:34,488 WebSocket connection opened
+2021-12-08 11:31:34,489 Failed sending message as connection was closed
+2021-12-08 11:31:34,489 Failed sending message as connection was closed
+2021-12-08 11:31:34,489 Failed sending message as connection was closed
+2021-12-08 11:31:34,489 Failed sending message as connection was closed
+2021-12-08 11:31:34,489 Failed sending message as connection was closed
+2021-12-08 11:31:34,490 Failed sending message as connection was closed
+2021-12-08 11:31:34,490 Failed sending message as connection was closed
+2021-12-08 11:31:34,490 Failed sending message as connection was closed
+2021-12-08 11:31:34,490 Failed sending message as connection was closed
+2021-12-08 11:31:34,490 Failed sending message as connection was closed
+2021-12-08 11:31:34,490 Failed sending message as connection was closed
+2021-12-08 11:31:34,490 Failed sending message as connection was closed
+2021-12-08 11:31:34,491 Failed sending message as connection was closed
+2021-12-08 11:31:34,491 Failed sending message as connection was closed
+2021-12-08 11:31:34,491 Failed sending message as connection was closed
+2021-12-08 11:31:34,491 Failed sending message as connection was closed
+2021-12-08 11:31:34,491 Failed sending message as connection was closed
+2021-12-08 11:31:34,491 Failed sending message as connection was closed
+2021-12-08 11:31:34,491 Failed sending message as connection was closed
+2021-12-08 11:31:34,492 Failed sending message as connection was closed
+2021-12-08 11:31:34,492 Failed sending message as connection was closed
+2021-12-08 11:31:34,492 Failed sending message as connection was closed
+2021-12-08 11:31:34,492 Failed sending message as connection was closed
+2021-12-08 11:31:34,492 Failed sending message as connection was closed
+2021-12-08 11:31:34,492 Failed sending message as connection was closed
+2021-12-08 11:31:34,492 Failed sending message as connection was closed
+2021-12-08 11:31:34,492 Failed sending message as connection was closed
+2021-12-08 11:31:34,493 WebSocket connection closed: code=None, reason=None
+2021-12-08 11:31:34,493 ServerConnection created
+2021-12-08 11:33:24,856 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-08 11:33:24,858 User authentication hooks NOT provided (default user enabled)
+2021-12-08 11:33:24,862 Bokeh app running at: http://localhost:8000/prototype
+2021-12-08 11:33:24,862 Starting Bokeh server with process id: 29405
+2021-12-08 11:33:26,620 WebSocket connection opened
+2021-12-08 11:33:26,621 ServerConnection created
+2021-12-08 11:36:51,360 Starting Bokeh server version 2.3.3 (running on Tornado 6.1)
+2021-12-08 11:36:51,361 User authentication hooks NOT provided (default user enabled)
+2021-12-08 11:36:51,365 Bokeh app running at: http://localhost:8000/prototype
+2021-12-08 11:36:51,365 Starting Bokeh server with process id: 29614
+2021-12-08 11:36:53,750 WebSocket connection opened
+2021-12-08 11:36:53,751 ServerConnection created

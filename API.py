@@ -2,6 +2,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse
 from calculator.ETC import exposure_time_calculator
 from json import dumps as json
+from re import sub  # Processing regular expressions
 
 
 hostName = "0.0.0.0"
@@ -27,11 +28,21 @@ def process_request(query):
         return f'An error occured while processing your request<br>{e}<br><br>', True
 
 def text2html(text):
+    text = text.replace('&', '&#38;')
     text = text.replace(' ', '&nbsp;')
     text = text.replace('\t', '&nbsp'*4)
     text = text.replace('\n', '<br>')
-    return text
+    return '<html><body style="font-family: monospace;">' + text + '</body></html>'
            
+
+def sanitize_input(text):
+    # Allowed characters are alphanumerics and . = [ ] - ( ) & + _ ,
+    whitelist = r'a-zA-Z0-9\.\=\[\]\-()&+_,'
+    # Negate the list of allowed characters
+    not_whitelist = f'[^{whitelist}]'
+    # Remove all non-allowed characters from string
+    return sub(not_whitelist,'', text)
+
 
 
 class APIServer(BaseHTTPRequestHandler):
@@ -42,12 +53,12 @@ class APIServer(BaseHTTPRequestHandler):
 
         try:
             query = urlparse(self.path).query
+            query = sanitize_input(query)
             query = dict(qc.split("=") for qc in query.split("&"))
             # Convert lists from string to list
             for key, val in query.items():
                 if val.startswith('[') and val.endswith(']'):
                     query[key] = [x.strip() for x in val[1:-1].split(',')]
-            print(query)
         except:
             query = {}
         response, error = process_request(query)
@@ -64,7 +75,8 @@ class APIServer(BaseHTTPRequestHandler):
             self.wfile.write(bytes(json(response, ensure_ascii=False), 'utf-8'))
 
 
-if __name__ == "__main__":        
+if __name__ == "__main__":  
+
     webServer = HTTPServer((hostName, serverPort), APIServer)
     print("Server started http://%s:%s" % (hostName, serverPort))
 

@@ -53,14 +53,14 @@ class exposure_time_calculator:
 
         self.source_flux = self.source.get_flux(self.wavelengths) * self.atmosphere.get_transmission(self.wavelengths)
 
-        source_rate = self.source_flux * self.instrument.get_throughput(self.wavelengths) * self.binning[0] * self.binning[1]  # Binning in the spectral direction
+        source_rate = self.source_flux * self.instrument.get_throughput(self.wavelengths) * self.instrument.binning[0] * self.instrument.binning[1]  # Binning in the spectral direction
         source_rate *= self.telescope_area * source_slit_ratio * (self.wavelengths / self.instrument.spectral_resolution)
 
 
-        background_rate = self.atmosphere.get_emission(self.wavelengths) * self.instrument.get_throughput(self.wavelengths) * self.binning[0] * self.binning[1]
+        background_rate = self.atmosphere.get_emission(self.wavelengths) * self.instrument.get_throughput(self.wavelengths) * self.instrument.binning[0] * self.instrument.binning[1]
         background_rate *= self.telescope_area * slit_size * (self.wavelengths / self.instrument.spectral_resolution)
         # Divide reads by 2 because read noise is per CDS (2 reads)
-        read_noise = self.instrument.get_read_noise()**2 * slit_size_pixels / sqrt(self.reads) / self.binning[0]  # Binning in the spatial direction
+        read_noise = self.instrument.get_read_noise()**2 * slit_size_pixels / sqrt(self.reads) / self.instrument.binning[0]  # Binning in the spatial direction
 
         dark_current_rate = self.instrument.get_dark_current() * slit_size_pixels
         
@@ -126,7 +126,7 @@ class exposure_time_calculator:
             # Get length of single exposure
             self.exposure = [(t / number_exposures) for t in self.integration_time] * u.s
 
-            # Calculate and save counts based on calculatred exposure = f(λ)
+            # Calculate and save counts based on calculated exposure = f(wavelength)
             # TODO -- convert to list of lists instead of list, this will break for multiple snr!!!
             self.source_count_adu = [source_rate * self.instrument.pixel_size / source_size * exp * number_exposures / self.instrument.gain for exp in self.exposure] * (u.adu/u.pixel)
             self.background_count_adu = [background_rate / slit_size * self.instrument.pixel_size * exp * number_exposures / self.instrument.gain for exp in self.exposure] * (u.adu/u.pixel)
@@ -160,7 +160,6 @@ class exposure_time_calculator:
         self.repeats = u.Quantity(self.config.defaults.repeats)
         self.coadds = u.Quantity(self.config.defaults.coadds)
         self.target = self.config.defaults.target
-        self.binning = u.Quantity(self.config.defaults.binning)
         # Calculate default wavelengths array from min, max of instrument and atmosphere
         min_wavelength = max(self.atmosphere._wavelength_index[0], self.instrument.min_wavelength)
         max_wavelength = min(self.atmosphere._wavelength_index[-1], self.instrument.max_wavelength)
@@ -169,22 +168,59 @@ class exposure_time_calculator:
         self._calculate()
 
     def set_parameters(self, parameters):
-        # TODO -- input validation
+        # Validate input format
         if isinstance(parameters, str):
-            parameters = json_loads(parameters)
+            try:
+                parameters = json_loads(parameters)
+            except ValueError:
+                raise ValueError('In ETC.set_parameters() -- parameters is not a valid dictionary or json-like string')
+        elif not isinstance(parameters, dict):
+            raise ValueError('In ETC.set_parameters() -- parameters is not a valid dictionary or json-like string')
+
+        # Set each parameter, then calculate results
+        errors = ''
         for key, val in parameters.items():
-            self.set_parameter(key, val)
+            try:
+                self.set_parameter(key, val, run_calculator=False)
+            except ValueError as e:
+                errors += str(e).split(' -- ')[-1] + '\n'
+        
+        self._calculate()
+        if len(errors) > 0:
+            raise ValueError(f'In ETC.set_parameters() -- encountered the following errors: \n{errors}')
 
 
-    def set_parameter(self, name, value):
+    def set_parameter(self, name, value, run_calculator=True):
+
+        # Parameter belongs to other class
+        if name not in vars(self).keys():
+
+            # Coerce parameter name, if applicable
+            if name in vars(self.instrument).keys():
+                warn(f'In ETC.set_parameter() -- coercing parameter {name} to instrument.{name}')
+                name = 'instrument.' + name
+            elif name in vars(self.source).keys():
+                warn(f'In ETC.set_parameter() -- coercing parameter {name} to source.{name}')
+                name = 'source.' + name
+            elif name in vars(self.atmosphere).keys():
+                warn(f'In ETC.set_parameter() -- coercing parameter {name} to atmosphere.{name}')
+                name = 'atmosphere.' + name
+            
+            # Assign parameter to appropriate place
+            if name.startswith('instrument.'):
+                self.instrument.set_parameter(name.replace('instrument.',''), value)
+            elif name.startswith('source.'):
+                self.source.set_parameter(name.replace('source.',''), value)
+            elif name.startswith('atmosphere.'):
+                self.atmosphere.set_parameter(name.replace('atmosphere.',''), value)
+            else:
+                # Throw error if invalid name
+                raise ValueError(f'In ETC.set_parameter() -- invalid parameter {name}')
+
         # TODO -- validation
-        if name.startswith('instrument.'):
-            self._set_instrument_parameter('.'.join(name.split('.')[1:]), value)
-        elif name.startswith('source.'):
-            self._set_source_parameter('.'.join(name.split('.')[1:]), value)
-        elif name.startswith('atmosphere.'):
-            self._set_atmosphere_parameter('.'.join(name.split('.')[1:]), value)
+        
         else:
+
             if name == 'target':
                 if value != 'signal_noise_ratio' and value != 'exposure':
                     raise ValueError('In ETC.set_parameter() -- target must be either "exposure" or "signal_noise_ratio"')
@@ -194,47 +230,31 @@ class exposure_time_calculator:
                     self.exposure = [u.Quantity(x) for x in self.config.defaults.exposure] * u.s
                 self.target = value
             elif name == 'wavelengths':
+                if isinstance(value, str):
+                    value = [value]
+                elif not isinstance(value, list):
+                    value = list(value)
                 # TODO -- only allow wavelengths within bounds
                 self.wavelengths = [u.Quantity(x).to(u.angstrom) for x in value] * u.angstrom
             elif name == 'exposure':
+                if isinstance(value, str):
+                    value = [value]
+                elif not isinstance(value, list):
+                    value = list(value)
                 self.target = 'signal_noise_ratio'
                 self.exposure = [u.Quantity(x).to(u.s) for x in value] * u.s
             elif name == 'signal_noise_ratio':
+                if isinstance(value, str):
+                    value = [value]
+                elif not isinstance(value, list):
+                    value = list(value)
                 self.target = 'exposure'
                 self.signal_noise_ratio = [u.Quantity(x) for x in value] * u.dimensionless_unscaled
             else:
                 vars(self)[name] = u.Quantity(value)
-        self._calculate()
-
-    
-    def _set_source_parameter(self, name, value):
-        # TODO -- input validation
-        if name == 'type':
-            self.source.set_type(value)
-        elif name == 'wavelength_band':
-            self.source.wavelength_band = str(value)
-        elif name == 'brightness':
-            self.source.set_brightness(value)
-        elif name == 'temperature':
-            self.source.temperature = u.Quantity(value).to(u.K, equivalencies=u.temperature())
-        else:
-            vars(self.source)[name] = u.Quantity(value)
+        
+        if run_calculator:
             self._calculate()
-
-    def _set_atmosphere_parameter(self, name, value):
-        # TODO -- input validation
-        vars(self.atmosphere)[name] = u.Quantity(value)
-        self._calculate()
-    
-    def _set_instrument_parameter(self, name, value):
-        # TODO -- input validation
-        if name == 'name':
-            self.instrument.set_name(value)
-        elif name == 'mode':
-            self.instrument.mode = str(value)
-        else:
-            vars(self.instrument)[name] = u.Quantity(value)
-        self._calculate()
 
     def get_parameters(self):
 
@@ -243,7 +263,6 @@ class exposure_time_calculator:
             'reads': str(self.reads),
             'repeats': str(self.repeats),
             'coadds': str(self.coadds),
-            'binning': self.binning.value,
             'atmosphere.seeing': str(self.atmosphere.seeing),
             'atmosphere.airmass': str(self.atmosphere.airmass),
             'atmosphere.water_vapor': str(self.atmosphere.water_vapor)

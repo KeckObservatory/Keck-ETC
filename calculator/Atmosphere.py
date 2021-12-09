@@ -207,3 +207,17 @@ class atmosphere:
         # Save interpolation values to results
         results[(self._wavelength_index[0] <= wavelengths) & (wavelengths <= self._wavelength_index[-1])] = interpolation
         return results * u.Unit('photon/(s arcsec^2 nm m^2)')
+
+    
+    def set_parameter(self, name, value):
+        # TODO -- input validation
+        if name == 'water_vapor' and not min(self._water_vapor_index) <= u.Quantity(value) <= max(self._water_vapor_index):
+            raise ValueError(f'In atmosphere.set_parameter() -- water vapor {value} is not within bounds of [{min(self._water_vapor_index)}, {max(self._water_vapor_index)}]')
+        
+        if name == 'airmass' and not min(self._airmass_index) <= u.Quantity(value) <= max(self._airmass_index):
+            raise ValueError(f'In atmosphere.set_parameter() -- water vapor {value} is not within bounds of [{min(self._airmass_index)}, {max(self._airmass_index)}]')
+        
+        if name == 'seeing' and u.Quantity(value).value <= 0:
+            raise ValueError(f'In atmosphere.set_parameter() -- seeing {value} is invalid')
+
+        vars(self)[name] = u.Quantity(value)
