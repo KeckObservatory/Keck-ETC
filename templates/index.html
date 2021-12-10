@@ -1,94 +1,96 @@
-{% extends base %}
+<!DOCTYPE html>
+<html lang="en">
+  
+    <head>
+    
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1" id="viewport-meta" />
+        
+        <title>WMKO ETC</title>
 
-{% block title%}W.M.K.O. ETC{% endblock %}
+        <link rel='icon' type='image/x-icon' href='static/favicon.ico'>
+        <link rel='stylesheet' href='styles.css'>
+        <script type='text/javascript' src='script.js'></script>
 
-{% block postamble %}
-    <link rel='icon' type='image/x-icon' href='prototype/static/favicon.ico'>
-    <style>
-        {% include 'styles.css' %}
-    </style>
-    <meta name="viewport" content="width=device-width,initial-scale=1" id="viewport-meta" />
-    <meta charset='utf-8'>
-    <script>
-        const errorHandler = (e) => {
-            if (e.message.includes('not connected')) {                  
-                alert('Connection lost, please refresh page');
-            } else if (e.message.includes('Unhandled ERROR')) {
-                alert('Server error, please refresh page');
-            } else {
-                alert('Unexpected '+e.message+'\nPlease refresh page');
-            }
-            //location.reload();
-        };
-        window.addEventListener('error', errorHandler, {once:true});  // Set once to true to prevent duplicate js alerts before reloading page
-        const resizeHandler = (e) => {
-            // If page is resized, reset contents to size appropriately
-            if (e.isTrusted && typeof window.Bokeh.documents[0] != 'undefined') {
-                const reset = window.Bokeh.documents[0].get_model_by_name('reset_contents_container');
-                if (reset.tags[0] === false){
-                    reset.tags = [true];
-                }
-            }
-            // Handle position of text for plotting overlay, ensure that it's centered
-            if (typeof window.Bokeh.documents[0] != 'undefined') {
-                const plot = window.Bokeh.documents[0].get_model_by_name('vs_plot');
-                if (plot != null && plot.select_one('text').visible){
-                    plot.select_one('text').x = plot.inner_width/2;
-                    plot.select_one('text').y = plot.inner_height/2;
-                }
-            }
+    </head>
 
-        };
-        window.addEventListener('resize', resizeHandler);
-    </script>
-{% endblock %}
-
-{% block contents %}
+<body onload='setup()'>
     <section>
         <div class='title-bar'>
-            <h2>W.M.K.O. Exposure Time Calculator</h2>
-            {{ embed(roots.reset_button) }}
+            <div class="instrument-menu">
+                <div class='instrument'>LRIS</div>
+                <div class='instrument selected'>NIRES</div>
+                <div class='instrument'>DEIMOS</div>
+                <div class='instrument'>HIRES</div>
+                <div class='instrument'>NIRC2</div>
+                <div class='instrument'>KCWI</div>
+                <div class='instrument'>ESI</div>
+                <div class='instrument'>OSIRIS</div>
+            </div>
+            <button class='reset' type='button'>Reset Calculator</button>
         </div>
-        <div class="instrument-menu">
-            {{ embed(roots.instruments) }}
-        </div>
+        
         <div class='row'>
             <div class='main'>
-                <div class="input row">
+                <div class="row">
                     <div class="panel first">
-                        {{ embed(roots.exposure_panel) }}
+
+                        <div class='section-title'>Exposure</div>
+
+                        <div class='input-row' id='input-target'>
+                            <div class='input select'>
+                                <div class='label-container'>
+                                    <label>Calculation Target:</label>
+                                    <label class='info'>&#x1F6C8;</label>
+                                </div>
+                                <select>
+                                    <option value='signal_noise_ratio'>signal to noise ratio</option>
+                                    <option value='exposure'>exposure</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class='input-row' id='input-exposure'>
+                            <div class='input slider'>
+                                <div class='label-container'>
+                                    <label>Exposure [s]: 3600</label>
+                                    <label class='info'>&#x1F6C8;</label>
+                                </div>
+                                <input type='range' min='0' max='7200' value='3600'>
+                            </div>
+                        </div>
+
                     </div>
                     <div class="panel">
-                        {{ embed(roots.source_panel) }}
+                        <div class='loading-symbol'></div>
                     </div>
                     <div class='panel'>
-                        {{ embed(roots.instrument_panel) }}
+                        <div class='loading-symbol'></div>
                     </div>
                     <div class="panel">
-                        {{ embed(roots.atmosphere_panel) }}
+                        <div class='loading-symbol'></div>
                     </div>
                 </div>
-                <div class="output row">
+                <div class="row">
                     <div class='panel first'>
-                        {{ embed(roots.results) }}
+                        <div class='loading-symbol'></div>
                     </div>
                 </div>
             </div>
+            
             <div class='sidebar'>
                 <div class='panel last'>
-                    {{ embed(roots.sidebar) }}
+                    <div class='loading-symbol'></div>
                 </div>
             </div>
         </div>
         <article class='instructions'>
             <h3>ETC Instructions</h3>
-            {{ embed(roots.instructions) }}
+            <div class='loading-symbol'></div>
         </article>
     </section>
-    {% include 'cookie_message.html' %}
+    <!-- {% include 'cookie_message.html' %} -->
+    </body>
 
-    {{ embed(roots.alert_container) }}
-    {{ embed(roots.cookie_container) }}
-    {{ embed(roots.page_loaded_container) }}
-    {{ embed(roots.reset_contents_container) }}
-{% endblock %}
+
+</html>
