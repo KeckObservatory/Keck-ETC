@@ -27,7 +27,7 @@
                 <div class='instrument'>ESI</div>
                 <div class='instrument'>OSIRIS</div>
             </div>
-            <button class='reset' type='button'>Reset Calculator</button>
+            <button class='default reset' type='button'>Reset Calculator</button>
         </div>
         
         <div class='row'>
@@ -38,7 +38,7 @@
                         <div class='section-title'>Exposure</div>
 
                         <div class='input-row' id='input-target'>
-                            <div class='input select'>
+                            <div class='input select first last'>
                                 <div class='label-container'>
                                     <label>Calculation Target:</label>
                                     <label class='info'>&#x1F6C8;</label>
@@ -51,7 +51,7 @@
                         </div>
 
                         <div class='input-row' id='input-exposure'>
-                            <div class='input slider'>
+                            <div class='input slider first last'>
                                 <div class='label-container'>
                                     <label>Exposure [s]: 3600</label>
                                     <label class='info'>&#x1F6C8;</label>
@@ -60,14 +60,46 @@
                             </div>
                         </div>
 
+                        <div class='input-row' id='input-exposure-min-max'>
+                            <div class='input spin first'>
+                                <div class='label-container'><label>Min:</label></div>
+                                <div class='spin-wrapper'>
+                                    <input type='text' value='0'>
+                                    <button class='spin-btn up'></button>
+                                    <button class='spin-btn down'></button>
+                                </div>
+                            </div>
+                            <div class='input spin'>
+                                <div class='label-container'><label>Max:</label></div>
+                                <div class='spin-wrapper'>
+                                    <input type='text' value='0'>
+                                    <button class='spin-btn up'></button>
+                                    <button class='spin-btn down'></button> 
+                                </div>
+                            </div>
+                            <div class='input select last'>
+                                <div class='label-container'>
+                                    <label>&nbsp;</label>
+                                    <label class='info'>⦿</label>
+                                </div>
+                                <select>
+                                    <option value='s'>s</option>
+                                    <option value='min'>min</option>
+                                </select>
+                            </div>
+                        </div>
+
                     </div>
                     <div class="panel">
+                        <div class='section-title'>Source</div>
                         <div class='loading-symbol'></div>
                     </div>
                     <div class='panel'>
+                        <div class='section-title'>Instrument</div>
                         <div class='loading-symbol'></div>
                     </div>
                     <div class="panel">
+                        <div class='section-title'>Atmosphere</div>
                         <div class='loading-symbol'></div>
                     </div>
                 </div>
@@ -77,9 +109,10 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class='sidebar'>
                 <div class='panel last'>
+                    <div class='section-title'>Results</div>
                     <div class='loading-symbol'></div>
                 </div>
             </div>
