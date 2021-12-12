@@ -29,25 +29,18 @@
 .panel {
   border-radius: 10px;
   border: 1px solid #e6e6e6;
-  padding: 0.6vw;
+  padding: 0.8vw;
   margin: 0 0.5vw 1vw 0.5vw;
   min-width: 100px;
   min-height: 100px;
   box-sizing: border-box;
   flex-grow: 1;
   display: block;
+  width: 100%;
 }
 
 .output .panel {
   padding-right: 1.25vw;
-}
-
-.first {
-  margin-left: 0;
-}
-
-.last {
-  margin-right: 0;
 }
 
 section {
@@ -62,11 +55,15 @@ section {
 }
 
 .main {
-  flex-grow: 90;
+  flex-grow: 1;
+  margin-right: 0.5vw;
+  width: 100%;
 }
 
 .sidebar {
-  flex-grow: 10;
+  width: 100%;
+  margin-left: 0.5vw;
+  flex-shrink: 6;
   flex-direction: column;
   align-items: stretch;
   display: flex;
@@ -76,20 +73,9 @@ input[type='file'] {
   width: 100% !important;
 }
 
-/* Text styling, fonts and font sizes for looking pretty */
-/* TODO -- SET FONTS WITH bokeh model.text_font_size='10em'!!! */
-
-
-@media (max-width: 1200px) {
-  .bk.section-title, .bk.bk-tab, h2 {
-    font-size: 100% !important;
-  }
-}
-
-
 
 h2 {
-  font-size: 1.8vw;
+  font-size: large;
   margin-block-end: 0.5em;
   margin-block-start: 0.5em;
 }
@@ -120,50 +106,8 @@ body {
   text-align: center !important;
 }
 
-div.label-container {
-  width: 100%;
-  flex-direction: row;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 0 0 .5vw;
-  padding: 0 .5vw;
-  box-sizing: border-box;
-}
-
 div.paragraph-row {
   width: calc(100% - 10px) !important;
-}
-
-label.info{
-  align-self: flex-start;
-}
-
-label.info::after{
-  content: attr(data-tooltip);
-  padding: 2px;
-  display: none;
-  position: absolute;
-  width: max-content;
-  max-width: 20vw;
-  overflow-wrap: normal;
-  text-overflow: ellipsis;
-  white-space: normal;
-  height: auto;
-  z-index: 1;
-  box-shadow: 1px 2px 4px rgba(0,0,0,0.2);
-  text-align: center;
-  background-color: #ffffff;
-  border: 1px solid #cccccc;
-  /*
-  -moz-border-radius: 2px;
-  -webkit-border-radius: 2px;
-  -ms-border-radius: 2px;
-  border-radius: 2px;
-  */
-}
-label.info:hover::after{
-  display: block;
 }
 
 
@@ -191,167 +135,34 @@ label.info:hover::after{
 }
 
 
-/* From https://www.w3schools.com/howto/howto_js_rangeslider.asp */
-/*
-
-
-.input.slider input {
-  appearance: none;
-  -webkit-appearance: none;
-  overflow: hidden;
-  width: 100%;
-  height: 10px;
-  background: #fff;
-  opacity: 0.7;
-  border-radius: 10px;
-  border: 1px solid #d3d3d3;
-  box-sizing: border-box;
-}
-.input.slider input::-webkit-slider-runnable-track {
-  background: #fff;
-}
-.input.slider input::-moz-range-track {
-  height: 10px;
-  background: #fff;
-}
-.input.slider input:hover {
-  opacity: 1;
-}
-.input.slider input::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  height: 15px;
-  width: 15px;
-  cursor: pointer;
-  background: #fff;
-  border: 1px solid #ccc;
-}
-.input.slider input::-moz-range-thumb {
-  height: 15px;
-  width: 15px;
-  cursor: pointer;
-  background: #fff;
-  border: 1px solid #ccc;
-  box-sizing: border-box;
-}
-.input.slider input::-ms-fill-lower {
-  background: #ddd;
-}
-.input.slider input::-ms-thumb {
-  background: #fff;
-  border: 1px solid #ccc;
-  height: 15px;
-  width: 15px;
-  box-sizing: border-box;
-}
-.input.slider input::-ms-ticks-after { 
-  display: none; 
-}
-.input.slider input::-ms-ticks-before { 
-  display: none; 
-}
-.input.slider input::-ms-track { 
-  background: #fff;
-  color: transparent;
-  height: 10px;
-  border: 1px solid #d3d3d3;
-}
-.input.slider input::-ms-tooltip { 
-  display: none;
-}
-*/
-.input.slider input {
-  width: 100%;
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0 0.5vw;
-}
-
-
 /* COPIED FROM BOKEH!!! */
 
-.spin-wrapper {
-  position: relative;
-  overflow: hidden;
+.input, input-spin, input-select, input-slider {
+  flex-grow: 1;
+  margin: 0 0.3vw;
   width: 100%;
   box-sizing: border-box;
 }
 
-button.spin-btn {
-  position: absolute;
-  display: block;
-  height: 50%;
-  width: 30px;
-  padding: 0;
-  margin: 0;
-  right: 0;
-  border: none;
-  background: none;
-  cursor: pointer;
-}
-button.spin-btn::before {
-  content: '';
-  display: inline-block;
-  transform: translateY(-50%);
-  border-left: 5px solid transparent;
-  border-right: 5px solid transparent;
+.input:first-child, 
+input-spin:first-child, 
+input-select:first-child, 
+input-slider:first-child, 
+.panel:first-child {
+  margin-left: 0;
 }
 
-button.spin-btn.up {
-  top: 0;
-}
-button.spin-btn.up::before {
-  border-bottom: 5px solid #000;
-}
-
-button.spin-btn.down {
-  bottom: 0;
-}
-button.spin-btn.down::before {
-  border-top: 5px solid #000;
-}
-
-.spin-wrapper input {
-  padding-right: 20px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-div.input {
-  flex-grow: 1;
-  margin: 0 0.5vw;
-}
-
-div.input select:focus, div.input input[type='text']:focus {
-  border-color: #66afe9;
-  outline: 0;
-  box-shadow: inset 0 1px 1px rgb(0 0 0 / 8%), 0 0 8px rgb(102 175 233 / 60%);
-}
-
-div.input select, div.input input[type='text'] {
-  height: auto;
-  appearance: none;
-  -webkit-appearance: none;
-  width: 100%;
-  border: 1px solid #ccc;
-  padding: 0 3%;
-  border-radius: 4px;
-  flex-grow: 1;
-  -webkit-flex-grow: 1;
-  min-height: 31px;
-  overflow: visible;
-}
-
-div.input select {
-  background-image: url(static/select.svg);
-  background-position: right 0.5em center;
-  background-size: 8px 6px;
-  background-repeat: no-repeat;
+.input:last-child, 
+input-spin:last-child, 
+input-select:last-child, 
+input-slider:last-child, 
+.panel:last-child {
+  margin-right: 0;
 }
 
 .input-row {
   width: 100%;
-  margin: 2% 0;
+  margin: 0.5vw 0;
   display: inline-flex;
   display: -webkit-inline-flex;
   flex-wrap: nowrap;
@@ -364,11 +175,13 @@ div.input select {
 }
 
 .section-title {
-  padding: 1% 0;
+  padding: 0.2vw 0;
+  margin: 0 0.5vw 1vw;
   border-bottom: 1px solid #ccc;
-  width: 100%;
-  font-size: 1vw;
+  width: auto;
+  font-size: large;
   font-weight: bold;
+  box-sizing: border-box;
 }
 
 button.default {
@@ -395,7 +208,7 @@ div.title-bar {
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid #e6e6e6;
-  margin: 1% 0;
+  margin: 1vw 0;
 }
 
 .instrument-menu {
@@ -406,7 +219,7 @@ div.title-bar {
 }
 
 .instrument-menu .instrument {
-  font-size: 1.1vw;
+  font-size: large;
   font-weight: bold;
   border-radius: 4px 4px 0 0;
   padding: 2%;

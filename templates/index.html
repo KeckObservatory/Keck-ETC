@@ -12,9 +12,15 @@
         <link rel='stylesheet' href='styles.css'>
         <script type='text/javascript' src='script.js'></script>
 
+        <!-- Custom element definitions -->
+        <script type='text/javascript' src='modules/input-label.js'></script>
+        <script type='text/javascript' src='modules/input-spin.js'></script>
+        <script type='text/javascript' src='modules/input-select.js'></script>
+        <script type='text/javascript' src='modules/input-slider.js'></script>
+
     </head>
 
-<body onload='setup()'>
+<body>
     <section>
         <div class='title-bar'>
             <div class="instrument-menu">
@@ -33,93 +39,133 @@
         <div class='row'>
             <div class='main'>
                 <div class="row">
-                    <div class="panel first">
+                    <div class="panel">
 
                         <div class='section-title'>Exposure</div>
 
-                        <div class='input-row' id='input-target'>
-                            <div class='input select first last'>
-                                <div class='label-container'>
-                                    <label>Calculation Target:</label>
-                                    <label class='info'>&#x1F6C8;</label>
-                                </div>
-                                <select>
-                                    <option value='signal_noise_ratio'>signal to noise ratio</option>
-                                    <option value='exposure'>exposure</option>
-                                </select>
-                            </div>
+                        <div class='input-row'>
+                            <input-select label='Calculation Target' id='target'>
+                                <option value='signal_noise_ratio'>signal to noise ratio</option>
+                                <option value='exposure'>exposure</option>
+                            </input-select>
                         </div>
 
-                        <div class='input-row' id='input-exposure'>
-                            <div class='input slider first last'>
-                                <div class='label-container'>
-                                    <label>Exposure [s]: 3600</label>
-                                    <label class='info'>&#x1F6C8;</label>
-                                </div>
-                                <input type='range' min='0' max='7200' value='3600'>
-                            </div>
+                        <div class='input-row' style='margin-bottom: 0.5vw;'>
+                            <input-slider min='0' max='7200' value='3600' unit='s' id='exposure'>Exposure</input-slider>
                         </div>
 
-                        <div class='input-row' id='input-exposure-min-max'>
-                            <div class='input spin first'>
-                                <div class='label-container'><label>Min:</label></div>
-                                <div class='spin-wrapper'>
-                                    <input type='text' value='0'>
-                                    <button class='spin-btn up'></button>
-                                    <button class='spin-btn down'></button>
-                                </div>
-                            </div>
-                            <div class='input spin'>
-                                <div class='label-container'><label>Max:</label></div>
-                                <div class='spin-wrapper'>
-                                    <input type='text' value='0'>
-                                    <button class='spin-btn up'></button>
-                                    <button class='spin-btn down'></button> 
-                                </div>
-                            </div>
-                            <div class='input select last'>
-                                <div class='label-container'>
-                                    <label>&nbsp;</label>
-                                    <label class='info'>⦿</label>
-                                </div>
-                                <select>
-                                    <option value='s'>s</option>
-                                    <option value='min'>min</option>
-                                </select>
-                            </div>
+                        <div class='input-row' style='margin-top: 0;'>
+                            <input-spin min=0 value=2 step=1 id='exposure-min'>Min</input-spin>
+                            <input-spin min=0 value=7200 step=1 id='exposure-max'>Max</input-spin>
+                            <input-select id='exposure-unit'>
+                                <option value='s'>s</option>
+                                <option value='min'>min</option>
+                            </input-select>
+
+                        </div>
+
+                        <div class='input-row'>
+                            <input-spin min=1 value=1 id=dithers>Dithers</input-spin>
+                            <input-spin min=1 value=1 id=repeats>Repeats</input-spin>
+                        </div>
+
+                        <div class='input-row'>
+                            <input-spin min=1 value=1 id=coadds>Coadds</input-spin>
+                            <input-select label='Reads' id=reads>
+                                <option value='1'>1</option>
+                                <option value='2'>2</option>
+                            </input-select>
                         </div>
 
                     </div>
                     <div class="panel">
                         <div class='section-title'>Source</div>
-                        <div class='loading-symbol'></div>
+                        
+                        <div class='input-row'>
+                            <input-select label='Source Type' id='source-type'>
+                                <option value='vega'>Vega</option>
+                            </input-select>
+                        </div>
+
+                        <div class='input-row'>
+                            <input-spin value=18 id=flux>Flux</input-spin>
+                            <input-select label='&nbsp;' id=flux-unit>
+                                <option value='mag(AB)'>mag(AB)</option>
+                            </input-select>
+                            <input-select label='Band' id=wavelength-band>
+                                <option value='K'>K</option>
+                            </input-select>
+                        </div>
+
+                        <div class='input-row'>
+                            <input-spin value=2 id=redshift>Redshift</input-spin>
+                        </div>
+
+                        <div class='input-row'>
+                            <p>File upload goes here...</p>
+                        </div>
+
                     </div>
                     <div class='panel'>
                         <div class='section-title'>Instrument</div>
-                        <div class='loading-symbol'></div>
+                        
+                        <div class='input-row'>
+                            <input-select label='Mode' id='mode'>
+                                <option>spectroscopic</option>
+                            </input-select>
+                        </div>
+                        <div class='input-row'>
+                            <input-select label='Slit' id=slit>
+                                <option value='[0.55arcsec,18arcsec]'>0.55" x 18"</option>
+                            </input-select>
+                        </div>
+
+                        <div class='input-row'>
+                            <input-select label='Binning' id=binning>
+                                <option value='[1,1]'>1x1</option>
+                            </input-select>
+                        </div>
+
                     </div>
                     <div class="panel">
                         <div class='section-title'>Atmosphere</div>
-                        <div class='loading-symbol'></div>
+                        
+                        <div class='input-row'>
+                            <input-spin min=0 value=0.8 id=seeing>Seeing</input-spin>
+                            <input-select id=seeing-unit>
+                                <option>arcsec</option>
+                            </input-select>
+                        </div>
+
+                        <div class='input-row'>
+                            <input-spin min=1 max=2 step=0.1 value=1.2 id=airmass>Airmass</input-spin>
+                        </div>
+
+                        <div class='input-row'>
+                            <input-spin min=1 max=5 step=0.5 value=1.6 id=water-vapor>Water Vapor</input-spin>
+                            <input-select id=water-vapor-unit>
+                                <option>mm</option>
+                            </input-select>
+                        </div>
+
                     </div>
                 </div>
                 <div class="row">
-                    <div class='panel first'>
+                    <div class='panel'>
                         <div class='loading-symbol'></div>
                     </div>
                 </div>
             </div>
 
             <div class='sidebar'>
-                <div class='panel last'>
+                <div class='panel'>
                     <div class='section-title'>Results</div>
                     <div class='loading-symbol'></div>
                 </div>
             </div>
         </div>
-        <article class='instructions'>
-            <h3>ETC Instructions</h3>
-            <div class='loading-symbol'></div>
+        <article id='instructions' >
+            <h2>ETC Instructions</h2>
         </article>
     </section>
     <!-- {% include 'cookie_message.html' %} -->

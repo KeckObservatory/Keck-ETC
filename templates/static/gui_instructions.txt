@@ -2,10 +2,4 @@ Welcome to the W. M. Keck Observatory exposure time calculator! It will calculat
 
 This tool updates output products in realtime as you modify input parameters. Mouse over and click on the plots to see SNR or required exposure time at a wavelength of interest. The plots are interactive, use the tool bar on the upper right of the plots to zoom, reset, save plots, etc. Use the sliding bar in the Exposure pannel to adjust exppsure time or SNR. The computed SNR is per unit resolution. Users can upload their own source SED in ECSV or FITS format for ETC calculations.
 
-Questions? Contact syeh at keck.hawaii.edu 
-
-Some important things to include are:
-    - ETC assumes a gaussian, doesn't use PSF
-    - SNR is calculated for whole slit (per unit resolution / per resolution element)
-    - How to use interactive plots (scroll to zoom, scroll on axis to zoom one axis, click on legend to show/hide lines, reset button, save button)
-    - For file upload, FITS or ECSV format, must have astropy compatible units specified
+Questions? Contact syeh at keck.hawaii.edu

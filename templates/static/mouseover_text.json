@@ -1,0 +1,31 @@
+{
+
+    "file-upload": "Upload a custom spectrum in either ASCII.ECSV or FITS file formats, including properly specified units in the header",
+
+    "exposure": "Individual exposure time, select range of values with min and max",
+
+    "target": "Specify whether you wish to calculate exposure time or SNR",
+
+    "airmass": "Specify airmass",
+
+    "seeing-unit": "Specify seeing",
+
+    "water-vapor-unit": "Specify precipitable water vapor, negligile in wavelengths < 1.3 um  ",
+
+    "source-type": "Select source SED template ",
+
+    "flux-unit": "Specify source flux/magnitude unit",
+
+    "wavelength-band": "Select desired passband",
+
+    "reshift": "Enter redshift",
+
+    "dithers": "Specify number of dithers, default to 1 (no dither)",
+
+    "repeats": "Specify number of dither repeats  ",
+
+    "coadds": "Specify number of coadds, default to 1",
+
+    "reads": "Specify detector number of reads, default to 2 (CDS)"
+
+}
