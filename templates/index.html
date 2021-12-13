@@ -17,158 +17,167 @@
         <script type='text/javascript' src='modules/input-spin.js'></script>
         <script type='text/javascript' src='modules/input-select.js'></script>
         <script type='text/javascript' src='modules/input-slider.js'></script>
+        <script type='text/javascript' src='modules/input-file.js'></script>
+        <script type='text/javascript' src='modules/cookie-message.js'></script>
 
     </head>
 
-<body>
-    <section>
-        <div class='title-bar'>
-            <div class="instrument-menu">
-                <div class='instrument'>LRIS</div>
-                <div class='instrument selected'>NIRES</div>
-                <div class='instrument'>DEIMOS</div>
-                <div class='instrument'>HIRES</div>
-                <div class='instrument'>NIRC2</div>
-                <div class='instrument'>KCWI</div>
-                <div class='instrument'>ESI</div>
-                <div class='instrument'>OSIRIS</div>
+    <body>
+        <section>
+            <div class='title-bar'>
+                <div class="instrument-menu">
+                    <div class='instrument'>LRIS</div>
+                    <div class='instrument selected'>NIRES</div>
+                    <div class='instrument'>DEIMOS</div>
+                    <div class='instrument'>HIRES</div>
+                    <div class='instrument'>NIRC2</div>
+                    <div class='instrument'>KCWI</div>
+                    <div class='instrument'>ESI</div>
+                    <div class='instrument'>OSIRIS</div>
+                </div>
+                <button class='default reset' type='button'>Reset Calculator</button>
             </div>
-            <button class='default reset' type='button'>Reset Calculator</button>
-        </div>
-        
-        <div class='row'>
-            <div class='main'>
-                <div class="row">
-                    <div class="panel">
+            
+            <div class='row'>
+                <div class='main'>
+                    <div class="row">
+                        <div class="panel">
 
-                        <div class='section-title'>Exposure</div>
+                            <div class='section-title'>Exposure</div>
 
-                        <div class='input-row'>
-                            <input-select label='Calculation Target' id='target'>
-                                <option value='signal_noise_ratio'>signal to noise ratio</option>
-                                <option value='exposure'>exposure</option>
-                            </input-select>
+                            <div class='input-row'>
+                                <input-select label='Calculation Target' id='target'>
+                                    <option value='signal_noise_ratio'>signal to noise ratio</option>
+                                    <option value='exposure'>exposure</option>
+                                </input-select>
+                            </div>
+
+                            <div class='input-row' style='margin-bottom: 0.5vw;'>
+                                <input-slider min='0' max='7200' value='3600' unit='s' id='exposure'>Exposure</input-slider>
+                            </div>
+
+                            <div class='input-row' style='margin-top: 0;'>
+                                <input-spin min=0 value=2 step=1 id='exposure-min'>Min</input-spin>
+                                <input-spin min=0 value=7200 step=1 id='exposure-max'>Max</input-spin>
+                                <input-select id='exposure-unit'>
+                                    <option value='s'>s</option>
+                                    <option value='min'>min</option>
+                                </input-select>
+
+                            </div>
+
+                            <div class='input-row'>
+                                <input-spin min=1 value=1 id=dithers>Dithers</input-spin>
+                                <input-spin min=1 value=1 id=repeats>Repeats</input-spin>
+                            </div>
+
+                            <div class='input-row'>
+                                <input-spin min=1 value=1 id=coadds>Coadds</input-spin>
+                                <input-select label='Reads' id=reads>
+                                    <option value='1'>1</option>
+                                    <option value='2'>2</option>
+                                </input-select>
+                            </div>
+
                         </div>
+                        <div class="panel" id=source>
+                            <div class='section-title'>Source</div>
+                            
+                            <div class='input-row'>
+                                <input-select label='Source Type' id='source-type'>
+                                    <option value='vega'>Vega</option>
+                                </input-select>
+                            </div>
 
-                        <div class='input-row' style='margin-bottom: 0.5vw;'>
-                            <input-slider min='0' max='7200' value='3600' unit='s' id='exposure'>Exposure</input-slider>
+                            <div class='input-row'>
+                                <input-spin value=18 id=flux>Flux</input-spin>
+                                <input-select label='&nbsp;' id=flux-unit>
+                                    <option value='mag(AB)'>mag(AB)</option>
+                                </input-select>
+                                <input-select label='Band' id=wavelength-band>
+                                    <option value='K'>K</option>
+                                </input-select>
+                            </div>
+
+                            <div class='input-row'>
+                                <input-spin value=2 id=redshift>Redshift</input-spin>
+                            </div>
+
+                            <div class='input-row'>
+                                <input-file id=file-upload>Upload spectrum</input-file>
+                            </div>
+
                         </div>
+                        <div class='panel' id=instrument>
+                            <div class='section-title'>Instrument</div>
+                            
+                            <div class='input-row'>
+                                <input-select label='Mode' id='mode'>
+                                    <option>spectroscopic</option>
+                                </input-select>
+                            </div>
+                            <div class='input-row'>
+                                <input-select label='Slit' id=slit>
+                                    <option value='[0.55arcsec,18arcsec]'>0.55" x 18"</option>
+                                </input-select>
+                            </div>
 
-                        <div class='input-row' style='margin-top: 0;'>
-                            <input-spin min=0 value=2 step=1 id='exposure-min'>Min</input-spin>
-                            <input-spin min=0 value=7200 step=1 id='exposure-max'>Max</input-spin>
-                            <input-select id='exposure-unit'>
-                                <option value='s'>s</option>
-                                <option value='min'>min</option>
-                            </input-select>
+                            <div class='input-row'>
+                                <input-select label='Binning' id=binning>
+                                    <option value='[1,1]'>1x1</option>
+                                </input-select>
+                            </div>
 
                         </div>
+                        <div class="panel" id=atmosphere>
+                            <div class='section-title'>Atmosphere</div>
+                            
+                            <div class='input-row'>
+                                <input-spin min=0 value=0.8 id=seeing>Seeing</input-spin>
+                                <input-select id=seeing-unit>
+                                    <option>arcsec</option>
+                                </input-select>
+                            </div>
 
-                        <div class='input-row'>
-                            <input-spin min=1 value=1 id=dithers>Dithers</input-spin>
-                            <input-spin min=1 value=1 id=repeats>Repeats</input-spin>
+                            <div class='input-row'>
+                                <input-spin min=1 max=2 step=0.1 value=1.2 id=airmass>Airmass</input-spin>
+                            </div>
+
+                            <div class='input-row'>
+                                <input-spin min=1 max=5 step=0.5 value=1.6 id=water-vapor>Water Vapor</input-spin>
+                                <input-select id=water-vapor-unit>
+                                    <option>mm</option>
+                                </input-select>
+                            </div>
+
                         </div>
-
-                        <div class='input-row'>
-                            <input-spin min=1 value=1 id=coadds>Coadds</input-spin>
-                            <input-select label='Reads' id=reads>
-                                <option value='1'>1</option>
-                                <option value='2'>2</option>
-                            </input-select>
-                        </div>
-
                     </div>
-                    <div class="panel">
-                        <div class='section-title'>Source</div>
-                        
-                        <div class='input-row'>
-                            <input-select label='Source Type' id='source-type'>
-                                <option value='vega'>Vega</option>
-                            </input-select>
+                    <div class="row">
+                        <div class='panel'>
+                            <div class='loading-symbol'></div>
                         </div>
-
-                        <div class='input-row'>
-                            <input-spin value=18 id=flux>Flux</input-spin>
-                            <input-select label='&nbsp;' id=flux-unit>
-                                <option value='mag(AB)'>mag(AB)</option>
-                            </input-select>
-                            <input-select label='Band' id=wavelength-band>
-                                <option value='K'>K</option>
-                            </input-select>
-                        </div>
-
-                        <div class='input-row'>
-                            <input-spin value=2 id=redshift>Redshift</input-spin>
-                        </div>
-
-                        <div class='input-row'>
-                            <p>File upload goes here...</p>
-                        </div>
-
-                    </div>
-                    <div class='panel'>
-                        <div class='section-title'>Instrument</div>
-                        
-                        <div class='input-row'>
-                            <input-select label='Mode' id='mode'>
-                                <option>spectroscopic</option>
-                            </input-select>
-                        </div>
-                        <div class='input-row'>
-                            <input-select label='Slit' id=slit>
-                                <option value='[0.55arcsec,18arcsec]'>0.55" x 18"</option>
-                            </input-select>
-                        </div>
-
-                        <div class='input-row'>
-                            <input-select label='Binning' id=binning>
-                                <option value='[1,1]'>1x1</option>
-                            </input-select>
-                        </div>
-
-                    </div>
-                    <div class="panel">
-                        <div class='section-title'>Atmosphere</div>
-                        
-                        <div class='input-row'>
-                            <input-spin min=0 value=0.8 id=seeing>Seeing</input-spin>
-                            <input-select id=seeing-unit>
-                                <option>arcsec</option>
-                            </input-select>
-                        </div>
-
-                        <div class='input-row'>
-                            <input-spin min=1 max=2 step=0.1 value=1.2 id=airmass>Airmass</input-spin>
-                        </div>
-
-                        <div class='input-row'>
-                            <input-spin min=1 max=5 step=0.5 value=1.6 id=water-vapor>Water Vapor</input-spin>
-                            <input-select id=water-vapor-unit>
-                                <option>mm</option>
-                            </input-select>
-                        </div>
-
                     </div>
                 </div>
-                <div class="row">
+
+                <div class='sidebar'>
                     <div class='panel'>
+                        <div class='section-title'>Results</div>
                         <div class='loading-symbol'></div>
                     </div>
                 </div>
             </div>
+            <article id='instructions' >
+                <h2>ETC Instructions</h2>
+            </article>
+            <article id='bug-report' >
+                <a href='https://github.com/Keaton-Blair/etc-prototype/issues/new/choose' target=_blank>
+                    <p>To report a bug or request a feature, click here</p>
+                </a>
+            </article>
+        </section>
 
-            <div class='sidebar'>
-                <div class='panel'>
-                    <div class='section-title'>Results</div>
-                    <div class='loading-symbol'></div>
-                </div>
-            </div>
-        </div>
-        <article id='instructions' >
-            <h2>ETC Instructions</h2>
-        </article>
-    </section>
-    <!-- {% include 'cookie_message.html' %} -->
+        <cookie-message></cookie-message>
+
     </body>
 
 

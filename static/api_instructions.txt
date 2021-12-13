@@ -15,6 +15,7 @@ AVAILABLE RETURN OPTIONS:
     read_noise_count_adu:   description
     dark_current_count_adu: description
     total_integraion_time:  description
+    parameters:             description
 
 AVAILABLE PARAMETERS:
     exposure:               list of exposure times with units, i.e. [500s, 10min, 2.1hr]

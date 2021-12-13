@@ -1,0 +1,63 @@
+
+/* Default to hide message */
+div {
+    display: none;
+}
+
+/* If visible, set display and properties */
+div.visible {
+    position: fixed;
+    margin: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: rgba(255,255,255,.9);
+    z-index: 1;
+    box-shadow: 0 -1px 10px rgba(0,0,0,.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1vw 5vw;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+/* Animate slide out of bottom of page */
+div.closed {
+    transition: all 0.5s;
+    -webkit-transition: all 0.5s;
+    -moz-transition: all 0.5s;
+    transform: translate(0, 110%); /* 110% > 100% so that border doesn't show on page resize */
+}
+
+/* Styling for text and button */
+p {
+    color: #444;
+}
+button {
+    position: relative;
+    color: #f3f3f3;
+    background-color: #3498db;
+    border: none;
+    border-radius: 5px;
+    height: fit-content;
+    padding: .75vw 1vw;
+    -webkit-transition: all 0.3s;
+    -moz-transition: all 0.3s;
+    transition: all 0.3s;
+}
+button:hover {
+    background-color: #165a88;
+}
+button:active {
+    background-color: #165a88;
+    top: 2px;
+}
+@media (max-width: 1250px) {
+    p, button {
+        font-size: 1.2vw;
+    }
+    button b {
+        font-weight: normal;
+    }
+}

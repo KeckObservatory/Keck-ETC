@@ -47,7 +47,6 @@ setup = () => {
             }
         }).catch(error => console.log(error));
 
-
 };
 
 window.addEventListener('DOMContentLoaded', setup);

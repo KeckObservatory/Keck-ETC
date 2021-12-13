@@ -21,8 +21,15 @@ def process_request(query):
         del query['return']
         etc = exposure_time_calculator()  # Initialize etc
         etc.set_parameters(query)
+        # Get the requested values
         for key in return_vals.keys():
-            return_vals[key] = vars(etc)[key].value.tolist()
+            if key == 'parameters':
+                print(etc.get_parameters())
+                # If parameters were requested, retrieve them
+                return_vals[key] = etc.get_parameters()
+            else:
+                print('whoops!')
+                return_vals[key] = vars(etc)[key].value.tolist()
         return return_vals, False
     except Exception as e:
         return f'An error occured while processing your request<br>{e}<br><br>', True

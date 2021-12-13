@@ -38,6 +38,7 @@ window.customElements.define('input-select', class extends HTMLElement {
         if (newValue !== oldValue) {
             if (name === 'info') { this.info = newValue; }
             if (name === 'label') { this.label = newValue; }
+            if (name === 'value') { this.value = newValue; }
         }
     }
 
