@@ -18,8 +18,16 @@
         <script type='text/javascript' src='modules/input-select.js'></script>
         <script type='text/javascript' src='modules/input-slider.js'></script>
         <script type='text/javascript' src='modules/input-file.js'></script>
+        <script type='text/javascript' src='modules/output-number.js'></script>
         <script type='text/javascript' src='modules/cookie-message.js'></script>
 
+        <!-- Import Plotly.js -->
+        <script src='https://cdn.plot.ly/plotly-2.6.3.min.js'></script>
+        <!-- Import Bokeh js -->
+        <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-2.4.2.min.js" crossorigin="anonymous"></script>
+        <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-gl-2.4.2.min.js" crossorigin="anonymous"></script>
+        <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-api-2.4.2.min.js" crossorigin="anonymous"></script>
+        
     </head>
 
     <body>
@@ -35,7 +43,7 @@
                     <div class='instrument'>ESI</div>
                     <div class='instrument'>OSIRIS</div>
                 </div>
-                <button class='default reset' type='button'>Reset Calculator</button>
+                <button id='reset' type='button'>Reset Calculator</button>
             </div>
             
             <div class='row'>
@@ -153,8 +161,7 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class='panel'>
-                            <div class='loading-symbol'></div>
+                        <div class='panel' id='output-plots'>
                         </div>
                     </div>
                 </div>
@@ -162,10 +169,20 @@
                 <div class='sidebar'>
                     <div class='panel'>
                         <div class='section-title'>Results</div>
-                        <div class='loading-symbol'></div>
+                        <div class='output-container'>
+                            <output-number id=output-exposure>exposure</output-number>
+                            <output-number id=output-snr>S/N</output-number>
+                            <output-number id=output-wavelength>wavelength</output-number>
+                            <output-number id=output-flux>source flux</output-number>
+                            <output-number id=output-time>clock time</output-number>
+                            <output-number id=output-efficiency>efficiency</output-number>
+                        </div>
+                        <button id=download type=button>Download Data</button>
                     </div>
                 </div>
             </div>
+
+            <!-- Text content below main app -->
             <article id='instructions' >
                 <h2>ETC Instructions</h2>
             </article>
@@ -174,9 +191,12 @@
                     <p>To report a bug or request a feature, click here</p>
                 </a>
             </article>
+
         </section>
 
+        <!-- Floating content is defined here -->
         <cookie-message></cookie-message>
+        <a class='scroll-to-top' href='#'>&#x2B9D;</a>
 
     </body>
 

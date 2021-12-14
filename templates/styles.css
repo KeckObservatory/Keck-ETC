@@ -1,4 +1,6 @@
-
+html {
+  scroll-behavior: smooth;
+}
 
 /* From https://www.w3schools.com/howto/howto_css_loader.asp */
 
@@ -25,7 +27,23 @@
   width: 100% !important;
 }
 
-/* Testing custom css classes in bokeh objects */
+.scroll-to-top {
+  position: fixed;
+  right: 15px;
+  bottom: 15px;
+  display: none;
+  width: 50px;
+  height: 50px;
+  text-align: center;
+  line-height: 50px;
+  color: white;
+  background: rgba(52, 58, 64, 0.5);
+  font-weight: bold;
+  font-size: x-large;
+  text-decoration: none;
+  border-radius: 5px;
+}
+
 .panel {
   border-radius: 10px;
   border: 1px solid #e6e6e6;
@@ -39,8 +57,8 @@
   width: 100%;
 }
 
-.output .panel {
-  padding-right: 1.25vw;
+.panel#output-plots {
+  min-width: 250px;
 }
 
 section {
@@ -111,30 +129,6 @@ div.paragraph-row {
 }
 
 
-/* For mobile & vertical tablet, stack sections */
-@media (max-width: 900px) {
-  .panel, .input_panels .panel, .panel.first, .panel.last, .instrument-menu, .title-bar {
-    display: block;
-    width: 90%;
-    margin: 10px auto;
-  }
-
-  .row {
-    flex-direction: column;
-  }
-
-  div.bk.hrule {
-    width: 98% !important;
-  }
-
-  label.info::after{
-    max-width: 80vw;
-    margin: auto;
-  }
-
-}
-
-
 /* COPIED FROM BOKEH!!! */
 
 .input, input-spin, input-select, input-slider {
@@ -184,23 +178,32 @@ input-slider:last-child,
   box-sizing: border-box;
 }
 
-button.default {
+button {
   color: #333;
   background-color: #fff;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   cursor: pointer;
-  padding: 0.5% 1%;
+  padding: 0.5vw 1vw;
   border: 1px solid #ccc;
   border-radius: 4px;
 }
 
-button.default:hover {
+button:hover {
   background-color: #f5f5f5;
   border-color: #b8b8b8;
 }
 
-button.default:active {
+button:active {
   box-shadow: inset 0 3px 5px rgb(0 0 0 / 13%);
+}
+
+button#download {
+  text-align: center;
+  margin: 1vw 5%;
+  width: 90%;
+  box-sizing: border-box;
 }
 
 div.title-bar {
@@ -241,4 +244,81 @@ div.title-bar {
   color: #4d4d4d;
   background-color: white;
   border-color: #e6e6e6;
+}
+
+
+
+/* For mobile & vertical tablet, stack sections */
+@media (max-width: 900px) {
+
+  .main, .sidebar {
+    margin: 0;
+  }
+
+  .panel, .input_panels .panel, .panel.first, .panel.last, .title-bar {
+    display: block;
+    width: 100%;
+    margin: 10px auto;
+    overflow: hidden;
+    min-height: 0;
+    transition: all 0.5s;
+    -webkit-transition: all 0.5s;
+    -moz-transition: all 0.5s;
+  }
+
+  .panel div.input-row,
+  .panel output-number, 
+  .panel button {
+    display: none;
+  }
+
+  .panel.open div.input-row,
+  .panel.open output-number {
+    display: inline-flex;
+    display: -webkit-inline-flex;
+    flex-grow: 1;
+  }
+
+  .panel.open button#download {
+    display: block;
+    width: calc(100% - 1vw);
+    margin: 1vw 0.5vw;
+    padding: 1vw;
+  }
+
+  .output-container {
+    display: flex;
+    justify-content: space-around;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .panel.open .section-title {
+    border-bottom: 1px solid #ccc;
+    margin: 0 0.5vw 1vw;
+  }
+
+  .row {
+    flex-direction: column;
+  }
+
+  label.info::after{
+    max-width: 80vw;
+    margin: auto;
+  }
+
+  .section-title {
+    border: none;
+    margin-bottom: 0;
+    background-image: url(../static/select.svg);
+    background-position: right 0.5em center;
+    background-size: 8px 6px;
+    background-repeat: no-repeat;
+    cursor: pointer;
+  }
+
+  .scroll-to-top {
+    display: block;
+  }
+
 }

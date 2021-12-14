@@ -1,0 +1,47 @@
+
+div {
+    width: 90%;
+    border-bottom: 1px solid #ccc;
+    text-align: center;
+    margin: 1vw auto;
+}
+
+p {
+    font-weight: bold;
+    font-size: x-large;
+    white-space: nowrap;
+    margin-block-end: 0.25em;
+    margin-block-start: 1em;
+}
+
+@media (min-width: 1600px) {
+    p {
+        font-size: xx-large;
+    }
+}
+
+@media (max-width: 1180px) {
+    p {
+        font-size: larger;
+    }
+}
+
+@media (max-width: 900px) {
+    p {
+        font-size: normal;
+        margin-block-start: 0.25em;
+    }
+
+    div {
+        border: 1px solid #ccc;
+        width: 100%;
+        box-sizing: border-box;
+        margin: 3%;
+        padding: 1%;
+        border-radius: 5px;
+    }
+
+    label {
+        font-size: smaller;
+    }
+}
