@@ -2,6 +2,10 @@ html {
   scroll-behavior: smooth;
 }
 
+.hidden {
+  display: none;
+}
+
 /* From https://www.w3schools.com/howto/howto_css_loader.asp */
 
 .loading-symbol {
@@ -21,10 +25,6 @@ html {
 @keyframes spin {
   0% { transform: rotate(360deg); }
   100% { transform: rotate(0deg); }
-}
-
-.bk.input_section {
-  width: 100% !important;
 }
 
 .scroll-to-top {
@@ -57,8 +57,9 @@ html {
   width: 100%;
 }
 
-.panel#output-plots {
-  min-width: 250px;
+.sticky-container {
+  position: sticky;
+  top: 0.8vw;
 }
 
 section {
@@ -87,10 +88,6 @@ section {
   display: flex;
 }
 
-input[type='file'] {
-  width: 100% !important;
-}
-
 
 h2 {
   font-size: large;
@@ -103,53 +100,27 @@ body {
     font-size: small;
 }
 
-.sidebar-big p {
-  font-size: 1.8vw !important;
-  font-weight: bold;
-}
-
-.sidebar-container {
-  display: flex !important;
-  width: 100% !important;
-  flex-grow: 1;
-  flex-direction: column !important;
-  justify-content: space-around !important;
-}
-
-.center {
-  margin: auto !important;
-  position: relative !important;
-  top: 0 !important;
-  left: 0 !important;
-  text-align: center !important;
-}
-
-div.paragraph-row {
-  width: calc(100% - 10px) !important;
-}
-
-
 /* COPIED FROM BOKEH!!! */
 
-.input, input-spin, input-select, input-slider {
+input-spin, input-select, input-slider, input-file {
   flex-grow: 1;
   margin: 0 0.3vw;
   width: 100%;
   box-sizing: border-box;
 }
-
-.input:first-child, 
+ 
 input-spin:first-child, 
 input-select:first-child, 
-input-slider:first-child, 
+input-slider:first-child,
+input-file:first-child,
 .panel:first-child {
   margin-left: 0;
 }
 
-.input:last-child, 
 input-spin:last-child, 
 input-select:last-child, 
-input-slider:last-child, 
+input-slider:last-child,
+input-file:last-child,
 .panel:last-child {
   margin-right: 0;
 }

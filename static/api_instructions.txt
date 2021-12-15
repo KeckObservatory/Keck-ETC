@@ -18,14 +18,14 @@ AVAILABLE RETURN OPTIONS:
     parameters:             description
 
 AVAILABLE PARAMETERS:
-    exposure:               list of exposure times with units, i.e. [500s, 10min, 2.1hr]
-    signal_noise_ratio:     list of snr values, i.e. [10, 50.1, 220]
+    exposure:               list of exposure times with units, i.e. [500s,10min,2.1hr]
+    signal_noise_ratio:     list of snr values, i.e. [10,50.1,220]
     target:                 calculation target, possible values are 'exposure' or 'signal_noise_ratio'
     dithers:                number of dithers, must be > 0
     repeats:                number of repeats, must be > 0
     coadds:                 number of coadds, must be > 0
     reads:                  number of reads, possible values are 2, 4, 8, 16, 32, 64, 128
-    binning:                binning in [spatial, spectral], i.e. [1,2] or [2,2]
+    binning:                binning in [spatial, spectral], i.e. [1,2]
     source.type:            source template, possible values are emission, blackbody, power, flat, vega, qso, seyfert1, seyfert2
     source.flux:            source flux/magnitude with units, available units are mag(AB), mag(vega), mag(ST), Jy, flam, photlam
     source.wavelength_band: name of wavelength band, possible values are ...
@@ -36,8 +36,7 @@ AVAILABLE PARAMETERS:
     atmosphere.airmass:     airmass, must be between 1.0 and 2.0 inclusive
     atmosphere.water_vapor: waver vapor with units of length, must be between 1.0 and 5.0 mm
     instrument.name:        instrument name, possible values are nires, deimos, lris, hires, nirc2, kcwi, esi
-    instrument.slit_width:  slit width with units of arcsec, must be a valid option for specified instrument
-    instrument.slit_height: slid height with units of arcsec, must be a valid option for specified instrument
+    instrument.slit:        slit [width, length] with units of angle, i.e. [0.5arcsec,10arcsec], must be valid for instrument
     instrument.mode:        instrument mode, available options are:
                                 NIRES: spectroscopic
     instrument.grating:     selected grating, available options are:

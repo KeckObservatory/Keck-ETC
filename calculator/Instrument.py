@@ -86,8 +86,11 @@ class instrument:
         self._read_noise = u.Quantity(self.config.read_noise)
         self.spectral_resolution = u.Quantity(self.config.spectral_resolution)
         self.nonlinear_depth = u.Quantity(self.config.nonlinear_depth)
+        self.slit_options = [ [u.Quantity(x) for x in y] * u.arcsec for y in self.config.slit_options] * u.arcsec
         self.mode = self.config.defaults.mode  # Currently does nothing, TODO -- support for different modes
         self.active_parameters = ['name', 'slit_width', 'slit_length', 'mode']  # TODO -- adjust based on gratings, grism, filter, etc.
+        # Alias for slit width and length
+        self.slit = lambda: [self.slit_width, self.slit_length]
         
 
         self._read_throughput()
@@ -104,7 +107,21 @@ class instrument:
             elif isinstance(value, list):
                 value = [int(x) for x in value]
             if value not in self.config.binning_options or not isinstance(value, list):
-                raise ValueError(f'In ETC._set_instrument_parameter() -- "{value}" is not a valid binning value')
+                raise ValueError(f'In instrument.set_parameter() -- "{value}" is not a valid binning value')
             self.binning = u.Quantity(value)
+        elif name == 'slit':
+            if isinstance(value, str):
+                value = split('x|,', value)
+            try:
+                value = [u.Quantity(x) for x in value] * u.arcsec
+                if (not self.config.custom_slits) and (not any([(value==x).all() for x in self.slit_options])):
+                    raise ValueError()
+                self.slit_width = value[0]
+                self.slit_length = value[1]
+            except Exception:
+                print(value)
+                raise ValueError(f'In instrument.set_parameter() -- "{value}" is not a valid slit value')
+        elif name == 'slit_width' or name == 'slit_length':
+            raise ValueError('In instrument.set_parameter() -- must use "slit, [width,length] to set slit width or length')
         else:
             vars(self)[name] = u.Quantity(value)

@@ -1,8 +1,9 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse
 from calculator.ETC import exposure_time_calculator
-from json import dumps as json
+import json
 from re import sub  # Processing regular expressions
+from base64 import b64decode
 
 
 hostName = "0.0.0.0"
@@ -14,6 +15,7 @@ def process_request(query):
         return '', True
 
     try:
+        # Remove return values from query
         if isinstance(query['return'], list):
             return_vals = { x:[] for x in query['return'] }
         else:
@@ -24,11 +26,11 @@ def process_request(query):
         # Get the requested values
         for key in return_vals.keys():
             if key == 'parameters':
-                print(etc.get_parameters())
                 # If parameters were requested, retrieve them
                 return_vals[key] = etc.get_parameters()
+            elif key == 'nonlinear_depth_adu':
+                return_vals[key] = etc.instrument.nonlinear_depth.value
             else:
-                print('whoops!')
                 return_vals[key] = vars(etc)[key].value.tolist()
         return return_vals, False
     except Exception as e:
@@ -40,6 +42,15 @@ def text2html(text):
     text = text.replace('\t', '&nbsp'*4)
     text = text.replace('\n', '<br>')
     return '<html><body style="font-family: monospace;">' + text + '</body></html>'
+
+
+def query2dict(query):
+    query = dict(qc.split("=") for qc in query.split("&"))
+    # Convert lists from string to list
+    for key, val in query.items():
+        if val.startswith('[') and val.endswith(']'):
+            query[key] = [x.strip() for x in val[1:-1].split(',')]
+    return query
            
 
 def sanitize_input(text):
@@ -61,25 +72,29 @@ class APIServer(BaseHTTPRequestHandler):
         try:
             query = urlparse(self.path).query
             query = sanitize_input(query)
-            query = dict(qc.split("=") for qc in query.split("&"))
-            # Convert lists from string to list
-            for key, val in query.items():
-                if val.startswith('[') and val.endswith(']'):
-                    query[key] = [x.strip() for x in val[1:-1].split(',')]
+            query = query2dict(query)
         except:
             query = {}
         response, error = process_request(query)
-        if error or len(response)==0:
+        if len(response) == 0:
             self.send_response(200)
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+            self.wfile.write(bytes(self.usage, 'utf-8'))
+        elif error:
+            self.send_response(400)
+            self.send_header('Access-Control-Allow-Origin', '*')
             self.send_header('Content-type', 'text/html')
             self.end_headers()
             self.wfile.write(bytes(response, 'utf-8'))
-            self.wfile.write(bytes(self.usage, 'utf-8'))
+            #self.wfile.write(bytes(self.usage, 'utf-8'))
         else:
             self.send_response(200)
+            self.send_header('Access-Control-Allow-Origin', '*')
             self.send_header("Content-type", "application/json")
             self.end_headers()
-            self.wfile.write(bytes(json(response, ensure_ascii=False), 'utf-8'))
+            self.wfile.write(bytes(json.dumps(response, ensure_ascii=False), 'utf-8'))
 
 
 if __name__ == "__main__":  

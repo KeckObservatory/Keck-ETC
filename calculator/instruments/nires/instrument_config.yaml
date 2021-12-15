@@ -18,7 +18,7 @@ read_noise: 15 sqrt(electron/pixel)  # Kind of a nonsense unit, but read noise i
 
 throughput_path: throughput.txt  # Relative path to throughput file
 
-slits: [ [0.55 arcsec, 18 arcsec] ]
+slit_options: [ [0.55 arcsec, 18 arcsec] ]
 
 custom_slits: false
 

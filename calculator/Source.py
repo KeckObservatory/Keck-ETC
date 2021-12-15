@@ -180,6 +180,9 @@ class source:
         self.redshift = u.Quantity(self.config.defaults.redshift)
         self.wavelength_band = self.config.defaults.wavelength_band
 
+        # Alias for brightness
+        self.flux = lambda: self.brightness
+
         self._load_files()
 
         self._define_units()
@@ -276,7 +279,7 @@ class source:
             self.set_type(value)
         elif name == 'wavelength_band':
             self.wavelength_band = str(value)
-        elif name == 'brightness':
+        elif name == 'brightness' or name == 'flux':
             self.set_brightness(value)
         elif name == 'temperature':
             self.temperature = u.Quantity(value).to(u.K, equivalencies=u.temperature())
