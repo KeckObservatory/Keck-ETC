@@ -10,7 +10,6 @@
 
         <link rel='icon' type='image/x-icon' href='static/favicon.ico'>
         <link rel='stylesheet' href='styles.css'>
-        <script type='text/javascript' src='script.js'></script>
 
         <!-- Custom element definitions -->
         <script type='text/javascript' src='modules/input-label.js'></script>
@@ -21,13 +20,14 @@
         <script type='text/javascript' src='modules/output-number.js'></script>
         <script type='text/javascript' src='modules/cookie-message.js'></script>
 
-        <!-- Import Plotly.js -->
-        <script src='https://cdn.plot.ly/plotly-2.6.3.min.js'></script>
         <!-- Import Bokeh js -->
         <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-2.4.2.min.js" crossorigin="anonymous"></script>
         <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-gl-2.4.2.min.js" crossorigin="anonymous"></script>
         <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-api-2.4.2.min.js" crossorigin="anonymous"></script>
-        
+
+        <!-- Main javascript code for app functionality -->
+        <script type='text/javascript' src='script.js'></script>
+
     </head>
 
     <body>
@@ -171,11 +171,11 @@
                         <div class='sticky-container'>
                             <div class='section-title'>Results</div>
                             <div class='output-container'>
-                                <output-number id=output-exposure>exposure</output-number>
-                                <output-number id=output-snr>S/N</output-number>
-                                <output-number id=output-wavelength>wavelength</output-number>
-                                <output-number id=output-flux>source flux</output-number>
-                                <output-number id=output-time>clock time</output-number>
+                                <output-number id=output-exposure unit=s>exposure</output-number>
+                                <output-number id=output-signal-noise-ratio>S/N</output-number>
+                                <output-number id=output-wavelengths unit=&#x00B5;m>wavelength</output-number>
+                                <output-number id=output-source-flux unit=flam>source flux</output-number>
+                                <output-number id=output-clock-time unit=s>clock time</output-number>
                                 <output-number id=output-efficiency>efficiency</output-number>
                             </div>
                             <button id=download type=button>Download Data</button>

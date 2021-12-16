@@ -4,6 +4,7 @@ from calculator.ETC import exposure_time_calculator
 import json
 from re import sub  # Processing regular expressions
 from base64 import b64decode
+from numpy import NaN, isnan
 
 
 hostName = "0.0.0.0"
@@ -29,9 +30,12 @@ def process_request(query):
                 # If parameters were requested, retrieve them
                 return_vals[key] = etc.get_parameters()
             elif key == 'nonlinear_depth_adu':
-                return_vals[key] = etc.instrument.nonlinear_depth.value
+                return_vals[key] = [etc.instrument.nonlinear_depth.to('adu').value]
             else:
                 return_vals[key] = vars(etc)[key].value.tolist()
+                # Coerce to valid JSON format by converting NaN to null
+                return_vals[key] = replaceNaN(return_vals[key], 'NaN')
+
         return return_vals, False
     except Exception as e:
         return f'An error occured while processing your request<br>{e}<br><br>', True
@@ -43,6 +47,14 @@ def text2html(text):
     text = text.replace('\n', '<br>')
     return '<html><body style="font-family: monospace;">' + text + '</body></html>'
 
+def replaceNaN(array, replacement):
+    new_array = array
+    for idx, item in enumerate(array):
+        if isinstance(item, list):
+            new_array[idx] = replaceNaN(item, replacement)
+        else:
+            new_array[idx] = replacement if isnan(item) else item
+    return new_array
 
 def query2dict(query):
     query = dict(qc.split("=") for qc in query.split("&"))

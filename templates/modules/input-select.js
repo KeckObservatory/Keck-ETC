@@ -63,6 +63,12 @@ window.customElements.define('input-select', class extends HTMLElement {
         
         this.labelElement = this.shadowRoot.firstElementChild;
 
+        // Add event listener to input
+        this.select.addEventListener('change', () => {
+            // Signal value changed for any event listeners attached to this
+            this.dispatchEvent(new Event('change'));
+        });
+
         // Add CSS to shadow DOM
         const link = document.createElement('link');
         link.rel = 'stylesheet'; 

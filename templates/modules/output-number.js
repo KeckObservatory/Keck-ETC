@@ -80,7 +80,7 @@ window.customElements.define('output-number', class extends HTMLElement {
         const numChars = 9 - this.unit.length
 
         // If number is too big or too small, use scientific notation
-        if (this.value >= 10**numChars || this.value <= 10**(-numChars)) {
+        if (this.value >= 10**numChars || this.value <= 10**(1-numChars)) {
             const expDigits = this.value.toExponential(0).split(/[+-]/).at(-1).length;
             const numDecimals = Math.max(numChars - expDigits - 4, 0);
             const exponential = this.value.toExponential(numDecimals);

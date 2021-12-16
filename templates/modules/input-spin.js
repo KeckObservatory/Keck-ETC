@@ -112,6 +112,12 @@ window.customElements.define('input-spin', class extends HTMLElement {
         this.upButton.addEventListener('click', () => this.stepValue(1));
         this.downButton.addEventListener('click', () => this.stepValue(-1));
 
+        // Add event listener to input
+        this.input.addEventListener('change', () => {
+            // Signal value changed for any event listeners attached to this
+            this.dispatchEvent(new Event('change'));
+        });
+
         // Add CSS to shadow DOM
         const link = document.createElement('link');
         link.rel = 'stylesheet'; 
@@ -124,8 +130,8 @@ window.customElements.define('input-spin', class extends HTMLElement {
     stepValue(direction) {
         // Default to a step size of 1
         const step = !isNaN(this.step) ? this.step : 1;
-        // Increment/decrement value by step size
-        this.value = parseFloat(this.value) + direction * step;
+        // Increment/decrement value by step size, rounded to 6 sig-figs to avoid floating point errors
+        this.value = (parseFloat(this.value) + direction * step).toPrecision(6);
     }
 
 

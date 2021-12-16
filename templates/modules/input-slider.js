@@ -90,7 +90,15 @@ window.customElements.define('input-slider', class extends HTMLElement {
 
     connectedCallback() {
 
-        this.slider.addEventListener('input', (e) => this.sliderCallback());
+        // Add event listener for non-throttled changes
+        this.slider.addEventListener('input', () => {
+            this.sliderCallback();
+        });
+
+        // For throttled changes, dispatch event for external listeners
+        this.slider.addEventListener('change', () => {
+            this.dispatchEvent(new Event('change'));
+        });
 
         window.onload = () => {
             this.value = this.value;
