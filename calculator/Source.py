@@ -47,10 +47,10 @@ class source:
                 def define_data_scope(data):  # Wrapper function to narrow the scope of data and make sure each interpolation uses its own dataset
                     def scale_and_interpolate(w):  # TODO -- Figure out why each function is returning the same results...
                         wavelengths = data['wavelength'].to(u.angstrom) * (1 + self.redshift)  # Apply redshift
-                        flux = data['flux'].to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(wavelengths) + self.spectral_density_vega(wavelengths.to(u.angstrom)))  # Convert to units of flux
-                        central_wavelength = u.Quantity(vars(self.config.wavelength_bands)[self.wavelength_band])  # Get central wavelength of passband
-                        flux = flux / interpolate(central_wavelength, wavelengths, flux) * self.brightness.to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(central_wavelength) + self.spectral_density_vega(central_wavelength.to(u.angstrom)))  # Scale source by given mag/flux
-                        return interpolate(w, wavelengths, flux, left=0, right=0)
+                        light = data['flux'].to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(wavelengths) + self.spectral_density_vega(wavelengths.to(u.angstrom)))  # Convert to units of light
+                        central_wavelength = u.Quantity(vars(self.config.wavelength_band_options)[self.wavelength_band])  # Get central wavelength of passband
+                        light = light / interpolate(central_wavelength, wavelengths, light) * self.flux.to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(central_wavelength) + self.spectral_density_vega(central_wavelength.to(u.angstrom)))  # Scale source by given mag/flux
+                        return interpolate(w, wavelengths, light, left=0, right=0)
                     return scale_and_interpolate
 
                 self._functions[name] = define_data_scope(data)  # Save function corresponding to this source
@@ -74,7 +74,7 @@ class source:
         try:
             # Check that all required fields exist and are spelled correctly
             _ = self.config.defaults.type
-            # TODO -- validation for self.config.defaults.brightness here, needs extra because u.Quantity() errors out
+            # TODO -- validation for self.config.defaults.flux here, needs extra because u.Quantity() errors out
             _ = u.Quantity(self.config.defaults.redshift)
             # TODO -- validate wavelength_bands and default.wavelength_band
         except:
@@ -107,8 +107,8 @@ class source:
         def define_data_scope(data):  # Wrapper function to narrow the scope of data and make sure each interpolation uses its own dataset
                     def shift_and_interpolate(w):  # TODO -- Figure out why each function is returning the same results...
                         wavelengths = data['wavelength'].to(u.angstrom) * (1 + self.redshift)  # Apply redshift
-                        flux = data['flux'].to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(wavelengths) + self.spectral_density_vega(wavelengths.to(u.angstrom)))  # Convert to units of flux
-                        return interpolate(w, wavelengths, flux, left=0, right=0)
+                        light = data['flux'].to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(wavelengths) + self.spectral_density_vega(wavelengths.to(u.angstrom)))  # Convert to units of light
+                        return interpolate(w, wavelengths, light, left=0, right=0)
                     return shift_and_interpolate
         
         self.vega_flux = define_data_scope(Table.read(self.config.template_filepath+'/'+self.config.vega_filename, format='ascii.ecsv'))
@@ -176,12 +176,9 @@ class source:
         self._validate_config()
 
         self.type = self.config.defaults.type
-        self.set_brightness(self.config.defaults.brightness)
+        self.set_flux(self.config.defaults.flux)
         self.redshift = u.Quantity(self.config.defaults.redshift)
         self.wavelength_band = self.config.defaults.wavelength_band
-
-        # Alias for brightness
-        self.flux = lambda: self.brightness
 
         self._load_files()
 
@@ -191,39 +188,37 @@ class source:
 
 
     def _emission(self, wavelengths):
-        # TODO -- Is there any reason to keep self.wavelength and self.wavelength_band separate? Can we ditch self.wavelength?
-        # TODO -- Replace area / sqrt(2pi) σ w/ amplitude (brightness, unless we're keeping central wavelength and mag. band separate)
-        central_wavelength = u.Quantity(vars(self.config.wavelength_bands)[self.wavelength_band])
+        central_wavelength = u.Quantity(vars(self.config.wavelength_band_options)[self.wavelength_band])
         sigma = self.width / (2 * sqrt(2 * log(2) ))
-        flux = self.brightness.to(self.photlam, equivalencies=u.spectral_density(wavelengths.to(u.angstrom)) + self.spectral_density_vega(wavelengths.to(u.angstrom))) / exp( (wavelengths - central_wavelength)**2/(2*sigma**2) )
-        return flux
+        light = self.flux.to(self.photlam, equivalencies=u.spectral_density(wavelengths.to(u.angstrom)) + self.spectral_density_vega(wavelengths.to(u.angstrom))) / exp( (wavelengths - central_wavelength)**2/(2*sigma**2) )
+        return light
 
 
     def _blackbody(self, wavelengths):
         # From https://pysynphot.readthedocs.io/en/latest/spectrum.html
-        flux = (2*h*c**2 / wavelengths**5) / (exp(h*c/(wavelengths*self.temperature*k_B)) - 1)
-        # Scale flux by the given mag / wavelength
-        central_wavelength = u.Quantity(vars(self.config.wavelength_bands)[self.wavelength_band])  # Get central wavelength of passband
-        flux = flux / interpolate(central_wavelength, wavelengths, flux) * self.brightness.to(self.photlam, equivalencies=u.spectral_density(central_wavelength) + self.spectral_density_vega(central_wavelength.to(u.angstrom)))  # Scale source by given mag/flux
-        return flux
+        light = (2*h*c**2 / wavelengths**5) / (exp(h*c/(wavelengths*self.temperature*k_B)) - 1)
+        # Scale light by the given mag / wavelength
+        central_wavelength = u.Quantity(vars(self.config.wavelength_band_options)[self.wavelength_band])  # Get central wavelength of passband
+        light = light / interpolate(central_wavelength, wavelengths, light) * self.flux.to(self.photlam, equivalencies=u.spectral_density(central_wavelength) + self.spectral_density_vega(central_wavelength.to(u.angstrom)))  # Scale source by given mag/flux
+        return light
 
 
     def _flat(self, wavelengths):
-        return ([self.brightness] * len(wavelengths) * self.brightness.unit).to(self.photlam, equivalencies=u.spectral_density(wavelengths.to(u.angstrom)) + self.spectral_density_vega(wavelengths.to(u.angstrom)))
+        return ([self.flux] * len(wavelengths) * self.flux.unit).to(self.photlam, equivalencies=u.spectral_density(wavelengths.to(u.angstrom)) + self.spectral_density_vega(wavelengths.to(u.angstrom)))
 
 
     def _power_law(self, wavelengths):
-        central_wavelength = u.Quantity(vars(self.config.wavelength_bands)[self.wavelength_band])
-        flux = self.brightness.to(self.photlam, equivalencies=u.spectral_density(wavelengths.to(u.angstrom)) + self.spectral_density_vega(wavelengths.to(u.angstrom))) * (wavelengths / central_wavelength) ** self.index
-        return flux
+        central_wavelength = u.Quantity(vars(self.config.wavelength_band_options)[self.wavelength_band])
+        light = self.flux.to(self.photlam, equivalencies=u.spectral_density(wavelengths.to(u.angstrom)) + self.spectral_density_vega(wavelengths.to(u.angstrom))) * (wavelengths / central_wavelength) ** self.index
+        return light
 
     
     def get_flux(self, wavelengths):
-        flux = self._functions[self.type](wavelengths)
+        light = self._functions[self.type](wavelengths)
         # Check below is currently unecessary, I changed boundary handling to 0 instead of NaN -- but check w/ Sherry before deleting
-        if isnan(flux).any():
+        if isnan(light).any():
             warn('In source.get_flux() -- some or all provided wavelengths are outside the current bounds, returning NaN', RuntimeWarning)
-        return flux.to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(wavelengths.to(u.angstrom)) + self.spectral_density_vega(wavelengths.to(u.angstrom)))
+        return light.to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(wavelengths.to(u.angstrom)) + self.spectral_density_vega(wavelengths.to(u.angstrom)))
 
     def add_template(self, template, name):
         # TODO -- input validation
@@ -240,10 +235,10 @@ class source:
         def define_data_scope(data):  # Wrapper function to narrow the scope of data and make sure each interpolation uses its own dataset
             def scale_and_interpolate(w):
                 wavelengths = data['WAVELENGTH'].to(u.angstrom) * (1 + self.redshift)  # Apply redshift
-                flux = data['FLUX'].to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(wavelengths) + self.spectral_density_vega(wavelengths.to(u.angstrom)))  # Convert to units of flux
-                central_wavelength = u.Quantity(vars(self.config.wavelength_bands)[self.wavelength_band])  # Get central wavelength of passband
-                flux = flux / interpolate(central_wavelength, wavelengths, flux) * self.brightness.to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(central_wavelength) + self.spectral_density_vega(central_wavelength.to(u.angstrom)))  # Scale source by given mag/flux
-                return interpolate(w, wavelengths, flux, left=0, right=0)
+                light = data['FLUX'].to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(wavelengths) + self.spectral_density_vega(wavelengths.to(u.angstrom)))  # Convert to units of light
+                central_wavelength = u.Quantity(vars(self.config.wavelength_band_options)[self.wavelength_band])  # Get central wavelength of passband
+                light = light / interpolate(central_wavelength, wavelengths, light) * self.flux.to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(central_wavelength) + self.spectral_density_vega(central_wavelength.to(u.angstrom)))  # Scale source by given mag/flux
+                return interpolate(w, wavelengths, light, left=0, right=0)
             return scale_and_interpolate
 
         self._functions[name.split('.')[0]] = define_data_scope(data)  # Save function corresponding to this source
@@ -255,32 +250,35 @@ class source:
         obj.name = name.split('.')[0]
         vars(self.config.source_types)[name.split('.')[0]] = obj
 
-    def set_brightness(self, brightness):
-        if isinstance(brightness, u.Quantity):
-            self.brightness = brightness
-        elif isinstance(brightness, str):
-            conversion = [float(brightness.lower().replace(abmag,'')) * u.ABmag for abmag in ['magab', 'abmag', 'mag(ab)'] if brightness.lower().endswith(abmag)]
+    def set_flux(self, flux):
+        if isinstance(flux, u.Quantity):
+            self.flux = flux
+        elif isinstance(flux, str):
+            conversion = [float(flux.lower().replace(abmag,'')) * u.ABmag for abmag in ['magab', 'abmag', 'mag(ab)'] if flux.lower().endswith(abmag)]
             if len(conversion) == 0:
-                conversion = [float(brightness.lower().replace(stmag,'')) * u.STmag for stmag in ['magst', 'stmag', 'mag(st)'] if brightness.lower().endswith(stmag)]
+                conversion = [float(flux.lower().replace(stmag,'')) * u.STmag for stmag in ['magst', 'stmag', 'mag(st)'] if flux.lower().endswith(stmag)]
             if len(conversion) == 0:
-                conversion = [float(brightness.lower().replace(m_bol,'')) * u.m_bol for m_bol in ['magbol', 'bolmag', 'mag(bol)'] if brightness.lower().endswith(m_bol)]
+                conversion = [float(flux.lower().replace(m_bol,'')) * u.m_bol for m_bol in ['magbol', 'bolmag', 'mag(bol)'] if flux.lower().endswith(m_bol)]
             if len(conversion) == 0:
-                conversion = [float(brightness.lower().replace(vega,'')) * self.vegamag for vega in ['magvega', 'vegamag', 'mag(vega)'] if brightness.lower().endswith(vega)]
+                conversion = [float(flux.lower().replace(vega,'')) * self.vegamag for vega in ['magvega', 'vegamag', 'mag(vega)'] if flux.lower().endswith(vega)]
             if len(conversion) == 0:
-                self.brightness = u.Quantity(brightness)
+                self.flux = u.Quantity(flux)
             else:
-                self.brightness = conversion[0]
+                self.flux = conversion[0]
         else:
-            raise ValueError('ERROR: In source.set_brightness -- Brightness is not an astropy quantity or string')
+            raise ValueError('ERROR: In source.set_flux -- flux is not an astropy quantity or string')
 
     def set_parameter(self, name, value):
         # TODO -- input validation
         if name == 'type':
             self.set_type(value)
         elif name == 'wavelength_band':
-            self.wavelength_band = str(value)
-        elif name == 'brightness' or name == 'flux':
-            self.set_brightness(value)
+            if str(value) in vars(self.config.wavelength_band_options).keys():
+                self.wavelength_band = str(value)
+            else:
+                raise ValueError(f'In source.set_parameter() -- {value} is not a valid wavelength band')
+        elif name == 'flux':
+            self.set_flux(value)
         elif name == 'temperature':
             self.temperature = u.Quantity(value).to(u.K, equivalencies=u.temperature())
         else:

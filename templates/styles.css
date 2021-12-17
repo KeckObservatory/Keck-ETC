@@ -3,7 +3,7 @@ html {
 }
 
 .hidden {
-  display: none;
+  display: none !important;
 }
 
 /* From https://www.w3schools.com/howto/howto_css_loader.asp */
@@ -141,7 +141,7 @@ input-file:last-child,
 
 .section-title {
   padding: 0.2vw 0;
-  margin: 0 0.5vw 1vw;
+  margin: 0 0 1vw;
   border-bottom: 1px solid #ccc;
   width: auto;
   font-size: large;

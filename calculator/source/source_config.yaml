@@ -2,7 +2,7 @@
 
 defaults:
   type: vega
-  brightness: 18 mag(AB)
+  flux: 18 mag(AB)
   wavelength_band: K
   redshift: 2.0  # negative for blueshift
 
@@ -49,7 +49,7 @@ template_filepath: calculator/source/
 vega_filename: vega_template.txt
 
 # List of wavelength bands and their central wavelength, edit to change available options
-wavelength_bands:
+wavelength_band_options:
   U: 365 nm
   B: 445 nm
   G: 464 nm

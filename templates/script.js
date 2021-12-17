@@ -1,70 +1,97 @@
 
-// Make API request to get info
-const apiRequest = async (query, parameters) => {
+// Method to convert between units
+const convertUnits = (value, unitFrom, unitTo, requiredInfo) => {
+    // Available units, divided into types
+    const units = {
+        length: {
+            'angstrom': 10**-10,
+            'nm': 10**-9,
+            'um': 10**-6,
+            'mm': 10**-3,
+            'cm': 10**-2,
+            'm': 1,
+            'km': 10**3
+        },
+        angle: {
+            'marcsec': 10**-3,
+            'milliarcsec': 10**-3,
+            'arcsec': 1,
+            '"': 1,
+            '\'': 60,
+            'arcmin': 60,
+            'degree': 3600,
+            'radian': 206265,
+        },
+        time: {
+            'ns': 10**-9,
+            'us': 10**-6,
+            'ms': 10**-3,
+            's': 1,
+            'min': 60,
+            'minute': 60,
+            'hr': 3600,
+            'hour': 3600,
+            'day': 86400
+        },
+        temperature: {
+            'k': [1, 0],
+            'kelvin': [1, 0],
+            'c': [1, 273.15],
+            'celsius': [1, 273.15],
+            'f': [1.8, 459.67],
+            'fahrenheit': [1.8, 459.67],
+            'r': [1.8, 0],
+            'rankine': [1.8, 0]
+        },
+        flux: {
+            'mag(ab)': [],
+            'abmag': [],
+            'mag(vega)': [],
+            'vegamag': [],
+            'mag(st)': [],
+            'stmag': [],
+            'jy': [],
+            'janksy': [],
+            'flam': [],
+            'photlam': []
+        }
+    }
 
-    // Add parameters to query
-    for (const [key, value] of Object.entries(parameters)){
-        if (value instanceof Array){
-            query += '&' + key + '=[' + value + ']';
+    // Get type of both units
+    const type = Object.keys(units).filter( type => 
+        unitFrom.toLowerCase() in units[type] && unitTo.toLowerCase() in units[type]
+    );
+
+    // If units didn't have the same type, throw error
+    if (type.length === 0) {
+        throw 'Cannot convert from '+unitFrom+' to '+unitTo;
+    }
+
+    // Otherwise, convert based on type of unit
+    if (['length', 'angle', 'time'].includes(type[0])) {
+        return value * units[type[0]][unitTo.toLowerCase()] / units[type[0]][unitFrom.toLowerCase()];
+    }
+
+    if (type[0] === 'temperature') {
+        if (['k','kelvin'].includes(unitTo.toLowerCase()) ||
+            ['k','kelvin'].includes(unitFrom.toLowerCase()))
+        {   // If one of the units is kelvin, translate, scale, and translate to convert
+            const from = units.temperature[unitFrom.toLowerCase()];
+            const to = units.temperature[unitTo.toLowerCase()];
+            return (value + from[1]) * to[0] / from[0] - to[1];
         } else {
-            query += '&' + key + '=' + value;
+            // Otherwise, convert to Kelvin and back
+            return convertUnits( convertUnits(value, unitFrom, 'K'), 'K', unitTo );
         }
     }
 
-    // Send fetch request and return data
-    const request = await fetch('http://vm-internship:8080'+query);
-    const data = request.status === 200 ? request.json() : {};
-    return data;
-}
-
-
-const createDataSources = () => {
-    // Create sources, define with placeholder arrays
-    const source = new Bokeh.ColumnDataSource({ data: { 
-        'wavelengths': [],
-        'exposure': [],
-        'source_count_adu': [],
-        'background_count_adu': [],
-        'read_noise_count_adu': [],
-        'dark_current_count_adu': [],
-        'signal_noise_ratio': [],
-        'nonlinear_depth_adu': [],
-        'clock_time': [],
-        'efficiency': [],
-        'source_flux': []
-    }});
-
-    const vsSource = new Bokeh.ColumnDataSource({ data: {
-        'exposure': [],
-        'signal_noise_ratio': []
-    }});
-
-    return {source: source, vsSource: vsSource};
-}
-
-const updateDataSource = (source, data) => {
-    // Format data so that every column is the same length
-    for (const [key, value] of Object.entries(data)) {
-        if (typeof value === 'number') {
-            data[key] = new Array(data.wavelengths.length).fill(value);
-        } else if (value.length === 1 && typeof value[0] === 'object') {
-            data[key] = value[0];
-        } else if (value.length === 1) {
-            data[key] = new Array(data.wavelengths.length).fill(value[0]);
-        } else if (typeof value[0] === 'object') {
-            data[key] = value.map(x => x[0]);
-        }
+    if (type[0] === 'flux') {
+        // TODO
+        return value;
     }
 
-    // Convert angstrom to nm
-    if (data.wavelengths) {
-        data.wavelengths = data.wavelengths.map( x => x/10 );
-    }
-
-    // Update ColumnDataSource
-    source.data = data;
-    source.change.emit();
 }
+
 
 // Define Bokeh source and plots
 const createPlots = (source, vsSource) => {
@@ -182,6 +209,74 @@ const createPlots = (source, vsSource) => {
 
 }
 
+
+// Make API request to get info
+const apiRequest = async (query, parameters) => {
+
+    // Add parameters to query
+    for (const [key, value] of Object.entries(parameters)){
+        if (value instanceof Array){
+            query += '&' + key + '=[' + value + ']';
+        } else {
+            query += '&' + key + '=' + value;
+        }
+    }
+
+    // Send fetch request and return data
+    const request = await fetch('http://vm-internship:8080'+query);
+    const data = request.status === 200 ? request.json() : {};
+    return data;
+}
+
+
+const createDataSources = () => {
+    // Create sources, define with placeholder arrays
+    const source = new Bokeh.ColumnDataSource({ data: { 
+        'wavelengths': [],
+        'exposure': [],
+        'source_count_adu': [],
+        'background_count_adu': [],
+        'read_noise_count_adu': [],
+        'dark_current_count_adu': [],
+        'signal_noise_ratio': [],
+        'nonlinear_depth_adu': [],
+        'clock_time': [],
+        'efficiency': [],
+        'source_flux': []
+    }});
+
+    const vsSource = new Bokeh.ColumnDataSource({ data: {
+        'exposure': [],
+        'signal_noise_ratio': []
+    }});
+
+    return {source: source, vsSource: vsSource};
+}
+
+const updateDataSource = (source, data) => {
+    // Format data so that every column is the same length
+    for (const [key, value] of Object.entries(data)) {
+        if (typeof value === 'number') {
+            data[key] = new Array(data.wavelengths.length).fill(value);
+        } else if (value.length === 1 && typeof value[0] === 'object') {
+            data[key] = value[0];
+        } else if (value.length === 1) {
+            data[key] = new Array(data.wavelengths.length).fill(value[0]);
+        } else if (typeof value[0] === 'object') {
+            data[key] = value.map(x => x[0]);
+        }
+    }
+
+    // Convert angstrom to nm
+    if (data.wavelengths) {
+        data.wavelengths = data.wavelengths.map( x => x/10 );
+    }
+
+    // Update ColumnDataSource
+    source.data = data;
+    source.change.emit();
+}
+
 const updateResults = () => {
     // Get wavelength to use
     const wavelength = resPanelWavelength.location;
@@ -208,6 +303,36 @@ const updateVSPlot = () => {
     // Update data for vs. plot
     apiRequest(getQuery(true), getParameters(true)).then( data => updateDataSource(vsSource, data) );
     // TODO -- change axes, tooltips, etc...
+}
+
+const updateUI = (parameters) => {
+    // Loop through all inputs in app
+    document.querySelectorAll('input-select, input-spin, input-slider').forEach( input => {
+        const name = input.id.replace('-','_');
+        // If id is not parameter, parameter-unit, parameter-min, or parameter-max, then hide inactive element 
+        if (!(name in parameters || name.replace('_unit','') in parameters || 
+            name.replace('_min','') in parameters || name.replace('_max','') in parameters))
+        {
+            input.parentElement.classList.add('hidden');
+        } else if (!name.endsWith('unit') && !name.endsWith('min') && !name.endsWith('max')) {
+            // Otherwise, get value from parameters
+            let value = parameters[name].value;
+            // If needed, convert value to appropriate unit
+            if (document.querySelector('#'+input.id+'-unit')) {
+                value = convertUnits(value, parameters[name].unit, document.querySelector('#'+input.id+'-unit').value);
+            }
+            // If available, set options for select
+            if (parameters[name].options) {
+                input.options = parameters[name].options;
+            }
+            // Set value
+            input.value = value;
+            input.parentElement.classList.remove('hidden');
+        } else {
+            input.parentElement.classList.remove('hidden');
+        }
+    });
+
 }
 
 const update = () => {
@@ -245,7 +370,7 @@ const getParameters = (isForVSPlot) => {
     for (parameter of options) {
         const id = '#'+parameter.replace('_','-');
         const element = document.querySelector(id);
-        if (!!element && !element.classList.contains('hidden')){
+        if (!!element && !element.parentElement.classList.contains('hidden') && element.value){
             const unit = !!document.querySelector(id+'-unit') ? document.querySelector(id+'-unit').value : '';
             if (isForVSPlot && (id==='#exposure' || id==='#signal-noise-ratio')){
                 // For vs. plot, get range of exp/snr from min and max elements

@@ -1,12 +1,19 @@
 window.customElements.define('input-select', class extends HTMLElement {
 
     static get observedAttributes() {
-        return ['label', 'info', 'value'];
+        return ['label', 'info', 'value', 'options'];
     }
 
     get info() { return this.getAttribute('info'); }
     get label() { return this.getAttribute('label'); }
     get value() { return this.select.value; }
+    
+    get options() {
+        return Array.from(this.select.children).map( child => ({
+            name: child.textContent,
+            value: child.value
+        }));
+    }
 
     set info(val) {
         this.setAttribute('info', val);
@@ -22,10 +29,30 @@ window.customElements.define('input-select', class extends HTMLElement {
     }
 
     set value(val) {
-        const options = Array.from(a.select.options).map( o => o.value);
-        if (options.includes(val)) {
+        const options = this.options.map( opt => opt.value );
+        if (options.includes(String(val))) {
             this.select.value = val;
+        } else if (options.length > 0){
+            throw 'Value ' + val + ' is not a valid option';
         }
+    }
+
+    set options(val) {
+        // Remove current options
+        while (this.select.firstChild) { this.select.removeChild(this.select.firstChild) };
+        // Add options based on input
+        val.forEach( option => {
+            const el = document.createElement('option');
+            el.value = option.value;
+            if ('name' in option) {
+                el.innerText = option.name;
+            } else if (option instanceof Array) {
+                el.innerText = option.join(' x ');
+            } else {
+                el.innerText = option.value;
+            }
+            this.select.appendChild(el);
+        });
     }
 
     connectedCallback() {
@@ -39,6 +66,7 @@ window.customElements.define('input-select', class extends HTMLElement {
             if (name === 'info') { this.info = newValue; }
             if (name === 'label') { this.label = newValue; }
             if (name === 'value') { this.value = newValue; }
+            if (name === 'options') { this.options = newValue; }
         }
     }
 

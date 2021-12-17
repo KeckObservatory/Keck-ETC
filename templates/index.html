@@ -54,10 +54,7 @@
                             <div class='section-title'>Exposure</div>
 
                             <div class='input-row'>
-                                <input-select label='Calculation Target' id='target'>
-                                    <option value='signal_noise_ratio'>signal to noise ratio</option>
-                                    <option value='exposure'>exposure</option>
-                                </input-select>
+                                <input-select label='Calculation Target' id='target'></input-select>
                             </div>
 
                             <div class='input-row' style='margin-bottom: 0.5vw;'>
@@ -68,8 +65,9 @@
                                 <input-spin min=0 value=2 step=1 id='exposure-min'>Min</input-spin>
                                 <input-spin min=0 value=7200 step=1 id='exposure-max'>Max</input-spin>
                                 <input-select id='exposure-unit'>
-                                    <option value='s'>s</option>
-                                    <option value='min'>min</option>
+                                    <option>s</option>
+                                    <option>min</option>
+                                    <option>hr</option>
                                 </input-select>
 
                             </div>
@@ -81,10 +79,7 @@
 
                             <div class='input-row'>
                                 <input-spin min=1 value=1 id=coadds>Coadds</input-spin>
-                                <input-select label='Reads' id=reads>
-                                    <option value='1'>1</option>
-                                    <option value='2'>2</option>
-                                </input-select>
+                                <input-select label='Reads' id=reads></input-select>
                             </div>
 
                         </div>
@@ -92,9 +87,7 @@
                             <div class='section-title'>Source</div>
                             
                             <div class='input-row'>
-                                <input-select label='Source Type' id='source-type'>
-                                    <option value='vega'>Vega</option>
-                                </input-select>
+                                <input-select label='Source Type' id='type'></input-select>
                             </div>
 
                             <div class='input-row'>
@@ -109,6 +102,30 @@
 
                             <div class='input-row'>
                                 <input-spin value=2 id=redshift>Redshift</input-spin>
+                            </div>
+
+                            <div class='input-row'>
+                                <input-spin value=200 id=width>Line Width</input-spin>
+                                <input-select value=nm min=0 id=width-unit>
+                                    <option>Angstrom</option>
+                                    <option>nm</option>
+                                    <option value=um>&#x03bc;m</option>
+                                    <option>mm</option>
+                                </input-select>
+                            </div>
+
+                            <div class='input-row'>
+                                <input-spin value=5000 id=temperature>Temperature</input-spin>
+                                <input-select value=Kelvin id=temperature-unit>
+                                    <option>Kelvin</option>
+                                    <option>Celsius</option>
+                                    <option>Fahrenheit</option>
+                                    <option>Rankine</option>
+                                </input-select>
+                            </div>
+
+                            <div clas='input-row'>
+                                <input-spin value=-2 id=index>Power Index</input-spin>
                             </div>
 
                             <div class='input-row'>
@@ -131,6 +148,18 @@
                             </div>
 
                             <div class='input-row'>
+                                <input-select label='Grating' id=grating></input-select>
+                            </div>
+
+                            <div class='input-row'>
+                                <input-select label='Filter' id=filter></input-select>
+                            </div>
+
+                            <div class='input-row'>
+                                <input-select label='Grism' id=grism></input-select>
+                            </div>
+
+                            <div class='input-row'>
                                 <input-select label='Binning' id=binning>
                                     <option value='[1,1]'>1x1</option>
                                 </input-select>
@@ -141,7 +170,7 @@
                             <div class='section-title'>Atmosphere</div>
                             
                             <div class='input-row'>
-                                <input-spin min=0 value=0.8 id=seeing>Seeing</input-spin>
+                                <input-spin min=0 value=0.8 step=0.1 id=seeing>Seeing</input-spin>
                                 <input-select id=seeing-unit>
                                     <option>arcsec</option>
                                 </input-select>
@@ -152,9 +181,10 @@
                             </div>
 
                             <div class='input-row'>
-                                <input-spin min=1 max=5 step=0.5 value=1.6 id=water-vapor>Water Vapor</input-spin>
+                                <input-spin min=1 max=5 step=0.1 value=1.6 id=water-vapor>Water Vapor</input-spin>
                                 <input-select id=water-vapor-unit>
                                     <option>mm</option>
+                                    <option>cm</option>
                                 </input-select>
                             </div>
 

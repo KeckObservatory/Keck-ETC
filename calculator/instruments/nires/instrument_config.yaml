@@ -4,8 +4,7 @@
 
 
 defaults:
-  slit_width: 0.55 arcsec
-  slit_length: 18 arcsec
+  slit: [18 arcsec, 0.55 arcsec]  # Width, length
   pixel_size: 0.0225 arcsec^2/pixel  # Check w/ Sherry, in her code this was s^2/px^2 but I think that's a typo... ?
   mode: spectroscopic
   binning: [1, 1]
@@ -24,11 +23,11 @@ custom_slits: false
 
 spectral_resolution: 2700  # Spectral resolving power of instrument, defined as λ / Δλ
 
-modes: [spectroscopic]
+mode_options: [spectroscopic]
 
 gain: 3.8 electron / adu
 
 nonlinear_depth: 30000 adu  # Confirm number with Sherry
 
 # Options for binning [spatial, spectral]
-binning_options: [ [1,1], [1,2], [2,1], [2,2] ]
+binning_options: [ [1,1] ]

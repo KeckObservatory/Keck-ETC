@@ -78,8 +78,10 @@ class instrument:
 
         # Maybe move these, find the most appropriate place later...
         self.gain = u.Quantity(self.config.gain)
-        self.slit_width = u.Quantity(self.config.defaults.slit_width)
-        self.slit_length = u.Quantity(self.config.defaults.slit_length)
+        self.slit = [u.Quantity(x) for x in self.config.defaults.slit] * u.arcsec
+        # More explicit aliases for slit
+        self.slit_width = self.slit[0]
+        self.slit_length = self.slit[1]
         self.binning = u.Quantity(self.config.defaults.binning)
         self.pixel_size = u.Quantity(self.config.defaults.pixel_size)
         self._dark_current = u.Quantity(self.config.dark_current)
@@ -88,9 +90,7 @@ class instrument:
         self.nonlinear_depth = u.Quantity(self.config.nonlinear_depth)
         self.slit_options = [ [u.Quantity(x) for x in y] * u.arcsec for y in self.config.slit_options] * u.arcsec
         self.mode = self.config.defaults.mode  # Currently does nothing, TODO -- support for different modes
-        self.active_parameters = ['name', 'slit_width', 'slit_length', 'mode']  # TODO -- adjust based on gratings, grism, filter, etc.
-        # Alias for slit width and length
-        self.slit = lambda: [self.slit_width, self.slit_length]
+        self.active_parameters = ['name', 'slit', 'mode', 'binning']  # TODO -- adjust based on gratings, grism, filter, etc.
         
 
         self._read_throughput()
@@ -113,15 +113,16 @@ class instrument:
             if isinstance(value, str):
                 value = split('x|,', value)
             try:
-                value = [u.Quantity(x) for x in value] * u.arcsec
+                # If dimensionless, assume arcsec, otherwise convert to arcsec
+                value = [u.Quantity(x) * u.arcsec if u.Quantity(x).unit==u.dimensionless_unscaled else u.Quantity(x) for x in value] * u.arcsec
                 if (not self.config.custom_slits) and (not any([(value==x).all() for x in self.slit_options])):
                     raise ValueError()
-                self.slit_width = value[0]
-                self.slit_length = value[1]
+                self.slit = value
+                self.slit_width = self.slit[0]
+                self.slit_length = self.slit[1]
             except Exception:
-                print(value)
                 raise ValueError(f'In instrument.set_parameter() -- "{value}" is not a valid slit value')
         elif name == 'slit_width' or name == 'slit_length':
-            raise ValueError('In instrument.set_parameter() -- must use "slit, [width,length] to set slit width or length')
+            raise ValueError('In instrument.set_parameter() -- must use set_parameter("slit", [width,length]) to set slit width or length')
         else:
             vars(self)[name] = u.Quantity(value)
