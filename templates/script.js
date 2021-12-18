@@ -223,7 +223,7 @@ const apiRequest = async (query, parameters) => {
     }
 
     // Send fetch request and return data
-    const request = await fetch('http://vm-internship:8080'+query);
+    const request = await fetch('http://localhost:8080'+query);
     const data = request.status === 200 ? request.json() : {};
     return data;
 }
@@ -308,7 +308,7 @@ const updateVSPlot = () => {
 const updateUI = (parameters) => {
     // Loop through all inputs in app
     document.querySelectorAll('input-select, input-spin, input-slider').forEach( input => {
-        const name = input.id.replace('-','_');
+        const name = input.id.replaceAll('-','_');
         // If id is not parameter, parameter-unit, parameter-min, or parameter-max, then hide inactive element 
         if (!(name in parameters || name.replace('_unit','') in parameters || 
             name.replace('_min','') in parameters || name.replace('_max','') in parameters))
@@ -326,7 +326,10 @@ const updateUI = (parameters) => {
                 input.options = parameters[name].options;
             }
             // Set value
+            guiInactive = true;
             input.value = value;
+            guiInactive = false;
+
             input.parentElement.classList.remove('hidden');
         } else {
             input.parentElement.classList.remove('hidden');
@@ -336,15 +339,23 @@ const updateUI = (parameters) => {
 }
 
 const update = () => {
+    // Display loading symbols on output
+    document.querySelectorAll('.panel.output').forEach(el => el.classList.add('loading'));
     // Get results from ETC, update ui and data
     apiRequest(getQuery(false), getParameters(false)).then( data => {
         updateUI(data.parameters);
         updateDataSource(source, data);
+        // Change results to reflect new data
+        updateResults();
+        // Get vs. data and update plot
+        updateVSPlot();
+        // Done updating document, remove loading symbols
+        document.querySelectorAll('.panel.output.loading').forEach(el => el.classList.remove('loading'));
+    // On error, display to user
+    }).catch( error => {
+        alert('Error:\n'+error);
     });
-    // Change results to reflect new data
-    updateResults();
-    // Get vs. data and update plot
-    updateVSPlot();
+    
 }
 
 const getQuery = (isForVSPlot) => {
@@ -410,13 +421,16 @@ setup = () => {
     });
 
     // Define mobile collapse / expand behavior
-    document.querySelectorAll('div.section-title').forEach( (el) => {
+    document.querySelectorAll('div.section-title, div.loading-overlay').forEach( (el) => {
         el.addEventListener('click', (event) => {
+            // Get anscestor panel
+            const toggle = el.closest('div.panel');
+
             // On click, toggle css .open class
-            if (el.parentElement.classList.contains('open')) {
-                el.parentElement.classList.remove('open');
+            if (toggle.classList.contains('open')) {
+                toggle.classList.remove('open');
             } else {
-                el.parentElement.classList.add('open');
+                toggle.classList.add('open');
             }
         });
     });
@@ -446,6 +460,8 @@ setup = () => {
         }).catch(error => console.log(error));
 
 
+    // Flag to avoid triggering callbacks from within callback
+    guiInactive = false;
     // Define ColumnDataSource
     ({source, vsSource} = createDataSources());
     // Define output plots
@@ -453,10 +469,19 @@ setup = () => {
     // Update inputs and outputs with values from API
     update();
 
-    
+    // Define callbacks on value changes for inputs
+    document.querySelectorAll('input-select, input-spin, input-slider').forEach( input => {
+        if (!input.id.endsWith('min') && !input.id.endsWith('max') && !input.id.endsWith('unit')) {
+            input.addEventListener('change', () => {if (!guiInactive) { update() } });
+        }
+    });
 
 };
 
 
 Bokeh.set_log_level('error');
 window.addEventListener('DOMContentLoaded', setup);
+
+// TODO -- Handle GUI changes in JS, only call updateUI on load!
+// TODO -- Store values in cookies
+// TODO -- Change plots on target callback

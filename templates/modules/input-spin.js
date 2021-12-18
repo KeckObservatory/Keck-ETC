@@ -63,8 +63,13 @@ window.customElements.define('input-spin', class extends HTMLElement {
             if (inBounds) {
                 this.setAttribute('value', val);
                 this.input.value = val;
+                this.dispatchEvent(new Event('change'));
+                return;
             }
         }
+
+        // Otherwise, reset text to previous value
+        this.input.value = this.value;
     }
     
 
@@ -112,11 +117,8 @@ window.customElements.define('input-spin', class extends HTMLElement {
         this.upButton.addEventListener('click', () => this.stepValue(1));
         this.downButton.addEventListener('click', () => this.stepValue(-1));
 
-        // Add event listener to input
-        this.input.addEventListener('change', () => {
-            // Signal value changed for any event listeners attached to this
-            this.dispatchEvent(new Event('change'));
-        });
+        // Update value when user types changes into input element
+        this.input.addEventListener('change', () => this.value = this.input.value);
 
         // Add CSS to shadow DOM
         const link = document.createElement('link');

@@ -69,7 +69,15 @@
                                     <option>min</option>
                                     <option>hr</option>
                                 </input-select>
+                            </div>
 
+                            <div class='input-row' style='margin-bottom: 0.5vw;'>
+                                <input-slider min='0' max='20' value='10' id='signal-noise-ratio'>Signal to Noise Ratio</input-slider>
+                            </div>
+
+                            <div class='input-row' style='margin-top: 0;'>
+                                <input-spin min=0 value=0 id='signal-noise-ratio-min'>Min</input-spin>
+                                <input-spin min=0 value=20 id='signal-noise-ratio-max'>Max</input-spin>
                             </div>
 
                             <div class='input-row'>
@@ -191,13 +199,19 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class='panel' id='output-plots'>
+                        <div class='panel output loading' id='output-plots'>
+                        <div class=loading-overlay>
+                            <img src=static/loading_symbol.svg alt='loading symbol'>
+                        </div>
                         </div>
                     </div>
                 </div>
 
                 <div class='sidebar'>
-                    <div class='panel'>
+                    <div class='panel output loading'>
+                        <div class=loading-overlay>
+                            <img src=static/loading_symbol.svg alt='loading symbol'>
+                        </div>
                         <div class='sticky-container'>
                             <div class='section-title'>Results</div>
                             <div class='output-container'>

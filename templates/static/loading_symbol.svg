@@ -1,0 +1,15 @@
+<svg version="1.1" height="100" width="100" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <linearGradient id="gradient" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stop-color="#fff" stop-opacity="1"/>
+            <stop offset="30%" stop-color="#666" stop-opacity="0.4"/>
+            <stop offset="100%" stop-color="#3f3f3f" stop-opacity="0.4"/>
+        </linearGradient>
+    </defs>
+    <circle cx="50" cy="50" r="39" 
+    stroke-dasharray="0 12.25"
+    stroke-linecap="round"
+    fill="transparent"
+    stroke="url(#gradient)" 
+    stroke-width="7" />
+</svg>

@@ -46,8 +46,8 @@ window.customElements.define('input-select', class extends HTMLElement {
             el.value = option.value;
             if ('name' in option) {
                 el.innerText = option.name;
-            } else if (option instanceof Array) {
-                el.innerText = option.join(' x ');
+            } else if (option.value instanceof Array) {
+                el.innerText = option.value.join(' x ');
             } else {
                 el.innerText = option.value;
             }
