@@ -53,8 +53,11 @@ html {
   height: 50px;
   text-align: center;
   line-height: 50px;
-  color: white;
-  background: rgba(52, 58, 64, 0.5);
+  color: #333;
+  background: #fff;
+  border: 1px solid #ccc;
+  z-index: 1;
+  box-shadow: 1px 1px 5px 0 #000;
   font-weight: bold;
   font-size: x-large;
   text-decoration: none;
@@ -116,6 +119,7 @@ h2 {
 body {
     font-family: 'Helvetica', 'Arial', sans-serif;
     font-size: small;
+    background-color: #fff;
 }
 
 /* COPIED FROM BOKEH!!! */
@@ -214,7 +218,7 @@ div.title-bar {
   font-size: large;
   font-weight: bold;
   border-radius: 4px 4px 0 0;
-  padding: 2%;
+  padding: 0.5vw;
   white-space: nowrap;
   cursor: pointer;
   color: #666666;
@@ -239,6 +243,16 @@ div.title-bar {
 
 /* For mobile & vertical tablet, stack sections */
 @media (max-width: 900px) {
+
+  .instrument-menu {
+    flex-grow: 1;
+    overflow-x: scroll;
+    margin-right: 10px;
+  }
+
+  .instrument-menu .instrument {
+    padding: 1vw;
+  }
 
   .main, .sidebar {
     margin: 0;
