@@ -69,7 +69,7 @@ const convertUnits = (value, unitFrom, unitTo, requiredInfo) => {
 
     // Otherwise, convert based on type of unit
     if (['length', 'angle', 'time'].includes(type[0])) {
-        return value * units[type[0]][unitTo.toLowerCase()] / units[type[0]][unitFrom.toLowerCase()];
+        return value * units[type[0]][unitFrom.toLowerCase()] / units[type[0]][unitTo.toLowerCase()];
     }
 
     if (type[0] === 'temperature') {
@@ -223,7 +223,7 @@ const apiRequest = async (query, parameters) => {
     }
 
     // Send fetch request and return data
-    const request = await fetch('http://localhost:8080'+query);
+    const request = await fetch('http://vm-internship:8080'+query);
     const data = request.status === 200 ? request.json() : {};
     return data;
 }
@@ -320,6 +320,14 @@ const updateUI = (parameters) => {
             // If needed, convert value to appropriate unit
             if (document.querySelector('#'+input.id+'-unit')) {
                 value = convertUnits(value, parameters[name].unit, document.querySelector('#'+input.id+'-unit').value);
+                input.unit = parameters[name].unit;
+            }
+            // If min and max exist, set to defaults of 0 and 2 * value
+            if (document.querySelector('#'+input.id+'-min')) {
+                document.querySelector('#'+input.id+'-min').value = 0;
+            }
+            if (document.querySelector('#'+input.id+'-max')) {
+                document.querySelector('#'+input.id+'-max').value = 2 * value;
             }
             // If available, set options for select
             if (parameters[name].options) {
@@ -371,22 +379,22 @@ const getQuery = (isForVSPlot) => {
 
 const getParameters = (isForVSPlot) => {
     const options = [
-        'target', 'exposure', 'signal_noise_ratio', 'dithers', 'repeats', 'coadds', 'reads',
-        'type', 'flux', 'wavelength_band', 'redshift', 'index', 'temperature', 'line_width',
+        'exposure', 'signal_noise_ratio', 'dithers', 'repeats', 'coadds', 'reads',
+        'type', 'flux', 'wavelength_band', 'redshift', 'index', 'temperature', 'width',
         'mode', 'slit', 'binning', 'grating', 'grism',
-        'seeing', 'airmass', 'water_vapor'
+        'seeing', 'airmass', 'water_vapor', 'target' // Target is last because it must be set after exp. or snr
     ];
     const parameters = isForVSPlot ? {wavelengths: [vsPlotWavelength.location+'nm']} : {};
 
     for (parameter of options) {
-        const id = '#'+parameter.replace('_','-');
+        const id = '#'+parameter.replaceAll('_','-');
         const element = document.querySelector(id);
         if (!!element && !element.parentElement.classList.contains('hidden') && element.value){
             const unit = !!document.querySelector(id+'-unit') ? document.querySelector(id+'-unit').value : '';
             if (isForVSPlot && (id==='#exposure' || id==='#signal-noise-ratio')){
                 // For vs. plot, get range of exp/snr from min and max elements
-                const start = document.querySelector(id+'-min').value;
-                const stop = document.querySelector(id+'-max').value;
+                const start = parseFloat(document.querySelector(id+'-min').value);
+                const stop = parseFloat(document.querySelector(id+'-max').value);
                 const step = (stop - start) / (25-1); // Hard-coded value of 25 points
                 const list = Array(25).fill(start).map((x, i) => x + i * step);
                 parameters[parameter] = list.map(x => x+unit);
@@ -471,7 +479,36 @@ setup = () => {
 
     // Define callbacks on value changes for inputs
     document.querySelectorAll('input-select, input-spin, input-slider').forEach( input => {
-        if (!input.id.endsWith('min') && !input.id.endsWith('max') && !input.id.endsWith('unit')) {
+        if (input.id.endsWith('unit')) {
+            const number = document.querySelector('#'+input.id.replace('-unit',''));
+            const min = document.querySelector('#'+input.id.replace('-unit','-min'));
+            const max = document.querySelector('#'+input.id.replace('-unit','-max'));
+            input.addEventListener('change', event => {
+                const oldNumberValue = number.value;
+                guiInactive = true;
+                if (min && max) {
+                    min.value = convertUnits(min.value, event.oldValue, event.newValue);
+                    max.value = convertUnits(max.value, event.oldValue, event.newValue);
+                }
+                number.value = convertUnits(oldNumberValue, event.oldValue, event.newValue);
+                number.unit = event.newValue;
+                guiInactive = false;
+            });
+        } else if (input.id.endsWith('min')) {
+            const number = document.querySelector('#'+input.id.replace('-min',''));
+            input.addEventListener('change', () => {
+                guiInactive = true;
+                number.min = input.value;
+                guiInactive = false;
+            });
+        } else if (input.id.endsWith('max')) {
+            const number = document.querySelector('#'+input.id.replace('-max',''));
+            input.addEventListener('change', () => {
+                guiInactive = true;
+                number.max = input.value;
+                guiInactive = false;
+            });
+        } else if (!input.id.endsWith('min') && !input.id.endsWith('max')) {
             input.addEventListener('change', () => {if (!guiInactive) { update() } });
         }
     });

@@ -54,7 +54,7 @@ window.customElements.define('input-spin', class extends HTMLElement {
 
     set value(val) {
         if (!isNaN(val)) {
-            val = parseFloat(val);
+            val = parseFloat(parseFloat(val).toPrecision(4)); // Round to 4 sig-figs to avoid floating point errors
 
             let inBounds = true;
             if (this.min && val < this.min) { inBounds = false; }
@@ -133,7 +133,7 @@ window.customElements.define('input-spin', class extends HTMLElement {
         // Default to a step size of 1
         const step = !isNaN(this.step) ? this.step : 1;
         // Increment/decrement value by step size, rounded to 6 sig-figs to avoid floating point errors
-        this.value = (parseFloat(this.value) + direction * step).toPrecision(6);
+        this.value = parseFloat(this.value) + direction * step;
     }
 
 

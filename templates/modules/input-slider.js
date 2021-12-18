@@ -21,7 +21,8 @@ window.customElements.define('input-slider', class extends HTMLElement {
             val = parseFloat(val);
             if (!this.max || val <= this.max) {
                 this.setAttribute('min', val);
-                this.slider.min = val
+                this.slider.min = val;
+                this.slider.step = (this.max - this.min) / 100;
                 if (this.value < val) {
                     this.value = val;
                 }
@@ -34,7 +35,8 @@ window.customElements.define('input-slider', class extends HTMLElement {
             val = parseFloat(val);
             if (!this.min || val >= this.min) {
                 this.setAttribute('max', val);
-                this.slider.max = val
+                this.slider.max = val;
+                this.slider.step = (this.max - this.min) / 100;
                 if (this.value > val) {
                     this.value = val;
                 }
@@ -44,27 +46,25 @@ window.customElements.define('input-slider', class extends HTMLElement {
 
     set unit(val) {
         this.setAttribute('unit', val);
-        if (val) {
-            const str = this.textContent + ' ('+val+'): <b>'+this.value+'</b>';
-            this.label.innerHTML = str;
-        }
+        this.updateLabel();
     }
 
     set value(val) {
         if (!isNaN(val)) {
-            val = parseFloat(val);
-
-            let inBounds = true;
-            if (this.min && val < this.min) { inBounds = false; }
-            if (this.max && val > this.max) { inBounds = false; }
-
-            if (inBounds) {
+            val = parseFloat(parseFloat(val).toPrecision(4)); // Round to avoid floating point errors
+            if (!(val < parseFloat(this.min) || val > parseFloat(this.max))) {
                 this.setAttribute('value', val);
                 this.slider.value = val;
-                const str = this.textContent + ' ('+this.unit+'): <b>'+val+'</b>';
-                this.label.innerHTML = str;
+                this.slider.style.backgroundSize = (this.value - this.min) * 100 / (this.max - this.min) + '% 100%';
+                this.updateLabel();
             }
         }
+    }
+
+    updateLabel() {
+        const unitLabel = this.unit ? ' ('+this.unit+')' : ''
+        const str = this.textContent + unitLabel +': <b>'+this.value+'</b>';
+        this.label.innerHTML = str;
     }
     
 
@@ -81,29 +81,19 @@ window.customElements.define('input-slider', class extends HTMLElement {
         
     }
 
-    sliderCallback() {
-
-        this.value = this.slider.value;
-          
-        this.slider.style.backgroundSize = (this.value - this.min) * 100 / (this.max - this.min) + '% 100%';
-    }
-
     connectedCallback() {
 
         // Add event listener for non-throttled changes
-        this.slider.addEventListener('input', () => {
-            this.sliderCallback();
-        });
+        this.slider.addEventListener('input', () => this.value = this.slider.value);
+
 
         // For throttled changes, dispatch event for external listeners
         this.slider.addEventListener('change', () => {
             this.dispatchEvent(new Event('change'));
         });
 
-        window.onload = () => {
-            this.value = this.value;
-            this.slider.style.backgroundSize = (this.value - this.min) * 100 / (this.max - this.min) + '% 100%';
-        }
+        this.slider.style.backgroundSize = (this.value - this.min) * 100 / (this.max - this.min) + '% 100%';
+
     }
 
     constructor() {

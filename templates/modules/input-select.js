@@ -6,7 +6,7 @@ window.customElements.define('input-select', class extends HTMLElement {
 
     get info() { return this.getAttribute('info'); }
     get label() { return this.getAttribute('label'); }
-    get value() { return this.select.value; }
+    get value() { return this.getAttribute('value'); }
     
     get options() {
         return Array.from(this.select.children).map( child => ({
@@ -31,7 +31,14 @@ window.customElements.define('input-select', class extends HTMLElement {
     set value(val) {
         const options = this.options.map( opt => opt.value );
         if (options.includes(String(val))) {
-            this.select.value = val;
+            const event = new Event('change');
+            event.oldValue = this.value;
+            event.newValue = val;
+            if (event.newValue !== event.oldValue) {
+                this.setAttribute('value', val);
+                this.select.value = val;
+                this.dispatchEvent(event);
+            }
         } else if (options.length > 0){
             throw 'Value ' + val + ' is not a valid option';
         }
@@ -56,8 +63,9 @@ window.customElements.define('input-select', class extends HTMLElement {
     }
 
     connectedCallback() {
+        // If no label given, set to whitespace for spacing
         if (!this.label && !this.info) {
-            this.label = '\xa0'  // Set to whitespace for spacing
+            this.label = '\xa0'
         }
     }
 
@@ -87,14 +95,15 @@ window.customElements.define('input-select', class extends HTMLElement {
         this.shadowRoot.addEventListener( 'slotchange', event => {      
             let node = this.querySelector( 'option' );
             node && this.select.append( node );
+            if (!this.value) this.value = this.select.value;
         });
         
         this.labelElement = this.shadowRoot.firstElementChild;
 
         // Add event listener to input
         this.select.addEventListener('change', () => {
-            // Signal value changed for any event listeners attached to this
-            this.dispatchEvent(new Event('change'));
+            // Update value when select value changes
+            this.value = this.select.value;
         });
 
         // Add CSS to shadow DOM

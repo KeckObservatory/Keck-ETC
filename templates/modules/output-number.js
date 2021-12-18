@@ -77,19 +77,19 @@ window.customElements.define('output-number', class extends HTMLElement {
             return;
         }
 
-        const numChars = 9 - this.unit.length
+        const numChars = 7 - this.unit.length
 
         // If number is too big or too small, use scientific notation
         if (this.value >= 10**numChars || this.value <= 10**(1-numChars)) {
             const expDigits = this.value.toExponential(0).split(/[+-]/).at(-1).length;
-            const numDecimals = Math.max(numChars - expDigits - 4, 0);
+            const numDecimals = Math.max(numChars - expDigits - 2, 0);
             const exponential = this.value.toExponential(numDecimals);
             this.output.textContent = exponential + ' ' + this.unit;
             return;
         }
 
-        // Otherwise, trim number to correct number of decimal places - 2 because font makes numbers wider
-        const numDigits = (Math.log(parseInt(this.value)) * Math.LOG10E + 1 | 0) + 2;
+        // Otherwise, trim number to correct number of decimal places
+        const numDigits = Math.log(parseInt(this.value)) * Math.LOG10E + 1 | 0;
         this.output.textContent = this.value.toFixed(numChars - numDigits) + ' ' + this.unit;
 
     }
