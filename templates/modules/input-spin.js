@@ -8,7 +8,7 @@ window.customElements.define('input-spin', class extends HTMLElement {
     get info() { return this.getAttribute('info'); }
     get min() { return this.getAttribute('min'); }
     get max() { return this.getAttribute('max'); }
-    get value() { return this.getAttribute('value'); }
+    get value() { return this.input.value; }
     get step() { return this.getAttribute('step'); }
 
     set info(val) {
@@ -19,11 +19,12 @@ window.customElements.define('input-spin', class extends HTMLElement {
     set min(val) {
         if (!isNaN(val)) {
             val = parseFloat(val);
-            if (!this.max || val <= this.max) {
-                this.setAttribute('min', val);
-                if (this.value < val) {
-                    this.value = val;
-                }
+            this.setAttribute('min', val);
+            if (this.max && val > this.max) {
+                this.max = val;
+            }
+            if (this.value < val) {
+                this.value = val;
             }
             if (isNaN(val)) {
                 this.setAttribute('min', null);
@@ -34,11 +35,12 @@ window.customElements.define('input-spin', class extends HTMLElement {
     set max(val) {
         if (!isNaN(val)) {
             val = parseFloat(val);
-            if (!this.min || val >= this.min) {
-                this.setAttribute('max', parseFloat(val));
-                if (this.value > val) {
-                    this.value = val;
-                }
+            this.setAttribute('max', parseFloat(val));
+            if (this.min && val < this.min) {
+                this.min = val;
+            }
+            if (this.value > val) {
+                this.value = val;
             }
             if (isNaN(val)) {
                 this.setAttribute('max', null);
@@ -53,23 +55,8 @@ window.customElements.define('input-spin', class extends HTMLElement {
     }
 
     set value(val) {
-        if (!isNaN(val)) {
-            val = parseFloat(parseFloat(val).toPrecision(4)); // Round to 4 sig-figs to avoid floating point errors
-
-            let inBounds = true;
-            if (this.min && val < this.min) { inBounds = false; }
-            if (this.max && val > this.max) { inBounds = false; }
-
-            if (inBounds) {
-                this.setAttribute('value', val);
-                this.input.value = val;
-                this.dispatchEvent(new Event('change'));
-                return;
-            }
-        }
-
-        // Otherwise, reset text to previous value
-        this.input.value = this.value;
+        // Round to 6 sig-figs to avoid floating point errors
+        this.input.value = parseFloat(parseFloat(val).toPrecision(6));
     }
     
 
@@ -94,6 +81,7 @@ window.customElements.define('input-spin', class extends HTMLElement {
         if (!this.value) {
             this.value = 0;
         }
+        this.setAttribute('oldValue', this.value);
     }
 
     constructor() {
@@ -118,7 +106,23 @@ window.customElements.define('input-spin', class extends HTMLElement {
         this.downButton.addEventListener('click', () => this.stepValue(-1));
 
         // Update value when user types changes into input element
-        this.input.addEventListener('change', () => this.value = this.input.value);
+        this.input.addEventListener('change', () => {
+            // Round to 4 sig-figs to avoid floating point errors
+            const val = parseFloat(this.value);
+            if (!isNaN(val)) {
+                this.value = val;
+
+                if (val < this.min) this.value = this.min;
+
+                if (val > this.max) this.value = this.max;
+
+                this.dispatchEvent(new Event('change'));
+
+                this.setAttribute('oldValue', this.value);
+            } else {
+                this.value = this.getAttribute('oldValue');
+            }
+        });
 
         // Add CSS to shadow DOM
         const link = document.createElement('link');
@@ -133,7 +137,10 @@ window.customElements.define('input-spin', class extends HTMLElement {
         // Default to a step size of 1
         const step = !isNaN(this.step) ? this.step : 1;
         // Increment/decrement value by step size, rounded to 6 sig-figs to avoid floating point errors
-        this.value = parseFloat(this.value) + direction * step;
+        const val = parseFloat(this.value) + direction * step;
+        if (!(val < this.min || val > this.max)) {
+            this.value = val;
+        }
     }
 
 

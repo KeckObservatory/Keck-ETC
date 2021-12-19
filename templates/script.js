@@ -223,7 +223,7 @@ const apiRequest = async (query, parameters) => {
     }
 
     // Send fetch request and return data
-    const request = await fetch('http://vm-internship:8080'+query);
+    const request = await fetch('http://localhost:8080'+query);
     const data = request.status === 200 ? request.json() : {};
     return data;
 }
@@ -479,6 +479,7 @@ setup = () => {
 
     // Define callbacks on value changes for inputs
     document.querySelectorAll('input-select, input-spin, input-slider').forEach( input => {
+        // If unit, convert values for corresponding elements
         if (input.id.endsWith('unit')) {
             const number = document.querySelector('#'+input.id.replace('-unit',''));
             const min = document.querySelector('#'+input.id.replace('-unit','-min'));
@@ -489,11 +490,16 @@ setup = () => {
                 if (min && max) {
                     min.value = convertUnits(min.value, event.oldValue, event.newValue);
                     max.value = convertUnits(max.value, event.oldValue, event.newValue);
+                } else {
+                    const oldMaxValue = number.max;
+                    number.min = convertUnits(number.min, event.oldValue, event.newValue);
+                    number.max = convertUnits(oldMaxValue, event.oldValue, event.newValue);
                 }
                 number.value = convertUnits(oldNumberValue, event.oldValue, event.newValue);
                 number.unit = event.newValue;
                 guiInactive = false;
             });
+        // If minimum, set value for corresponding element
         } else if (input.id.endsWith('min')) {
             const number = document.querySelector('#'+input.id.replace('-min',''));
             input.addEventListener('change', () => {
@@ -501,6 +507,7 @@ setup = () => {
                 number.min = input.value;
                 guiInactive = false;
             });
+        // If maximum, set value for corresponding element
         } else if (input.id.endsWith('max')) {
             const number = document.querySelector('#'+input.id.replace('-max',''));
             input.addEventListener('change', () => {
@@ -508,6 +515,7 @@ setup = () => {
                 number.max = input.value;
                 guiInactive = false;
             });
+        // Otherwise, call update() to make API call w/ changed value and display results
         } else if (!input.id.endsWith('min') && !input.id.endsWith('max')) {
             input.addEventListener('change', () => {if (!guiInactive) { update() } });
         }
