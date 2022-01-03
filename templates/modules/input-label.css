@@ -8,6 +8,7 @@ div.label-container {
     padding: 0 .1vw 0 0;
     box-sizing: border-box;
     line-height: 1;
+    position: relative;
   }
 
   label.info{
@@ -28,10 +29,21 @@ div.label-container {
     z-index: 1;
     box-shadow: 1px 2px 4px rgba(0,0,0,0.2);
     text-align: center;
-    background-color: #ffffff;
-    border: 1px solid #cccccc;
+    background-color: #fff;
+    border: 1px solid #ccc;
+  }
+
+  label.info.right::after {
+    right: 0;
   }
 
   label.info:hover::after{
     display: block;
   }
+
+@media (max-width: 900px) {
+  label.info::after{
+    max-width: 40vw;
+    margin: auto;
+  }
+}

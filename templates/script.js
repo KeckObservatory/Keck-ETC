@@ -451,6 +451,11 @@ setup = () => {
                 const el = document.getElementById(name);
                 if (el) {
                     el.info = text.trim();
+                    // Set tooltip according to screen position
+                    // const tooltip = el.querySelector('label.info');
+                    // if (tooltip.getBoundingClientRect().x > window.innerWidth/2) {
+                    //     tooltip.classList.add('right');
+                    // }
                 }
             };
         }).catch(error => console.log(error));
