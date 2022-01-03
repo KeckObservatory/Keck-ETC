@@ -20,13 +20,11 @@ To install this program, clone this directory using `git clone https://github.co
 
 Next, ensure that all requirments are met. To install requirements, use
 ```
-pip install bokeh
 pip install astropy
 pip install scipy
 ```
 if using `pip`, or
 ```
-conda install bokeh
 conda install astropy
 ```
 if using `conda`.
@@ -34,42 +32,33 @@ if using `conda`.
 ### Requirements
 
 - Bash v?
-- Python v?
-- Bokeh v?
+- Python 3.8?
 
 - Python Libraries:
     - numpy v?
     - astropy v?
-    - yaml
-    - warnings
-    - json
-    - io
-    - Base64
-    - os
-    - scipy v?
-    - http
-    - urllib
+    - scipy v?s
 
 ### Running 
 
-To run the server, run the executable file `etc` with argument `start`. To see usage, use `--help`. An example is shown below:
+To run the server, run the executable file `wmko-etc` with argument `start`. To see usage, use `--help`. An example is shown below:
 
 ```
-$   ./etc start gui
+$   ./wmko-etc start gui
 
 Starting gui server on port 5006
 
-$   ./etc start api -p 8080
+$   ./wmko-etc start api -p 8080
 
 Starting api server on port 8080
 
-$   ./etc status
+$   ./wmko-etc status
 
 Checking status of server * on port *
 Running 1 API server on port 8080
 Running 1 GUI server on port 5006
 
-$   ./etc -h
+$   ./wmko-etc -h
 
 Usage: ./etc {start,stop,status,restart} [-f] [-p port_number] [-h]
     Positional arguments: {start,stop,status,restart}

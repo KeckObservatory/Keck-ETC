@@ -223,7 +223,7 @@ const apiRequest = async (query, parameters) => {
     }
 
     // Send fetch request and return data
-    const request = await fetch('http://localhost:8080'+query);
+    const request = await fetch('http://vm-internship:8080'+query);
     const data = request.status === 200 ? request.json() : {};
     return data;
 }
