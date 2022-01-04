@@ -484,7 +484,7 @@ setup = () => {
 
     // Define instrument-menu click behavior
     document.querySelectorAll('.instrument-menu .instrument').forEach( 
-        element => element.addEventListener('click', event => {
+        element => element.addEventListener('click', () => {
             document.querySelectorAll('.instrument').forEach( (el) => el.classList.remove('selected'));
             element.classList.add('selected');
             apiRequest({'instrument.name': element.textContent});
@@ -492,13 +492,49 @@ setup = () => {
     );
 
     // Define reset button click handling
-    document.querySelector('button#reset').addEventListener('click', event => {
+    document.querySelector('button#reset').addEventListener('click', () => {
         //apiRequest({});
+    });
+
+    // Define download button click handling
+    document.querySelector('button#download').addEventListener('click', () => {
+        const table_to_csv = (source) => {
+            const columns = Object.keys(source.data)
+            const nrows = source.get_length()
+            const lines = [columns.join(',')]
+        
+            for (let i = 0; i < nrows; i++) {
+                let row = [];
+                for (let j = 0; j < columns.length; j++) {
+                    const column = columns[j]
+                    row.push(source.data[column][i].toString())
+                }
+                lines.push(row.join(','))
+            }
+            return lines.join('\\n').concat('\\n')
+        }
+        
+        
+        const filename = 'etc_results.csv'
+        const filetext = table_to_csv(source)
+        const blob = new Blob([filetext], { type: 'text/csv;charset=utf-8;' })
+        
+        //for IE
+        if (navigator.msSaveBlob) {
+            navigator.msSaveBlob(blob, filename)
+        } else {
+            const link = document.createElement('a')
+            link.href = URL.createObjectURL(blob)
+            link.download = filename
+            link.target = '_blank'
+            link.style.visibility = 'hidden'
+            link.dispatchEvent(new MouseEvent('click'))
+        }
     });
 
     // Define mobile collapse / expand behavior
     document.querySelectorAll('div.section-title, div.loading-overlay').forEach( (el) => {
-        el.addEventListener('click', (event) => {
+        el.addEventListener('click', () => {
             // Get anscestor panel
             const toggle = el.closest('div.panel');
 
