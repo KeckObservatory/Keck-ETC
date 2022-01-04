@@ -1,8 +1,10 @@
 ## W. M. Keck Observatory Exposure Time Calculator
 
-*Developed by Keaton Blair and Sherry Yeh, 2021*
+Copyright (c) 2022, W. M. Keck Observatory
+All rights reserved.
 
-*Liscensing info. goes here*
+This project is licensed under the BSD-style license found in the
+LICENSE file in the root directory of this source tree.
 
 ### About Program
 
@@ -71,3 +73,11 @@ Usage: ./etc {start,stop,status,restart} [-f] [-p port_number] [-h]
         -f, --force     Force kill running server, use with 'stop' or 'restart'
         -h, --help      Displays this message
 ```
+
+### Contact Us
+
+This project was developed by Keaton Blair and Sherry Yeh at the W. M. Keck Observatory.
+
+[To submit a bug report or feature request, click here.](https://github.com/KeckObservatory/Keck-ETC/issues/new/choose)
+
+For other feedback or information, contact Sherry Yeh at [syeh@keck.hawaii.edu](mailto:syeh@keck.hawaii.edu).
