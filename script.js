@@ -95,7 +95,7 @@ const convertUnits = (value, unitFrom, unitTo, requiredInfo) => {
 
 // Define Bokeh source and plots
 const createPlots = (source, vsSource) => {
-    
+
     // Create vertical lines for marking wavelengths
     const resPanelWavelength = new Bokeh.Span({
         location: 0,
@@ -113,7 +113,6 @@ const createPlots = (source, vsSource) => {
         mousemove: [new Bokeh.CustomJS({ args: {w: resPanelWavelength}, code: 'w.location=cb_obj.x; updateResults()' })],
         tap: [new Bokeh.CustomJS({ args: {w: vsPlotWavelength}, code: 'w.location=cb_obj.x; updateVSPlot()' })]
     };
-
 
 
     // Define first plot, snr/exp vs. wavelength
@@ -198,6 +197,20 @@ const createPlots = (source, vsSource) => {
     vsPlot.output_backend = 'svg';
 
 
+    // Set callback to change plot size for mobile
+    window.addEventListener('resize', () => {
+        if (window.innerWidth < 500) {
+            wavelengthPlot.height = 300;
+            countsPlot.height = 300;
+            vsPlot.height = 300;
+        }else if (window.innerWidth < 900) {
+            wavelengthPlot.height = 200;
+            countsPlot.height = 200;
+            vsPlot.height = 200;
+        }
+    })
+
+
     // Define grid of plots
     const grid = new Bokeh.Plotting.gridplot(
         [[wavelengthPlot], [countsPlot], [vsPlot]], {
@@ -213,6 +226,7 @@ const createPlots = (source, vsSource) => {
 
 }
 
+// Custom handling for reset button on exposure vs. wavelength plot
 const resetExposurePlot = () => {
     const exp = source.data['exposure'].filter( value => !Number.isNaN(parseFloat(value)) );
     const ax = wavelengthPlot.y_range;
@@ -222,8 +236,7 @@ const resetExposurePlot = () => {
     }
 }
 
-
-// Make API request to get info
+// Make API request given query and parameters
 const apiRequest = async (query, parameters) => {
 
     // Add parameters to query
@@ -236,7 +249,7 @@ const apiRequest = async (query, parameters) => {
     }
 
     // Send fetch request and return data
-    const request = await fetch('http://vm-internship:8080'+query);
+    const request = await fetch('http://localhost:8080'+query);
     const data = request.status === 200 ? request.json() : {};
     return data;
 }
@@ -280,7 +293,7 @@ const updateDataSource = (source, data) => {
         }
     }
 
-    // Convert angstrom to nm
+    // Convert wavelengths from angstrom to nm
     if (data.wavelengths) {
         data.wavelengths = data.wavelengths.map( x => x/10 );
     }
@@ -356,6 +369,10 @@ const updateUI = (parameters) => {
         } else if (!name.endsWith('unit') && !name.endsWith('min') && !name.endsWith('max')) {
             // Otherwise, get value from parameters
             let value = parameters[name].value;
+
+            // Before changing input, disable callbacks for change events
+            guiInactive = true;
+
             // If needed, convert value to appropriate unit
             if (document.querySelector('#'+input.id+'-unit')) {
                 value = convertUnits(value, parameters[name].unit, document.querySelector('#'+input.id+'-unit').value);
@@ -376,7 +393,6 @@ const updateUI = (parameters) => {
             }
 
             // Set value
-            guiInactive = true;
             input.value = value;
             guiInactive = false;
 
@@ -634,8 +650,10 @@ setup = () => {
 
 
 Bokeh.set_log_level('error');
+
 window.addEventListener('DOMContentLoaded', setup);
+// Resize event on page load to fix formatting bug due to loading content into cache
+window.addEventListener('load', () => window.dispatchEvent(new Event('resize')));
 
 // TODO -- Handle GUI changes in JS, only call updateUI on load!
 // TODO -- Store values in cookies
-// TODO -- Change plots on target callback

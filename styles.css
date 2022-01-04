@@ -304,6 +304,7 @@ div.title-bar {
     justify-content: space-around;
     align-items: stretch;
     width: 100%;
+    flex-wrap: wrap;
   }
 
   .panel.open .section-title {
