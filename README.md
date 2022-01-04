@@ -1,4 +1,4 @@
-## W.M. Keck Observatory Exposure Time Calculator
+## W. M. Keck Observatory Exposure Time Calculator
 
 *Developed by Keaton Blair and Sherry Yeh, 2021*
 

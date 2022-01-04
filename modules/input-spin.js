@@ -107,14 +107,13 @@ window.customElements.define('input-spin', class extends HTMLElement {
 
         // Update value when user types changes into input element
         this.input.addEventListener('change', () => {
-            // Round to 4 sig-figs to avoid floating point errors
             const val = parseFloat(this.value);
             if (!isNaN(val)) {
                 this.value = val;
 
-                if (val < this.min) this.value = this.min;
+                if (val < parseFloat(this.min)) this.value = this.min;
 
-                if (val > this.max) this.value = this.max;
+                if (val > parseFloat(this.max)) this.value = this.max;
 
                 this.dispatchEvent(new Event('change'));
 
@@ -134,12 +133,13 @@ window.customElements.define('input-spin', class extends HTMLElement {
 
 
     stepValue(direction) {
-        // Default to a step size of 1
+        // Default to a step size of 1 if not specified
         const step = !isNaN(this.step) ? this.step : 1;
         // Increment/decrement value by step size, rounded to 6 sig-figs to avoid floating point errors
         const val = parseFloat(this.value) + direction * step;
-        if (!(val < this.min || val > this.max)) {
+        if (!(val < parseFloat(this.min) || val > parseFloat(this.max))) {
             this.value = val;
+            this.dispatchEvent(new Event('change'));
         }
     }
 

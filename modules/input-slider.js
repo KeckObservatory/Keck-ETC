@@ -26,6 +26,7 @@ window.customElements.define('input-slider', class extends HTMLElement {
                 if (this.value < val) {
                     this.value = val;
                 }
+                this.updatePosition();
             }
         }
     }
@@ -40,6 +41,7 @@ window.customElements.define('input-slider', class extends HTMLElement {
                 if (this.value > val) {
                     this.value = val;
                 }
+                this.updatePosition();
             }
         }
     }
@@ -55,7 +57,7 @@ window.customElements.define('input-slider', class extends HTMLElement {
             if (!(val < parseFloat(this.min) || val > parseFloat(this.max))) {
                 this.setAttribute('value', val);
                 this.slider.value = val;
-                this.slider.style.backgroundSize = (this.value - this.min) * 100 / (this.max - this.min) + '% 100%';
+                this.updatePosition();
                 this.updateLabel();
             }
         }
@@ -65,6 +67,10 @@ window.customElements.define('input-slider', class extends HTMLElement {
         const unitLabel = this.unit ? ' ('+this.unit+')' : ''
         const str = this.textContent + unitLabel +': <b>'+this.value+'</b>';
         this.label.innerHTML = str;
+    }
+
+    updatePosition() {
+        this.slider.style.backgroundSize = (this.value - this.min) * 100 / (this.max - this.min) + '% 100%';
     }
     
 

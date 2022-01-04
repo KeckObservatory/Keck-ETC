@@ -166,8 +166,8 @@ const createPlots = (source, vsSource) => {
     countsPlot.line({field: 'wavelengths'}, {field: 'dark_current_count_adu'}, { source: source, legend_label: 'Dark Current', line_color: '#000000' });
     countsPlot.line({field: 'wavelengths'}, {field: 'nonlinear_depth_adu'}, { source: source, legend_label: 'Non-linearity', line_color: '#D55E00', line_dash: 'dashed' });
     countsPlot.toolbar.tools.at(-1).tooltips = [['Count (ADU/px)', '$y{0}'], ['λ (nm)', '$x{0}']];
-    countsPlot.xaxis[0].axis_label = 'wavelengths (nm)'
-    countsPlot.yaxis[0].axis_label = 'Counts (ADU/px)'
+    countsPlot.xaxis[0].axis_label = 'wavelengths (nm)';
+    countsPlot.yaxis[0].axis_label = 'Counts (ADU/px)';
     countsPlot.legend.label_height = 10;
     countsPlot.legend.label_width = 10;
     countsPlot.legend.label_text_font_size = '10px';
@@ -190,7 +190,11 @@ const createPlots = (source, vsSource) => {
         tools: 'pan, box_zoom, zoom_in, zoom_out, wheel_zoom, undo, redo, reset, save, help, hover'
     });
     vsPlot.line({field: 'exposure'}, {field: 'signal_noise_ratio'}, { source: vsSource });
-    vsPlot.toolbar.tools.at(-1).tooltips = [['S/N', '$y{0.0}'], ['exp (s)', '$x{0}']];
+    vsPlot.image_url({
+        url: 'static/plot_instructions.svg',
+        x: 0, y: 0, w: 10, h: 1,
+        anchor: 'center'
+    });
     vsPlot.output_backend = 'svg';
 
 
@@ -207,6 +211,15 @@ const createPlots = (source, vsSource) => {
 
     return {resPanelWavelength: resPanelWavelength, vsPlotWavelength: vsPlotWavelength, wavelengthPlot: wavelengthPlot, vsPlot: vsPlot};
 
+}
+
+const resetExposurePlot = () => {
+    const exp = source.data['exposure'].filter( value => !Number.isNaN(parseFloat(value)) );
+    const ax = wavelengthPlot.y_range;
+    if (exp.length > 0){
+        ax.end = exp.sort((a, b) => a - b)[Math.floor(exp.length / 2)];
+        ax.start = Math.min(...exp) - (ax.end - Math.min(...exp)) * 0.1;
+    }
 }
 
 
@@ -301,8 +314,34 @@ const updateVSPlot = () => {
     const wavelength = vsPlotWavelength.location;
     vsPlot.title.text = 'Wavelength: ' + wavelength.toFixed(0) + 'nm';
     // Update data for vs. plot
-    apiRequest(getQuery(true), getParameters(true)).then( data => updateDataSource(vsSource, data) );
-    // TODO -- change axes, tooltips, etc...
+    apiRequest(getQuery(true), getParameters(true)).then( data => {
+        updateDataSource(vsSource, data);
+        // Display / hide instructions conditional on data visibility
+        if (vsSource.data['exposure'].filter(x => !isNaN(x)).length == 0 ||
+            vsSource.data['signal_noise_ratio'].filter(x => !isNaN(x)).length == 0)
+        {
+            vsPlot.renderers[1].visible = true;
+        } else {
+            vsPlot.renderers[1].visible = false;
+        }
+    });
+    // Set axes labels & tooltips according to target
+    const target = document.querySelector('#target').value;
+    if (target === 'exposure') {
+        vsPlot.renderers[0].glyph.x = {field: 'signal_noise_ratio'};
+        vsPlot.renderers[0].glyph.y = {field: 'exposure'};
+        vsPlot.toolbar.tools.at(-1).tooltips = [['Exp (s)', '$y{0}'], ['S/N', '$x{0.0}']];
+        vsPlot.xaxis[0].axis_label = 'SNR';
+        vsPlot.yaxis[0].axis_label = 'Exposure (s)';
+    } else if (target === 'signal_noise_ratio') {
+        vsPlot.renderers[0].glyph.x = {field: 'exposure'};
+        vsPlot.renderers[0].glyph.y = {field: 'signal_noise_ratio'};
+        vsPlot.toolbar.tools.at(-1).tooltips = [['S/N', '$y{0.0}'], ['Exp (s)', '$x{0}']];
+        vsPlot.xaxis[0].axis_label = 'Exposure (s)';
+        vsPlot.yaxis[0].axis_label = 'SNR';
+    }
+    
+
 }
 
 const updateUI = (parameters) => {
@@ -322,17 +361,20 @@ const updateUI = (parameters) => {
                 value = convertUnits(value, parameters[name].unit, document.querySelector('#'+input.id+'-unit').value);
                 input.unit = parameters[name].unit;
             }
-            // If min and max exist, set to defaults of 0 and 2 * value
-            if (document.querySelector('#'+input.id+'-min')) {
+            // If min and max are unset, set to defaults of 0 and 2 * value
+            if (document.querySelector('#'+input.id+'-min') && input.min === null) {
                 document.querySelector('#'+input.id+'-min').value = 0;
+                input.min = 0;
             }
-            if (document.querySelector('#'+input.id+'-max')) {
+            if (document.querySelector('#'+input.id+'-max') && input.max === null) {
                 document.querySelector('#'+input.id+'-max').value = 2 * value;
+                input.max = 2 * value;
             }
             // If available, set options for select
             if (parameters[name].options) {
                 input.options = parameters[name].options;
             }
+
             // Set value
             guiInactive = true;
             input.value = value;
@@ -344,6 +386,32 @@ const updateUI = (parameters) => {
         }
     });
 
+    // Update first plot according to target
+    const target = document.querySelector('#target').value;
+    if (target === 'exposure') {
+        wavelengthPlot.renderers[0].glyph.y = {field: 'exposure'};
+        wavelengthPlot.toolbar.tools.at(-1).tooltips = [['Exp (s)', '$y{0}'], ['\u03bb (nm)', '$x{0}']];
+        wavelengthPlot.yaxis[0].axis_label = 'Exposure (s)';
+        wavelengthPlot.title.text = 'Exposure';
+        wavelengthPlot.renderers[0].visible = true;
+        wavelengthPlot.renderers[1].visible = false;
+        wavelengthPlot.js_event_callbacks = { 
+            ...wavelengthPlot.js_event_callbacks,
+            reset: [new Bokeh.CustomJS({ code: 'resetExposurePlot();' })]
+        };
+        wavelengthPlot.reset.emit();
+    } else if (target === 'signal_noise_ratio') {
+        wavelengthPlot.renderers[0].glyph.y = {field: 'signal_noise_ratio'};
+        wavelengthPlot.toolbar.tools.at(-1).tooltips = [['S/N', '$y{0.0}'], ['\u03bb (nm)', '$x{0}']];
+        wavelengthPlot.yaxis[0].axis_label = 'SNR';
+        wavelengthPlot.title.text = 'Signal to Noise Ratio';
+        wavelengthPlot.renderers[0].visible = false;
+        wavelengthPlot.renderers[1].visible = true;
+        wavelengthPlot.js_event_callbacks = { 
+            ...wavelengthPlot.js_event_callbacks,
+            reset: [] 
+        };
+    }
 }
 
 const update = () => {
@@ -351,8 +419,8 @@ const update = () => {
     document.querySelectorAll('.panel.output').forEach(el => el.classList.add('loading'));
     // Get results from ETC, update ui and data
     apiRequest(getQuery(false), getParameters(false)).then( data => {
-        updateUI(data.parameters);
         updateDataSource(source, data);
+        updateUI(data.parameters);
         // Change results to reflect new data
         updateResults();
         // Get vs. data and update plot

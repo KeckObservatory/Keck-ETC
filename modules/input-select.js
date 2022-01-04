@@ -60,6 +60,13 @@ window.customElements.define('input-select', class extends HTMLElement {
             }
             this.select.appendChild(el);
         });
+        // If value is in options, set value of select accordingly
+        if (this.options.map(opt=>opt.value).includes(this.value)) {
+            this.select.value = this.value;
+        // Otherwise, set value to default from new options
+        } else {
+            this.value = this.select.value;
+        }
     }
 
     connectedCallback() {
