@@ -1,3 +1,10 @@
+# Copyright (c) 2022, W. M. Keck Observatory
+# All rights reserved.
+
+# This source code is licensed under the BSD-style license found in the
+# LICENSE file in the root directory of this source tree. 
+
+
 import yaml
 from astropy.table import Table
 import astropy.units as u
@@ -76,7 +83,6 @@ class instrument:
 
         self._validate_config()
 
-        # Maybe move these, find the most appropriate place later...
         self.gain = u.Quantity(self.config.gain)
         self.slit = [u.Quantity(x) for x in self.config.defaults.slit] * u.arcsec
         # More explicit aliases for slit

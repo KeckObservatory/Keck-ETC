@@ -142,6 +142,29 @@ class exposure_time_calculator:
         self.efficiency = self.integration_time / self.clock_time
 
 
+    def reset_parameters(self):
+
+        # Initialize values
+        self.telescope_area = u.Quantity(self.config.telescope_area)
+        self.exposure = [u.Quantity(x) for x in self.config.defaults.exposure] * u.s
+        self.signal_noise_ratio = [u.Quantity(x) for x in self.config.defaults.signal_noise_ratio] * u.dimensionless_unscaled
+        self.dithers = u.Quantity(self.config.defaults.dithers)
+        self.reads = u.Quantity(self.config.defaults.reads)
+        self.repeats = u.Quantity(self.config.defaults.repeats)
+        self.coadds = u.Quantity(self.config.defaults.coadds)
+        self.target = self.config.defaults.target
+
+        # Calculate default wavelengths array from min, max of instrument and atmosphere
+        min_wavelength = max(self.atmosphere._wavelength_index[0], self.instrument.min_wavelength)
+        max_wavelength = min(self.atmosphere._wavelength_index[-1], self.instrument.max_wavelength)
+        self.wavelengths = linspace(min_wavelength, max_wavelength, self.config.defaults.default_wavelengths_number).to(u.angstrom)
+
+        # Reset objects
+        self.instrument.set_parameter('name', self.config.defaults.instrument)
+        self.atmosphere.reset_parameters()
+        self.source.reset_parameters()
+
+
     def __init__(self):
         # Set default values based on config file
         self._mount_config(_CONFIG_FILEPATH)
@@ -153,19 +176,7 @@ class exposure_time_calculator:
         self.source = source()
         u.add_enabled_units([self.source.flam, self.source.photlam])
 
-        # Initialize values
-        self.telescope_area = u.Quantity(self.config.telescope_area)
-        self.exposure = [u.Quantity(x) for x in self.config.defaults.exposure] * u.s
-        self.signal_noise_ratio = [u.Quantity(x) for x in self.config.defaults.signal_noise_ratio] * u.dimensionless_unscaled
-        self.dithers = u.Quantity(self.config.defaults.dithers)
-        self.reads = u.Quantity(self.config.defaults.reads)
-        self.repeats = u.Quantity(self.config.defaults.repeats)
-        self.coadds = u.Quantity(self.config.defaults.coadds)
-        self.target = self.config.defaults.target
-        # Calculate default wavelengths array from min, max of instrument and atmosphere
-        min_wavelength = max(self.atmosphere._wavelength_index[0], self.instrument.min_wavelength)
-        max_wavelength = min(self.atmosphere._wavelength_index[-1], self.instrument.max_wavelength)
-        self.wavelengths = linspace(min_wavelength, max_wavelength, self.config.defaults.default_wavelengths_number).to(u.angstrom)
+        self.reset_parameters()
 
         self._calculate()
 

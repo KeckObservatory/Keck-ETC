@@ -169,16 +169,21 @@ class source:
             self.active_parameters += list(vars(vars(self.config.source_types)[self.type].parameters).keys())
 
 
+    def reset_parameters(self):
+        
+        self.type = self.config.defaults.type
+        self.set_flux(self.config.defaults.flux)
+        self.redshift = u.Quantity(self.config.defaults.redshift)
+        self.wavelength_band = self.config.defaults.wavelength_band
+
+
     def __init__(self):
 
         self._mount_config(_CONFIG_FILEPATH)
 
         self._validate_config()
 
-        self.type = self.config.defaults.type
-        self.set_flux(self.config.defaults.flux)
-        self.redshift = u.Quantity(self.config.defaults.redshift)
-        self.wavelength_band = self.config.defaults.wavelength_band
+        self.reset_parameters()
 
         self._load_files()
 

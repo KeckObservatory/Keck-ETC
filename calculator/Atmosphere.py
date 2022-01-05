@@ -1,3 +1,10 @@
+# Copyright (c) 2022, W. M. Keck Observatory
+# All rights reserved.
+
+# This source code is licensed under the BSD-style license found in the
+# LICENSE file in the root directory of this source tree. 
+
+
 from astropy import units as u
 from astropy.table import Table
 import yaml
@@ -136,17 +143,21 @@ class atmosphere:
 
         
 
+    def reset_parameters(self):
+        
+        self.seeing = u.Quantity(self.config.defaults.seeing)
+
+        self.airmass = u.Quantity(self.config.defaults.airmass)
+
+        self.water_vapor = u.Quantity(self.config.defaults.water_vapor)
+
 
     def __init__(self):
         self._mount_config(_CONFIG_FILEPATH)
 
         self._validate_config()
 
-        self.seeing = u.Quantity(self.config.defaults.seeing)  # TODO -- run range of seeings, maybe return a dictionary / 2d list for different seeing values?
-
-        self.airmass = u.Quantity(self.config.defaults.airmass)
-
-        self.water_vapor = u.Quantity(self.config.defaults.water_vapor)
+        self.reset_parameters()
 
         self._load_files()
 

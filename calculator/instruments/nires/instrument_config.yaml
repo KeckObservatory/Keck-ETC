@@ -4,7 +4,7 @@
 
 
 defaults:
-  slit: [18 arcsec, 0.55 arcsec]  # Width, length
+  slit: [0.55 arcsec, 18 arcsec]  # Width, length
   pixel_size: 0.0225 arcsec^2/pixel  # Check w/ Sherry, in her code this was s^2/px^2 but I think that's a typo... ?
   mode: spectroscopic
   binning: [1, 1]

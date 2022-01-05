@@ -438,11 +438,16 @@ const updateUI = (parameters) => {
     }
 }
 
-const update = () => {
+const update = (reset) => {
+    // If reset is true, don't supply parameters to API call
+    let parameters = {};
+    if (!reset) {
+        parameters = getParameters(false);
+    }
     // Display loading symbols on output
     document.querySelectorAll('.panel.output').forEach(el => el.classList.add('loading'));
     // Get results from ETC, update ui and data
-    apiRequest(getQuery(false), getParameters(false)).then( data => {
+    apiRequest(getQuery(false), parameters).then( data => {
         updateDataSource(source, data);
         updateUI(data.parameters);
         // Change results to reflect new data
@@ -608,7 +613,7 @@ setup = () => {
     // Define output plots
     ({resPanelWavelength, vsPlotWavelength, wavelengthPlot, vsPlot} = createPlots(source, vsSource));
     // Update inputs and outputs with values from API
-    update();
+    update(true); // TODO -- read cookie value for settings, only reset from button
 
     // Define callbacks on value changes for inputs
     document.querySelectorAll('input-select, input-spin, input-slider').forEach( input => {

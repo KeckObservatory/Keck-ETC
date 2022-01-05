@@ -30,7 +30,7 @@ def process_request(query):
         else:
             return_vals = { query['return'] : [] }
         del query['return']
-        etc = exposure_time_calculator()  # Initialize etc
+        
         etc.set_parameters(query)
         # Get the requested values
         for key in return_vals.keys():
@@ -115,9 +115,14 @@ class APIServer(BaseHTTPRequestHandler):
             self.send_header("Content-type", "application/json")
             self.end_headers()
             self.wfile.write(bytes(json.dumps(response, ensure_ascii=False), 'utf-8'))
+            
+        # Reset etc for future API call
+        etc.reset_parameters()
 
 
 if __name__ == "__main__":  
+
+    etc = exposure_time_calculator()  # Initialize etc
 
     webServer = HTTPServer((hostName, serverPort), APIServer)
     print("Server started http://%s:%s" % (hostName, serverPort))
