@@ -332,7 +332,7 @@ div.title-bar {
   .section-title {
     border: none;
     margin-bottom: 0;
-    background-image: url(../static/select.svg);
+    background-image: url(static/select.svg);
     background-position: right 0.5em center;
     background-size: 8px 6px;
     background-repeat: no-repeat;

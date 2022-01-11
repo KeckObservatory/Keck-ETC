@@ -246,9 +246,6 @@ const createPlots = (source, vsSource) => {
         x: 0, y: 0, w: 10, h: 1,
         anchor: 'center'
     });
-    // TODO -- fix text sizing
-    //vsPlot.y_range.start = -1;
-    //vsPlot.y_range.end = 1;
     vsPlot.output_backend = 'svg';
 
 
@@ -389,9 +386,6 @@ const updateVSPlot = () => {
             vsSource.data['signal_noise_ratio'].filter(x => !isNaN(x)).length == 0)
         {
             vsPlot.renderers[1].visible = true;
-            // TODO -- figure out why y_range isn't setting properly
-            vsPlot.y_range.start = -1;
-            vsPlot.y_range.end = 1;
         } else {
             vsPlot.renderers[1].visible = false;
         }
@@ -655,11 +649,6 @@ setup = async () => {
                 const el = document.getElementById(name);
                 if (el) {
                     el.info = text.trim();
-                    // Set tooltip according to screen position
-                    // const tooltip = el.querySelector('label.info');
-                    // if (tooltip.getBoundingClientRect().x > window.innerWidth/2) {
-                    //     tooltip.classList.add('right');
-                    // }
                 }
             };
         }).catch(error => console.log(error));
@@ -712,17 +701,27 @@ setup = async () => {
         } else if (input.id.endsWith('min')) {
             const number = document.querySelector('#'+input.id.replace('-min',''));
             input.addEventListener('change', () => {
-                guiInactive = true;
-                number.min = input.value;
-                guiInactive = false;
+                if (!guiInactive) {
+                    guiInactive = true;
+                    number.min = input.value;
+                    guiInactive = false;
+                    updateVSPlot();
+                } else {
+                    number.min = input.value;
+                }
             });
         // If maximum, set value for corresponding element
         } else if (input.id.endsWith('max')) {
             const number = document.querySelector('#'+input.id.replace('-max',''));
             input.addEventListener('change', () => {
-                guiInactive = true;
-                number.max = input.value;
-                guiInactive = false;
+                if (!guiInactive) {
+                    guiInactive = true;
+                    number.max = input.value;
+                    guiInactive = false;
+                    updateVSPlot();
+                } else {
+                    number.max = input.value;
+                }
             });
         // Otherwise, call update() to make API call w/ changed value and display results
         } else if (!input.id.endsWith('min') && !input.id.endsWith('max')) {
