@@ -10,15 +10,15 @@ This project is licensed under the BSD-style license found in the LICENSE file i
 
 This project contains the source code for the server running the W.M.K.O. exposure time calculator.
 
-The calculator GUI can be found at <https://www2.keck.hawaii.edu/not-yet-released>, while the API can be found at <https://www2.keck.hawaii.edu/not-yet-released-again>. Usage instructions for the GUI and API can be found on their relevant pages.
+The calculator GUI can be found at <https://www2.keck.hawaii.edu/software/keckETC/>, while the API can be found at <https://www2.keck.hawaii.edu/software/keckETC/getETC2.php>. Usage instructions for the GUI and API can be found on their relevant pages.
 
-The remainder of this document contains instructions to download, install, and run the server on your own local machine.
+The remainder of this document contains instructions to download, install, and run the API server and GUI on your own local machine.
 
 *Acknowledgments to gemini & others go here*
 
 ### Installation
 
-To install this program, clone this directory using `git clone https://github.com/Keaton-WMKO/etc-prototype.git`.
+To install this program, clone this directory using `git clone https://github.com/KeckObservatory/Keck-ETC.git`.
 
 Next, ensure that all requirments are met. To install requirements, use
 ```

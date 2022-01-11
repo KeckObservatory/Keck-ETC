@@ -280,6 +280,11 @@ class source:
         elif name == 'wavelength_band':
             if str(value) in vars(self.config.wavelength_band_options).keys():
                 self.wavelength_band = str(value)
+            elif round(float(value)) * u.angstrom in u.Quantity([ u.Quantity(x) for x in vars(self.config.wavelength_band_options).values() ]):
+                names = list(vars(self.config.wavelength_band_options).keys())
+                wavelengths = [ u.Quantity(x) for x in vars(self.config.wavelength_band_options).values()] * u.angstrom
+                index = [round(x) for x in wavelengths.value.tolist()].index(round(float(value)))
+                self.wavelength_band = names[index]
             else:
                 raise ValueError(f'In source.set_parameter() -- {value} is not a valid wavelength band')
         elif name == 'flux':

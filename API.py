@@ -13,6 +13,8 @@ import json
 from re import sub  # Processing regular expressions
 from base64 import b64decode
 from numpy import NaN, isnan
+from datetime import datetime
+from os import getpid
 
 
 hostName = "0.0.0.0"
@@ -108,7 +110,6 @@ class APIServer(BaseHTTPRequestHandler):
             self.send_header('Content-type', 'text/html')
             self.end_headers()
             self.wfile.write(bytes(response, 'utf-8'))
-            #self.wfile.write(bytes(self.usage, 'utf-8'))
         else:
             self.send_response(200)
             self.send_header('Access-Control-Allow-Origin', '*')
@@ -125,7 +126,7 @@ if __name__ == "__main__":
     etc = exposure_time_calculator()  # Initialize etc
 
     webServer = HTTPServer((hostName, serverPort), APIServer)
-    print("Server started http://%s:%s" % (hostName, serverPort))
+    print(f'{hostName}:{serverPort} - - [{datetime.now().strftime("%d/%b/%Y %H:%M:%S")}] "Server started" {getpid()} -')
 
     try:
         webServer.serve_forever()
@@ -133,4 +134,4 @@ if __name__ == "__main__":
         pass
 
     webServer.server_close()
-    print("Server stopped.")
+    print(f'{hostName}:{serverPort} - - [{datetime.now().strftime("%d/%b/%Y %H:%M:%S")}] "Server stopped" {getpid()} -')

@@ -316,6 +316,11 @@ class exposure_time_calculator:
             slit['name'] = f'{slit["value"][0]}" x {slit["value"][1]}"'
         if self.instrument.config.custom_slits:
             parameters['slit']['options'] += [{'value': 'Custom'}]
+        # Update wavelength band
+        parameters['wavelength_band']['value'] = round(u.Quantity(vars(self.source.config.wavelength_band_options)[parameters['wavelength_band']['value']]).to(u.angstrom).value)
+        for band in parameters['wavelength_band']['options']:
+            band['name'] = band['value']
+            band['value'] = round(u.Quantity(vars(self.source.config.wavelength_band_options)[band['name']]).to(u.angstrom).value)
 
 
         return parameters

@@ -5,9 +5,10 @@
 // LICENSE file in the root directory of this source tree. 
 
 
-
-// Method to convert between units
-const convertUnits = (value, unitFrom, unitTo, requiredInfo) => {
+// load JSON file to get vega flux
+let vegaFlux = fetch('static/vega_flux.json').then( res => res.json() ).catch(error => console.log(error));
+// Method to convert between units, wavelength in Angstrom required for flux density conversions
+const convertUnits = (value, unitFrom, unitTo, wavelength) => {
     // Available units, divided into types
     const units = {
         length: {
@@ -51,18 +52,43 @@ const convertUnits = (value, unitFrom, unitTo, requiredInfo) => {
             'rankine': [1.8, 0]
         },
         flux: {
-            // TODO -- add functionality to flux conversions
-            'mag(ab)': [],
-            'abmag': [],
-            'mag(vega)': [],
-            'vegamag': [],
-            'mag(st)': [],
-            'stmag': [],
-            'jy': [],
-            'janksy': [],
-            'flam': [],
-            'photlam': []
+            // unit: [ convert from photlam, convert to photlam ]
+            // From https://pysynphot.readthedocs.io/en/latest/units.html and https://hea-www.harvard.edu/~pgreen/figs/Conversions.pdf
+            'mag(ab)': [ x => -2.5 * Math.log10(5.1*10**12 * x * wavelength) + 48.6,
+                        x => 10**(-(x - 48.6)/2.5) / (wavelength * 5.1*10**12) ],
+            'abmag': [ x => -2.5 * Math.log10(5.1*10**12 * x * wavelength) + 48.6,
+                        x => 10**(-(x - 48.6)/2.5) / (wavelength * 5.1*10**12) ],
+                // TODO -- need more precision on 5.1*10**12 from ABmag
+            'mag(vega)': [ x => -2.5 * Math.log10(x/vega(wavelength)),
+                            x => vega(wavelength) * 10**( -0.4 * x )],
+            'vegamag': [ x => -2.5 * Math.log10(x/vega(wavelength)),
+                            x => vega(wavelength) * 10**( -0.4 * x )],
+            'mag(st)': [ x => -2.5 * Math.log10(1.99*10**-8 * x / wavelength) - 21.1,
+                            x => 10**(-(x + 21.1)/2.5) * wavelength * 5.03*10**7 ],
+            'stmag': [ x => -2.5 * Math.log10(1.99*10**-8 * x / wavelength) - 21.1,
+                            x => 10**(-(x + 21.1)/2.5) * wavelength * 5.03*10**7 ],
+            'jy': [ x => 6.63*10**-4 * x * wavelength, x => 1.51*10**3 * x / wavelength ],
+            'janksy': [ x => 6.63*10**-4 * x * wavelength, x => 1.51*10**3 * x / wavelength ],
+            'flam': [ x => 1.99*10**-8 * x / wavelength, x => 5.03*10**7 * x * wavelength ],
+            'photlam': [ x => x, x => x ]
         }
+    }
+
+    const vega = wavelength => {
+        // Adjust wavelengths for redshift
+        const wavelengths = vegaFlux.wavelength.map(x => x * (1 + document.querySelector('#redshift').value));
+        // Handle boundary conditions, return 0 if outside wavelength range
+        if (wavelength <= wavelengths.at(0) || wavelength >= wavelengths.at(-1)) {
+            return 0;
+        }
+        // Interpolate to get flux (in flam) at wavelength
+        const before = wavelengths.filter(x => x <= wavelength).at(-1);
+        const after = wavelengths.filter(x => x > wavelength).at(0);
+        const percent = (wavelength - before) / (after - before);
+        const below = vegaFlux.flux.at(wavelengths.indexOf(before));
+        const above = vegaFlux.flux.at(wavelengths.indexOf(after));
+        const resultFlam = below + percent * (above - below);
+        return convertUnits(resultFlam, 'flam', 'photlam', wavelength);
     }
 
     // Get type of both units
@@ -75,7 +101,19 @@ const convertUnits = (value, unitFrom, unitTo, requiredInfo) => {
         throw 'Cannot convert from '+unitFrom+' to '+unitTo;
     }
 
+    // If given NaN, return null
+    if (isNaN(parseFloat(value))) {
+        return null;
+    }
+
+    // If units are the same, don't convert
+    if (unitFrom === unitTo) {
+        return value;
+    }
+
     // Otherwise, convert based on type of unit
+    value = parseFloat(value);
+
     if (['length', 'angle', 'time'].includes(type[0])) {
         return value * units[type[0]][unitFrom.toLowerCase()] / units[type[0]][unitTo.toLowerCase()];
     }
@@ -94,8 +132,14 @@ const convertUnits = (value, unitFrom, unitTo, requiredInfo) => {
     }
 
     if (type[0] === 'flux') {
-        // TODO
-        return value;
+        if (!wavelength) {
+            wavelength = parseFloat(document.querySelector('#wavelength-band').value);
+        }
+        if (!wavelength) {
+            throw 'For flux density conversions, must specify wavelength in Angstroms';
+        }
+        const valuePhotlam = units.flux[unitFrom.toLowerCase()][1](value);
+        return units.flux[unitTo.toLowerCase()][0](valuePhotlam);
     }
 
 }
@@ -509,7 +553,9 @@ const calculatorCallback = () => {
 }
 
 // Called when page loads
-setup = () => {
+setup = async () => {
+    // Get data for flux of vega from async call
+    vegaFlux = await vegaFlux;
 
     // Define instrument-menu click behavior
     document.querySelectorAll('.instrument-menu .instrument').forEach( 

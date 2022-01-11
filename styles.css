@@ -287,6 +287,11 @@ div.title-bar {
     -moz-transition: all 0.5s;
   }
 
+  /* Bokeh has intermittent trouble with mobile sizing, so hide plot overflow */
+  .panel.output {
+    overflow: hidden;
+  }
+
   .panel div.input-row,
   .panel output-number, 
   .panel button {

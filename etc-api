@@ -13,23 +13,22 @@ PROGRAM_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd 
 
 # Define script variables to default values
 version="0.0.1"
-port=5006
+port=8080
 printhelp=false
 printversion=false
 forcekill=false
 statusall=true
-server="none"
 action="none"
 usage=$(cat << END
-Usage: $PROGRAM_DIR/etc {start,stop,status,restart,test} [-f] [-h] [-v] [-p port_number]
+Usage: $PROGRAM_DIR/etc-api {start,stop,status,restart,test} [-f] [-h] [-v] [-p port_number]
     Positional arguments: {start,stop,status,restart,test}
-        start           Begin running a server, requires additional argument 'gui' or 'api'
-        stop            Stop running a server, requires additional argument 'gui' or 'api'
-        status          Print server status, accepts optional argument 'gui' or 'api'
-        restart         Restart a server, requires additional argument 'gui' or 'api'
+        start           Begin running the server
+        stop            Stop running the server
+        status          Print server status
+        restart         Restart the server
         test            Verify successful program installation
     Optional arguments:
-        -p, --port      Specifies port for server, defaults to 5006
+        -p, --port      Specifies port for server, defaults to 8080
         -f, --force     Force kill running server, use with 'stop' or 'restart'
         -v, --version   Display program version
         -h, --help      Displays this message
@@ -41,7 +40,6 @@ END
 # TODO -- add test command to verify installation
 while [[ -n $1 ]]; do
     case $1 in
-        gui | api ) server="$1";;
         start | stop | status | restart | test ) action="$1";;
         -h | --help ) printhelp=true;;
         -v | --version ) printversion=true;;
@@ -63,18 +61,13 @@ fi
 
 # If version, print version
 if $printversion; then
-    echo "etc $version"
+    echo "etc-api $version"
     exit 0
 fi
 
 # Validate input
 if [ "$action" == "none" ]; then
-    echo "Missing required positional argument {start,stop,status,restart}" >&2
-    echo "$usage" >&2
-    exit -1
-fi
-if [ "$action" != "status" ] && [ "$action" != "test" ] && [ "$server" == "none" ]; then
-    echo "Missing required additional argument 'gui' or 'api' for argument $action" >&2
+    echo "Missing required positional argument {start,stop,status,restart,test}" >&2
     echo "$usage" >&2
     exit -1
 fi
@@ -90,9 +83,13 @@ cd $PROGRAM_DIR
 # If command is stop or restart, stop corresponding server
 if [ "$action" == "stop" ] || [ "$action" == "restart" ]; then
 
-    pid="$(tac ./log/etc.log | grep -m1 "start $server $port" | awk '{print $NF}')"
+    log="$(tac ./log/etc.log | grep -m1 "$port * Server started")"
+    ip="$(echo $log | awk '{print $1;}')"
+    pid="$(echo $log | cut -d " " -f8)"
+
+    # TODO -- check log for "Server stopped" with date > "Server started" and output accordingly
     if [[ -z $pid ]]; then
-        echo "Error: could not find $server server running on port $port" >&2
+        echo "Error: could not find server running on port $port" >&2
         exit -1
     fi
 
@@ -101,56 +98,63 @@ if [ "$action" == "stop" ] || [ "$action" == "restart" ]; then
     else
         err="$(kill $pid 2>&1)"
     fi
+
     # If an error exists, then print error message and exit
     if [[ ! -z $err ]]; then 
-        printf "Error terminating $server server on port $port \n$err\n" >&2
+        printf "Error terminating server on port $port \n$err\n" >&2
         exit -1
     fi
     # If no error was detected, print success message and append to log
-    echo "Succesfully terminated $server server on port $port"
-    echo "$(date +"%Y-%m-%d %T") stop $server $port $pid" >> ./log/etc.log
+    echo "Succesfully terminated server on port $port"
+    echo "$ip - - [$[date +"%d/%b/%Y %H:%M:%S"]] \"Server stopped\" $pid -" >> ./log/etc.log
 
 fi
 
 if [ "$action" == "start" ] || [ "$action" == "restart" ]; then
 
-    echo "Starting $server server on port $port"
+    echo "Starting server on port $port"
 
     # TODO -- check to make sure port is not in use, then verify that it worked and output success message
 
-    if [ "$server" == "gui" ]; then
-        nohup bokeh serve . --port "$port" --log-file ./log/gui.log --allow-websocket-origin="*" &>/dev/null &
-        pid="$!"
+    nohup python3 -u API.py &>./log/etc.log &
+    pid="$!"
 
-    elif [ "$server" == "api" ]; then
+    # Wait to see evidence of successful start in log
+    started=false
+    timer=$SECONDS
+    while [ !$started ]; do
+        log="$(tac ./log/etc.log | grep -m1 "$port * \"Server started\" $pid")"
+        if [[ ! -z $log ]]; then
+            started=true
+        fi
+        # Timeout after 10 seconds with no results
+        if (( $SECONDS > $timer + 10 )); then
+            break
+        fi
+    done
 
-        nohup python3 -u API.py &>./log/api.log &
-        pid="$!"
-
+    if $started; then
+        echo "Succesfully started server on port $port with pid $pid"
+    else
+        echo "Error: timed out while waiting for confirmation of server start"
+        exit -1
     fi
-
-    # HERE, check that $pid is running and matches either "API.py" or "bokeh serve" before logging and outputting confirmation message
-    echo "$(date +"%Y-%m-%d %T") start $server $port $pid" >> ./log/etc.log
 
 fi
 
+# TODO -- fix status command
 if [ "$action" == "status" ]; then
 
     if $statusall; then port="*"; fi
-
-    if [ "$server" == "none" ]; then server="*"; fi
     
-    echo "Checking status of server $server on port $port"
+    echo "Checking status of server on port $port"
 
     apiports=""
-    guiports=""
 
     while read -r log; do
         log=($log)
         pid=${log[5]}
         if ps -p $pid > /dev/null; then
-            if [[ ${log[3]} == "gui" && "$(ps $pid)" == *"bokeh serve"* ]]; then
-                guiports+="${log[4]}, "
             elif [[ ${log[3]} == "api" && "$(ps $pid)" == *"python3 API.py"* ]]; then
                 apiports+="${log[4]}, "
             fi
@@ -206,11 +210,6 @@ if [ "$action" == "test" ]; then
 
     if [ "$(echo "import scipy" | python3)" != "" ]; then
         echo "Scipy is not installed -- run 'pip install scipy' to correct"
-        exit 0
-    fi
-
-    if [ "$(bokeh --version)" == *"command not found"* ]; then
-        echo "Bokeh is not installed -- run 'pip install bokeh' to correct"
         exit 0
     fi
 
