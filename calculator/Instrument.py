@@ -104,9 +104,9 @@ class instrument:
     def set_parameter(self, name, value):
         # TODO -- input validation
         if name == 'name':
-            self.set_name(value)
+            self.set_name(value.lower())
         elif name == 'mode':
-            self.mode = str(value)
+            self.mode = str(value.lower())
         elif name == 'binning':
             if isinstance(value, str):
                 value = [int(x) for x in split('x|,', value)]

@@ -246,6 +246,9 @@ const createPlots = (source, vsSource) => {
         x: 0, y: 0, w: 10, h: 1,
         anchor: 'center'
     });
+    // TODO -- fix text sizing
+    //vsPlot.y_range.start = -1;
+    //vsPlot.y_range.end = 1;
     vsPlot.output_backend = 'svg';
 
 
@@ -386,6 +389,9 @@ const updateVSPlot = () => {
             vsSource.data['signal_noise_ratio'].filter(x => !isNaN(x)).length == 0)
         {
             vsPlot.renderers[1].visible = true;
+            // TODO -- figure out why y_range isn't setting properly
+            vsPlot.y_range.start = -1;
+            vsPlot.y_range.end = 1;
         } else {
             vsPlot.renderers[1].visible = false;
         }
@@ -482,10 +488,20 @@ const updateUI = (parameters) => {
     }
 }
 
-const update = (reset) => {
+const update = (reset, load) => {
     // If reset is true, don't supply parameters to API call
     let parameters = {};
-    if (!reset) {
+    if (load) {
+        const cookies = document.cookie.split(';');
+        for (const i in cookies) {
+            const cookie = cookies[i].trim().split('=');
+            if (cookie[0] === 'etcparameters'){
+                parameters = JSON.parse(cookie[1]);
+            }
+        }
+    } else if (reset) {
+        document.cookie = 'etcparameters={}; expires=' + new Date();
+    } else {
         parameters = getParameters(false);
     }
     // Display loading symbols on output
@@ -526,6 +542,7 @@ const getParameters = (isForVSPlot) => {
         'seeing', 'airmass', 'water_vapor', 'target' // Target is last because it must be set after exp. or snr
     ];
     const parameters = isForVSPlot ? {wavelengths: [vsPlotWavelength.location+'nm']} : {};
+    parameters['name'] = document.querySelector('.instrument.selected').textContent;
 
     for (parameter of options) {
         const id = '#'+parameter.replaceAll('_','-');
@@ -544,6 +561,12 @@ const getParameters = (isForVSPlot) => {
             }
         }
     }
+    // Save current parameters as cookie for loading
+    if (!isForVSPlot) {
+        const exp_date = new Date( new Date().getTime() + 48 * 60 * 60 * 1000 );  // Add 48 hours to current date
+        document.cookie = 'etcparameters=' + JSON.stringify(parameters) + '; expires=' + exp_date.toUTCString() + '; SameSite=Strict;';
+    }
+
     return parameters;
 }
 
@@ -560,15 +583,17 @@ setup = async () => {
     // Define instrument-menu click behavior
     document.querySelectorAll('.instrument-menu .instrument').forEach( 
         element => element.addEventListener('click', () => {
-            document.querySelectorAll('.instrument').forEach( (el) => el.classList.remove('selected'));
-            element.classList.add('selected');
-            apiRequest({'instrument.name': element.textContent});
+            // For now, instead of proper behavior, display unavailability alert
+            alert('Instruments besides NIRES have not yet been implemented');
+            // document.querySelectorAll('.instrument').forEach( (el) => el.classList.remove('selected'));
+            // element.classList.add('selected');
+            // if (!guiInactive) { update() }
         })
     );
 
     // Define reset button click handling
     document.querySelector('button#reset').addEventListener('click', () => {
-        //apiRequest({});
+        update(true);
     });
 
     // Define download button click handling
@@ -659,7 +684,7 @@ setup = async () => {
     // Define output plots
     ({resPanelWavelength, vsPlotWavelength, wavelengthPlot, vsPlot} = createPlots(source, vsSource));
     // Update inputs and outputs with values from API
-    update(true); // TODO -- read cookie value for settings, only reset from button
+    update(false, true); // TODO -- read cookie value for settings, only reset from button
 
     // Define callbacks on value changes for inputs
     document.querySelectorAll('input-select, input-spin, input-slider').forEach( input => {
