@@ -290,7 +290,6 @@ const resetExposurePlot = () => {
 
 // Make API request given query and parameters
 const apiRequest = async (query, parameters) => {
-
     // Add parameters to query
     for (const [key, value] of Object.entries(parameters)){
         if (value instanceof Array){
@@ -299,10 +298,13 @@ const apiRequest = async (query, parameters) => {
             query += '&' + key + '=' + value;
         }
     }
-
     // Send fetch request and return data
-    const request = await fetch('http://localhost:8080'+query);
-    const data = request.status === 200 ? request.json() : {};
+    const request = await fetch('http://localhost:8080', {
+        method: 'POST',
+        headers: {'Content-Type': 'text/plain'},
+        body: query
+    });
+    const data = request.status === 200 ? request.json() : {error: request.text()};
     return data;
 }
 
@@ -380,14 +382,21 @@ const updateVSPlot = () => {
     vsPlot.title.text = 'Wavelength: ' + wavelength.toFixed(0) + 'nm';
     // Update data for vs. plot
     apiRequest(getQuery(true), getParameters(true)).then( data => {
-        updateDataSource(vsSource, data);
-        // Display / hide instructions conditional on data visibility
-        if (vsSource.data['exposure'].filter(x => !isNaN(x)).length == 0 ||
-            vsSource.data['signal_noise_ratio'].filter(x => !isNaN(x)).length == 0)
-        {
-            vsPlot.renderers[1].visible = true;
+        // If API request returned errors, format and throw accordingly
+        if (Object.keys(data).includes('error')) { 
+            data.error.then(errorMessage => alert( errorMessage.replaceAll('<br>','\n').replaceAll('&nbsp;',' ')));
+            update(true); // Reset calculator
         } else {
-            vsPlot.renderers[1].visible = false;
+            // Update data source with new results
+            updateDataSource(vsSource, data);
+            // Display / hide instructions conditional on data visibility
+            if (vsSource.data['exposure'].filter(x => !isNaN(x)).length == 0 ||
+                vsSource.data['signal_noise_ratio'].filter(x => !isNaN(x)).length == 0)
+            {
+                vsPlot.renderers[1].visible = true;
+            } else {
+                vsPlot.renderers[1].visible = false;
+            }
         }
     });
     // Set axes labels & tooltips according to target
@@ -493,8 +502,16 @@ const update = (reset, load) => {
                 parameters = JSON.parse(cookie[1]);
             }
         }
+        if (window.localStorage.getItem('etcTypeDefinition')) {
+            guiInactive = true;
+            document.querySelector('#file-upload').file = window.localStorage.getItem('etcTypeDefinition');
+            guiInactive = false;
+            parameters.typeb64 = document.querySelector('#file-upload').file;
+        }
     } else if (reset) {
         document.cookie = 'etcparameters={}; expires=' + new Date();
+        window.localStorage.clear();
+        document.querySelector('#file-upload').removeAttribute('file');
     } else {
         parameters = getParameters(false);
     }
@@ -502,23 +519,31 @@ const update = (reset, load) => {
     document.querySelectorAll('.panel.output').forEach(el => el.classList.add('loading'));
     // Get results from ETC, update ui and data
     apiRequest(getQuery(false), parameters).then( data => {
-        updateDataSource(source, data);
-        updateUI(data.parameters);
-        // Change results to reflect new data
-        updateResults();
-        // Get vs. data and update plot
-        updateVSPlot();
-        // Done updating document, remove loading symbols
-        document.querySelectorAll('.panel.output.loading').forEach(el => el.classList.remove('loading'));
+        // If API request returned errors, format and throw accordingly
+        if (Object.keys(data).includes('error')) { 
+            data.error.then(errorMessage => alert( errorMessage.replaceAll('<br>','\n').replaceAll('&nbsp;',' ')));
+            update(true); // Reset calculator
+        } else {
+            // Update data sources and UI
+            updateDataSource(source, data);
+            updateUI(data.parameters);
+            // Change results to reflect new data
+            updateResults();
+            // Get vs. data and update plot
+            updateVSPlot();
+            // Done updating document, remove loading symbols
+            document.querySelectorAll('.panel.output.loading').forEach(el => el.classList.remove('loading'));
+        }
     // On error, display to user
     }).catch( error => {
         alert('Error:\n'+error);
+        update(true); // Reset calculator
     });
     
 }
 
 const getQuery = (isForVSPlot) => {
-    let query = '?return=[exposure,signal_noise_ratio'
+    let query = 'return=[exposure,signal_noise_ratio'
     if (!isForVSPlot) {
         query += ',source_count_adu,read_noise_count_adu,clock_time,' +
                 'wavelengths,background_count_adu,dark_current_count_adu,' +
@@ -528,7 +553,7 @@ const getQuery = (isForVSPlot) => {
     return query;
 }
 
-const getParameters = (isForVSPlot) => {
+const getParameters = isForVSPlot => {
     const options = [
         'exposure', 'signal_noise_ratio', 'dithers', 'repeats', 'coadds', 'reads',
         'type', 'flux', 'wavelength_band', 'redshift', 'index', 'temperature', 'width',
@@ -537,6 +562,19 @@ const getParameters = (isForVSPlot) => {
     ];
     const parameters = isForVSPlot ? {wavelengths: [vsPlotWavelength.location+'nm']} : {};
     parameters['name'] = document.querySelector('.instrument.selected').textContent;
+    
+    // If custom source SED uploaded, add to query
+    const customSource = document.querySelector('#file-upload').file;
+
+    if (customSource) {
+        parameters['typeb64'] = customSource;
+        const filename = customSource.split(',')[0];
+        // If SED filename not in list of source types, it was just added
+        if (document.querySelector('#type').options.filter( opt => opt.name === filename.split('.')[0] ).length === 0) {
+            // In that case, remove source type from query in order to automatically set source to new type
+            options.splice(options.indexOf('type'), 1);
+        }
+    }
 
     for (parameter of options) {
         const id = '#'+parameter.replaceAll('_','-');
@@ -555,19 +593,22 @@ const getParameters = (isForVSPlot) => {
             }
         }
     }
-    // Save current parameters as cookie for loading
+    // Save current parameters as cookie, to resume session on future site load
     if (!isForVSPlot) {
         const exp_date = new Date( new Date().getTime() + 48 * 60 * 60 * 1000 );  // Add 48 hours to current date
-        document.cookie = 'etcparameters=' + JSON.stringify(parameters) + '; expires=' + exp_date.toUTCString() + '; SameSite=Strict;';
-    }
 
+        // Remove base 64 encoded source type definition from parameter string, if present
+        const parameterString = JSON.stringify(Object.fromEntries(Object.entries(parameters).filter( ([key,val]) => key !== 'typeb64' )));
+        document.cookie = 'etcparameters=' + parameterString + '; expires=' + exp_date.toUTCString() + '; SameSite=Strict;';
+
+        // If base 64 encoded source type definition was present, save in local storage instead of as cookie (too big for cookie)
+        if (parameters['typeb64']) { 
+            window.localStorage.setItem('etcTypeDefinition',parameters.typeb64);
+        }
+    }
     return parameters;
 }
 
-const calculatorCallback = () => {
-    const parameters = getParameters();
-
-}
 
 // Called when page loads
 setup = async () => {
@@ -675,8 +716,9 @@ setup = async () => {
     // Update inputs and outputs with values from API
     update(false, true); // TODO -- read cookie value for settings, only reset from button
 
+
     // Define callbacks on value changes for inputs
-    document.querySelectorAll('input-select, input-spin, input-slider').forEach( input => {
+    document.querySelectorAll('input-select, input-spin, input-slider, input-file').forEach( input => {
         // If unit, convert values for corresponding elements
         if (input.id.endsWith('unit')) {
             const number = document.querySelector('#'+input.id.replace('-unit',''));
@@ -724,10 +766,21 @@ setup = async () => {
                 }
             });
         // Otherwise, call update() to make API call w/ changed value and display results
-        } else if (!input.id.endsWith('min') && !input.id.endsWith('max')) {
+        } else {
             input.addEventListener('change', () => {if (!guiInactive) { update() } });
         }
     });
+
+    // Prevent default file drag-and-drop behavior, in case user misses file upload
+    window.addEventListener("dragover", e=> {
+        e.stopPropagation();
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'none';
+    },false);
+    window.addEventListener("drop", e=> {
+        e.stopPropagation();
+        e.preventDefault();
+    },false);
 
 };
 

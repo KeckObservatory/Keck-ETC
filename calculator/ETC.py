@@ -192,12 +192,20 @@ class exposure_time_calculator:
 
         # Set each parameter, then calculate results
         errors = ''
+        # Handle b64 values first, removing the indicator 'b64' from key
+        for key, val in [ (key, val) for key, val in parameters.items() if 'b64' in key]:
+            try:
+                self.set_parameter(key.replace('b64',''), val, run_calculator=False)
+                parameters.pop(key)
+            except Exception as e:
+                errors += str(e).split(' -- ')[-1] + '\n'
+        # Set all other values
         for key, val in parameters.items():
             try:
                 self.set_parameter(key, val, run_calculator=False)
-            except ValueError as e:
+            except Exception as e:
                 errors += str(e).split(' -- ')[-1] + '\n'
-        
+
         self._calculate()
         if len(errors) > 0:
             raise ValueError(f'In ETC.set_parameters() -- encountered the following errors: \n{errors}')

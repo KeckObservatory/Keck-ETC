@@ -1,6 +1,6 @@
 {
 
-    "file-upload": "Upload a custom spectrum in either ASCII.ECSV or FITS file formats, including properly specified units in the header",
+    "file-upload": "Upload a custom spectrum in either ASCII.ECSV or FITS file formats with column names WAVELENGTH and FLUX, including properly specified units in the header",
 
     "exposure": "Individual exposure time, select range of values with min and max",
 

@@ -39,7 +39,6 @@ class source:
 
     def _load_files(self):
         self._functions = {}
-        self.available_types = list(vars(self.config.source_types).keys())
 
         for name, source_type in vars(self.config.source_types).items():
             if 'filename' in vars(source_type).keys():
@@ -160,8 +159,12 @@ class source:
 
     def set_type(self, new_type):
         if new_type not in self.available_types:
-            warn(f'In Source.set_type() -- source type "{new_type}"" is not available', RuntimeWarning)
-            return
+            try:
+                self.add_template(new_type.split(',')[1], new_type.split(',')[0])
+                new_type = new_type.split(',')[0].split('.')[0]
+            except:
+                warn(f'In Source.set_type() -- source type "{new_type}"" is not available', RuntimeWarning)
+                return
         self.type = new_type
         self.active_parameters = list(vars(self.config.defaults).keys())
         if self.type in vars(self.config.source_types).keys() and 'parameters' in vars(vars(self.config.source_types)[self.type]).keys():
@@ -172,6 +175,7 @@ class source:
     def reset_parameters(self):
         
         self.type = self.config.defaults.type
+        self.available_types = self._original_types.copy()
         self.set_flux(self.config.defaults.flux)
         self.redshift = u.Quantity(self.config.defaults.redshift)
         self.wavelength_band = self.config.defaults.wavelength_band
@@ -182,6 +186,8 @@ class source:
         self._mount_config(_CONFIG_FILEPATH)
 
         self._validate_config()
+
+        self._original_types = list(vars(self.config.source_types).keys())
 
         self.reset_parameters()
 
@@ -245,9 +251,9 @@ class source:
                 light = light / interpolate(central_wavelength, wavelengths, light) * self.flux.to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(central_wavelength) + self.spectral_density_vega(central_wavelength.to(u.angstrom)))  # Scale source by given mag/flux
                 return interpolate(w, wavelengths, light, left=0, right=0)
             return scale_and_interpolate
-
         self._functions[name.split('.')[0]] = define_data_scope(data)  # Save function corresponding to this source
-        self.available_types.append(name.split('.')[0])  # Add to list of types available to choose from
+        if name.split('.')[0] not in self.available_types:
+            self.available_types.append(name.split('.')[0])  # Add to list of types available to choose from
         # Add name to config so that it's accessible
         class GenericObject:
             pass

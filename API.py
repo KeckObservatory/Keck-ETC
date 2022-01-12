@@ -43,7 +43,7 @@ def process_request(query):
                 return_vals[key] = [etc.instrument.nonlinear_depth.to('adu').value]
             else:
                 return_vals[key] = vars(etc)[key].value.tolist()
-                # Coerce to valid JSON format by converting NaN to null
+                # Coerce to valid JSON format by converting NaN to string
                 return_vals[key] = replaceNaN(return_vals[key], 'NaN')
 
         return return_vals, False
@@ -67,17 +67,26 @@ def replaceNaN(array, replacement):
     return new_array
 
 def query2dict(query):
-    query = dict(qc.split("=") for qc in query.split("&"))
+    query = query.split("&")
+    # Remove base64 encoded content (which is padded w/ "=") so that it doesn't break parsing
+    b64 = [q for q in query if 'b64=' in q]
+    query = [q for q in query if 'b64=' not in q]
+    # Parse query
+    query = dict(q.split("=") for q in query)
     # Convert lists from string to list
     for key, val in query.items():
         if val.startswith('[') and val.endswith(']'):
             query[key] = [x.strip() for x in val[1:-1].split(',')]
+    # Add in removed base 64 content
+    for b in b64:
+        query[b.split('b64=')[0]+'b64'] = b.split('b64=')[-1]
+
     return query
            
 
 def sanitize_input(text):
-    # Allowed characters are alphanumerics and . = [ ] - ( ) & + _ ,
-    whitelist = r'a-zA-Z0-9\.\=\[\]\-()&+_,'
+    # Allowed characters are alphanumerics and . = [ ] - / ( ) & + _ ,
+    whitelist = r'a-zA-Z0-9\.\=\[\]\-\/()&+_,'
     # Negate the list of allowed characters
     not_whitelist = f'[^{whitelist}]'
     # Remove all non-allowed characters from string
@@ -86,6 +95,47 @@ def sanitize_input(text):
 
 
 class APIServer(BaseHTTPRequestHandler):
+
+    def do_OPTIONS(self):
+        self.send_response(200, "ok")
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, OPTIONS')
+        self.send_header("Access-Control-Allow-Headers", "X-Requested-With")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.end_headers()
+
+    def do_POST(self):
+        with open('static/api_instructions.txt', 'r') as file:
+            self.usage = text2html(file.read())
+
+        try:
+            query = self.rfile.read( int(self.headers.get('Content-Length')) ).decode('utf-8')
+            query = sanitize_input(query)
+            query = query2dict(query)
+        except:
+            query = {}
+        response, error = process_request(query)
+        if len(response) == 0:
+            self.send_response(200)
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+            self.wfile.write(bytes(self.usage, 'utf-8'))
+        elif error:
+            self.send_response(400)
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+            self.wfile.write(bytes(response, 'utf-8'))
+        else:
+            self.send_response(200)
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.send_header("Content-type", "application/json")
+            self.end_headers()
+            self.wfile.write(bytes(json.dumps(response, ensure_ascii=False), 'utf-8'))
+            
+        # Reset etc for future API call
+        etc.reset_parameters()
 
     def do_GET(self):
         with open('static/api_instructions.txt', 'r') as file:
