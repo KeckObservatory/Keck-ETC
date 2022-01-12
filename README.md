@@ -43,34 +43,43 @@ if using `conda`.
 
 ### Running 
 
-To run the server, run the executable file `wmko-etc` with argument `start`. To see usage, use `--help`. An example is shown below:
+To run the server, run the executable file `etc-api` with argument `start`. To see usage, use `--help`. An example is shown below:
 
 ```
-$   ./wmko-etc start gui
+$   ./etc-api start
 
-Starting gui server on port 5006
+Starting server on port 8080
+Succesfully started server on port 8080 with pid 52104
 
-$   ./wmko-etc start api -p 8080
+$   ./etc-api start -p 5000
 
-Starting api server on port 8080
+Starting server on port 5000
+Succesfully started server on port 5000 with pid 52106
 
-$   ./wmko-etc status
+$   ./etc-api status
 
-Checking status of server * on port *
-Running 1 API server on port 8080
-Running 1 GUI server on port 5006
+Checking status of server on port *
+Running 2 servers on ports 5000, 8080
 
-$   ./wmko-etc -h
+$   ./etc-api stop
 
-Usage: ./etc {start,stop,status,restart} [-f] [-p port_number] [-h]
-    Positional arguments: {start,stop,status,restart}
-        start           Begin running a server, requires additional argument 'gui' or 'api'
-        stop            Stop running a server, requires additional argument 'gui' or 'api'
-        status          Print server status, accepts optional argument 'gui' or 'api'
-        restart         Restart a server, requires additional argument 'gui' or 'api'
+Succesfully terminated server on port 8080
+
+$   ./etc-api -h
+
+Usage: $PROGRAM_DIR/etc-api {start,stop,status,restart,test} [-f] [-h] [-v] [-w] [-p port_number] [-l log_file]
+    Positional arguments: {start,stop,status,restart,test}
+        start           Begin running the server
+        stop            Stop running the server
+        status          Print server status
+        restart         Restart the server
+        test            Verify successful program installation
     Optional arguments:
-        -p, --port      Specifies port for server
+        -p, --port      Specifies port for server, defaults to 8080
         -f, --force     Force kill running server, use with 'stop' or 'restart'
+        -l, --log       Path to logfile, defaults to ./log/etc.log
+        -w, --warn      Log python warnings, ignored by default
+        -v, --version   Display program version
         -h, --help      Displays this message
 ```
 

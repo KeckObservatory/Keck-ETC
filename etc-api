@@ -16,11 +16,13 @@ version="0.0.1"
 port=8080
 printhelp=false
 printversion=false
+warn=false
 forcekill=false
 statusall=true
 action="none"
+log="log/etc.log"
 usage=$(cat << END
-Usage: $PROGRAM_DIR/etc-api {start,stop,status,restart,test} [-f] [-h] [-v] [-p port_number]
+Usage: $PROGRAM_DIR/etc-api {start,stop,status,restart,test} [-f] [-h] [-v] [-w] [-p port_number] [-l log_file]
     Positional arguments: {start,stop,status,restart,test}
         start           Begin running the server
         stop            Stop running the server
@@ -30,6 +32,8 @@ Usage: $PROGRAM_DIR/etc-api {start,stop,status,restart,test} [-f] [-h] [-v] [-p 
     Optional arguments:
         -p, --port      Specifies port for server, defaults to 8080
         -f, --force     Force kill running server, use with 'stop' or 'restart'
+        -l, --log       Path to logfile, defaults to ./log/etc.log
+        -w, --warn      Log python warnings, ignored by default
         -v, --version   Display program version
         -h, --help      Displays this message
 END
@@ -45,6 +49,8 @@ while [[ -n $1 ]]; do
         -v | --version ) printversion=true;;
         -p | --port ) shift; port=$1; statusall=false;;
         -f | --force ) forcekill=true;;
+        -l | --log ) shift; log=$1;;
+        -w | --warn ) warn=true;;
         * ) 
             echo "Invalid option: $1"
             echo "$usage"
@@ -75,10 +81,16 @@ if ! [[ $port =~ ^[0-9]+$ ]]; then
     echo "Invalid port number $port" >&2
     exit -1
 fi
+if [[ ! -f "$log" ]]; then
+    echo "Error: log file $log does not exist" >&2
+    exit -1
+fi
 
 
 # Navigate to base directory for ETC
 cd $PROGRAM_DIR
+
+# TODO -- get info here, print if action = status, then do stop, restart, start accordingly
 
 # If command is stop or restart, stop corresponding server
 if [ "$action" == "stop" ] || [ "$action" == "restart" ]; then
@@ -106,7 +118,7 @@ if [ "$action" == "stop" ] || [ "$action" == "restart" ]; then
     fi
     # If no error was detected, print success message and append to log
     echo "Succesfully terminated server on port $port"
-    echo "$ip - - [$[date +"%d/%b/%Y %H:%M:%S"]] \"Server stopped\" $pid -" >> ./log/etc.log
+    echo "$ip - - [$[date +"%d/%b/%Y %H:%M:%S"]] \"Server stopped\" $pid -" >> "$log"
 
 fi
 
@@ -117,7 +129,7 @@ if [ "$action" == "start" ] || [ "$action" == "restart" ]; then
     # TODO -- check to make sure port is not in use, then verify that it worked and output success message
     # TODO -- use -W ignore to supress warnings by default, include option for verbose logging where warnings are output...
 
-    nohup python3 -u API.py &>./log/etc.log &
+    nohup python3 -u API.py &>"$log" &
     pid="$!"
 
     # Wait to see evidence of successful start in log

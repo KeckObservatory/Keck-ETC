@@ -426,7 +426,7 @@ const updateUI = (parameters) => {
         if (!(name in parameters || name.replace('_unit','') in parameters || 
             name.replace('_min','') in parameters || name.replace('_max','') in parameters))
         {
-            input.parentElement.classList.add('hidden');
+            input.parentElement.classList.remove('visible');
         } else if (!name.endsWith('unit') && !name.endsWith('min') && !name.endsWith('max')) {
             // Otherwise, get value from parameters
             let value = parameters[name].value;
@@ -457,11 +457,12 @@ const updateUI = (parameters) => {
             input.value = value;
             guiInactive = false;
 
-            input.parentElement.classList.remove('hidden');
+            input.parentElement.classList.add('visible');
         } else {
-            input.parentElement.classList.remove('hidden');
+            input.parentElement.classList.add('visible');
         }
     });
+    document.querySelector('input-file').parentElement.classList.add('visible');
 
     // Update first plot according to target
     const target = document.querySelector('#target').value;
@@ -495,6 +496,7 @@ const update = (reset, load) => {
     // If reset is true, don't supply parameters to API call
     let parameters = {};
     if (load) {
+        // Load saved state from cookies
         const cookies = document.cookie.split(';');
         for (const i in cookies) {
             const cookie = cookies[i].trim().split('=');
@@ -502,17 +504,24 @@ const update = (reset, load) => {
                 parameters = JSON.parse(cookie[1]);
             }
         }
+        // Load saved state from local storage
         if (window.localStorage.getItem('etcTypeDefinition')) {
             guiInactive = true;
             document.querySelector('#file-upload').file = window.localStorage.getItem('etcTypeDefinition');
             guiInactive = false;
             parameters.typeb64 = document.querySelector('#file-upload').file;
         }
+        // Load query parameters
+        let queryString = window.location.search;
+        queryString.replace(/[^a-zA-Z0-9\.\=\[\]\-()&+_,]/,''); // Filter characters by whitelist
+        new URLSearchParams(queryString).forEach( (val, key) => parameters[key] = val );
     } else if (reset) {
+        // Reset calculator to defaults, erase cookies and local storage, send parameters={}
         document.cookie = 'etcparameters={}; expires=' + new Date();
         window.localStorage.clear();
         document.querySelector('#file-upload').removeAttribute('file');
     } else {
+        // Get parameters from GUI
         parameters = getParameters(false);
     }
     // Display loading symbols on output
@@ -579,7 +588,7 @@ const getParameters = isForVSPlot => {
     for (parameter of options) {
         const id = '#'+parameter.replaceAll('_','-');
         const element = document.querySelector(id);
-        if (!!element && !element.parentElement.classList.contains('hidden') && element.value){
+        if (!!element && element.parentElement.classList.contains('visible') && element.value){
             const unit = !!document.querySelector(id+'-unit') ? document.querySelector(id+'-unit').value : '';
             if (isForVSPlot && (id==='#exposure' || id==='#signal-noise-ratio')){
                 // For vs. plot, get range of exp/snr from min and max elements
