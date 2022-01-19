@@ -425,8 +425,13 @@ const updateUI = (parameters) => {
     document.querySelectorAll('input-select, input-spin, input-slider').forEach( input => {
         const name = input.id.replaceAll('-','_');
         // If id is not parameter, parameter-unit, parameter-min, or parameter-max, then hide inactive element 
-        if ( !(name in parameters || name.split('_')[0] in parameters) ) {
-            input.parentElement.classList.add('hidden');
+        if (!(name in parameters || name.replace('_unit','') in parameters || 
+            name.replace('_min','') in parameters || name.replace('_max','') in parameters))
+        {
+            input.parentElement.classList.remove('visible');
+            
+        } else if (name.startsWith('slit_') && String(document.querySelector('#slit').value).toLowerCase() !== 'custom') {
+            input.parentElement.classList.remove('visible');
         } else if (!name.endsWith('unit') && !name.endsWith('min') && !name.endsWith('max') && !name.endsWith('width') && !name.endsWith('length')) {
             // Otherwise, get value from parameters
             let value = parameters[name].value;
@@ -466,11 +471,12 @@ const updateUI = (parameters) => {
             input.value = value;
             guiInactive = false;
 
-            input.parentElement.classList.remove('hidden');
+            input.parentElement.classList.add('visible');
         } else {
-            input.parentElement.classList.remove('hidden');
+            input.parentElement.classList.add('visible');
         }
     });
+    document.querySelector('input-file').parentElement.classList.add('visible');
 
     // Update instrument name
     setInstrument(parameters.name.value);
@@ -507,6 +513,7 @@ const update = (reset, load, instrumentChanged) => {
     // If reset is true, don't supply parameters to API call
     let parameters = {};
     if (load) {
+        // Load saved state from cookies
         const cookies = document.cookie.split(';');
         for (const i in cookies) {
             const cookie = cookies[i].trim().split('=');
@@ -514,19 +521,26 @@ const update = (reset, load, instrumentChanged) => {
                 parameters = JSON.parse(cookie[1]);
             }
         }
+        // Load saved state from local storage
         if (window.localStorage.getItem('etcTypeDefinition')) {
             guiInactive = true;
             document.querySelector('#file-upload').file = window.localStorage.getItem('etcTypeDefinition');
             guiInactive = false;
             parameters.typeb64 = document.querySelector('#file-upload').file;
         }
+        // Load query parameters
+        let queryString = window.location.search;
+        queryString.replace(/[^a-zA-Z0-9\.\=\[\]\-()&+_,]/,''); // Filter characters by whitelist
+        new URLSearchParams(queryString).forEach( (val, key) => parameters[key] = val );
     } else if (reset) {
+        // Reset calculator to defaults, erase cookies and local storage, send parameters={}
         document.cookie = 'etcparameters={}; expires=' + new Date();
         window.localStorage.clear();
         document.querySelector('#file-upload').removeAttribute('file');
     } else if (instrumentChanged) {
         parameters.name = document.querySelector('.instrument.selected').id.toUpperCase();
     } else {
+        // Get parameters from GUI
         parameters = getParameters(false);
     }
     // Display loading symbols on output
@@ -593,10 +607,9 @@ const getParameters = isForVSPlot => {
     for (parameter of options) {
         const id = '#'+parameter.replaceAll('_','-');
         const element = document.querySelector(id);
-        
-        // Loop through each visible element with set value
-        if (!!element && !element.parentElement.classList.contains('hidden') && element.value){
-            // If available, set unit
+
+        if (!!element && element.parentElement.classList.contains('visible') && element.value){
+
             const unit = !!document.querySelector(id+'-unit') ? document.querySelector(id+'-unit').value : '';
 
             // For vs. plot, get range of exp/snr from min and max elements
@@ -683,18 +696,6 @@ const setup = async () => {
             }
         });
     });
-
-    // Define behavior of custom slit option
-    // document.querySelector('#slit').addEventListener('change', event => {
-    //     console.log('hellloooooo');
-    //     if ( String(event.newValue).toLowerCase() === 'custom' ) {
-    //         console.log('one');
-    //         document.querySelector('#slit-width').parentElement.classList.remove('hidden');
-    //     } else {
-    //         console.log('two');
-    //         document.querySelector('#slit-width').parentElement.classList.add('hidden');
-    //     }
-    // });
 
     // Read in mouseover text file
     fetch('static/mouseover_text.json').then(response => 
