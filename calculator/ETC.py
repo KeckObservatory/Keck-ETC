@@ -154,13 +154,11 @@ class exposure_time_calculator:
         self.coadds = u.Quantity(self.config.defaults.coadds)
         self.target = self.config.defaults.target
 
-        # Calculate default wavelengths array from min, max of instrument and atmosphere
-        min_wavelength = max(self.atmosphere._wavelength_index[0], self.instrument.min_wavelength)
-        max_wavelength = min(self.atmosphere._wavelength_index[-1], self.instrument.max_wavelength)
-        self.wavelengths = linspace(min_wavelength, max_wavelength, self.config.defaults.default_wavelengths_number).to(u.angstrom)
-
         # Reset objects
         self.instrument.set_parameter('name', self.config.defaults.instrument)
+        # Calculate default wavelengths array from min, max of instrument
+        self.wavelengths = linspace(self.instrument.min_wavelength, self.instrument.max_wavelength, self.config.defaults.default_wavelengths_number).to(u.angstrom)
+
         self.atmosphere.reset_parameters()
         self.source.reset_parameters()
 
@@ -230,6 +228,12 @@ class exposure_time_calculator:
             # Assign parameter to appropriate place
             if name.startswith('instrument.'):
                 self.instrument.set_parameter(name.replace('instrument.',''), value)
+                # Calculate default wavelengths array from min, max of instrument
+                self.wavelengths = linspace(self.instrument.min_wavelength, self.instrument.max_wavelength, self.config.defaults.default_wavelengths_number).to(u.angstrom)
+                # If setting a different instrument, reset wavelength band and wavelengths according to instrument defaults
+                if name == 'instrument.name':
+                    # Set default wavelength band according to range of instrument
+                    self.source.set_parameter('wavelength_band', self.instrument.config.defaults.wavelength_band)
             elif name.startswith('source.'):
                 self.source.set_parameter(name.replace('source.',''), value)
             elif name.startswith('atmosphere.'):
@@ -293,7 +297,7 @@ class exposure_time_calculator:
                 if name+'_options' in vars(obj.config).keys():
                     options = vars(obj.config)[name+'_options']
                     if isinstance(options, list):
-                        if isinstance(options[0], list):
+                        if len(options) > 0 and isinstance(options[0], list):
                             parameters[name]['options'] = [ {'value': [u.Quantity(option[0]).value, u.Quantity(option[1]).value]} for option in options ]
                             if u.Quantity(options[0][0]).unit != u.dimensionless_unscaled:
                                 parameters[name]['unit'] = str(u.Quantity(options[0][0]).unit)
@@ -315,6 +319,8 @@ class exposure_time_calculator:
         parameters.update(construct_parameters(self.atmosphere, ['seeing', 'airmass', 'water_vapor']))
         parameters.update(construct_parameters(self.source, self.source.active_parameters))
         parameters.update(construct_parameters(self.instrument, self.instrument.active_parameters))
+        # Add instrument name
+        parameters['name'] = { 'value': self.instrument.name }
         # Update source type
         parameters['type']['options'] = [{'value': x, 'name': vars(self.source.config.source_types)[x].name} 
                                         if 'name' in vars(vars(self.source.config.source_types)[x]).keys() 
@@ -324,11 +330,12 @@ class exposure_time_calculator:
             slit['name'] = f'{slit["value"][0]}" x {slit["value"][1]}"'
         if self.instrument.config.custom_slits:
             parameters['slit']['options'] += [{'value': 'Custom'}]
-        # Update wavelength band
-        parameters['wavelength_band']['value'] = round(u.Quantity(vars(self.source.config.wavelength_band_options)[parameters['wavelength_band']['value']]).to(u.angstrom).value)
-        for band in parameters['wavelength_band']['options']:
-            band['name'] = band['value']
-            band['value'] = round(u.Quantity(vars(self.source.config.wavelength_band_options)[band['name']]).to(u.angstrom).value)
+        # Format wavelength band so that { value: K, options: [K,...] } --> { value: 21900, options: [ {name: K, value: 21900}, ... ] }
+        options = { key: val for key, val in vars(self.source.config.wavelength_band_options).items() if self.wavelengths[0] <= u.Quantity(val) <= self.wavelengths[-1] }
+        if self.source.wavelength_band not in options.keys():
+            options[self.source.wavelength_band] = vars(self.source.config.wavelength_band_options)[self.source.wavelength_band]
+        parameters['wavelength_band']['value'] = round(u.Quantity(options[parameters['wavelength_band']['value']]).to(u.angstrom).value)
+        parameters['wavelength_band']['options'] = [{ 'name': band, 'value': round(u.Quantity(wavelength).to(u.angstrom).value) } for band, wavelength in options.items() ]
 
 
         return parameters

@@ -1,5 +1,17 @@
-#        x       ratio
-#
+# %ECSV 0.9
+# ---
+# datatype:
+# - {name: wav, datatype: float32}
+# - {name: eff, datatype: float64}
+# - {name: eff_unc, datatype: float64}
+# meta: !!omap
+# - {Filter: OG550}
+# - {cwav: '8000'}
+# - {Grating: 1200G}
+# - {Grism: None}
+# - {Mode: spectroscopic}
+# schema: astropy-2.0
+wav eff
 3500.000000   0.051767
 3501.000000   0.052593
 3502.000000   0.053356

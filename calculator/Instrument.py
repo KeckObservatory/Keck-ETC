@@ -11,6 +11,7 @@ import astropy.units as u
 from numpy import interp, NaN, isnan
 from warnings import warn
 from re import split
+from os import listdir
 
 class instrument:
 
@@ -24,9 +25,9 @@ class instrument:
             if not isinstance(d, dict):
                 return d
             # Otherwise, create dummy object
-            class DummyObject:
+            class GenericObject:
                 pass
-            obj = DummyObject()
+            obj = GenericObject()
             # Loop over dictionary items and add to object
             for x in d:
                 obj.__dict__[x] = _dict2obj(d[x])
@@ -36,19 +37,42 @@ class instrument:
         config = _dict2obj(config)
         self.config = config
         
-    
+
+    def _update_wavelengths(self):
+        self.min_wavelength = self._current_throughput()['WAV'][0] * self._current_throughput()['WAV'].unit
+        self.max_wavelength = self._current_throughput()['WAV'][-1] * self._current_throughput()['WAV'].unit
+
+
+    def _current_throughput(self):
+        # Gather applicable parameters for proper throughput file
+        parameters = {}
+        if 'mode' in vars(self).keys():
+            parameters['MODE'] = self.mode
+        if 'filter' in vars(self).keys():
+            parameters['FILTER'] = self.filter
+        if 'grating' in vars(self).keys():
+            parameters['GRATING'] = self.grating
+        if 'grism' in vars(self).keys():
+            parameters['GRISM'] = self.grism
+        # Select throughput file matching instrument parameters
+        result = None
+        for throughput in self._throughput:
+            if all([ throughput.meta[key] == val for key, val in parameters.items() ]):
+                result = throughput
+        # If no throughput files matched, instrument mode/grating/filter/grism combination is invalid
+        if result is None:
+            raise ValueError('In instrument.get_throughput() -- instrument mode/grating/filter/grism combination is invalid')
+        
+        return result
+
+
     def _read_throughput(self):
-        # Code for deimos, once I have multiple instruments, maybe include config option like "throughput_path_type: template ? file"...
-        # self._throughput = {}
-        # for g in self.config.gratings:
-        #     for f in self.config.filters:
-        #         filepath = '/usr/local/home/kblair/Documents/ETC/prototype/instruments/'+self.name+'/'+f+'_'+g+'.txt'
-        #         data = Table.read(filepath, format='ascii.ecsv')
-        #         self._throughput[(g, f)] = data
-        filepath = 'calculator/instruments/'+self.name+'/'+self.config.throughput_path
-        self._throughput = Table.read(filepath, format='ascii.ecsv')
-        self.min_wavelength = self._throughput['wav'][0] * self._throughput['wav'].unit
-        self.max_wavelength = self._throughput['wav'][-1] * self._throughput['wav'].unit
+        self._throughput = []
+        directory = 'calculator/instruments/'+self.name+'/'+self.config.throughput_path
+        for filename in listdir(directory):
+            data = Table.read(directory + '/' + filename, format='fits')
+            data['EFF'].unit = u.electron / u.photon
+            self._throughput.append(data)
 
 
     def _validate_config(self):
@@ -61,15 +85,14 @@ class instrument:
 
 
     def get_throughput(self, wavelengths):
-        data = self._throughput  # self._throughput[(self.grating, self.filter)] for deimos!!
-        throughput = interp(wavelengths, data['wav'], data['eff'], left=NaN, right=NaN)
+        data = self._current_throughput()
+        throughput = interp(wavelengths, data['WAV'], data['EFF'], left=NaN, right=NaN)
         if isnan(throughput).any():
             warn('In instrument.get_throughput() -- ' +
-            'some or all provided wavelengths are outside the current bounds of ['+str(min(data['wav']))+', '+str(max(data['wav']))+'] '+str(data['wav'].unit)+', returning NaN', RuntimeWarning)
-        return u.Quantity(throughput, data['eff'].unit)
+            'some or all provided wavelengths are outside the current bounds of ['+str(min(data['WAV']))+', '+str(max(data['WAV']))+'] '+str(data['WAV'].unit)+', returning NaN', RuntimeWarning)
+        return u.Quantity(throughput, data['EFF'].unit)
 
     def get_dark_current(self):
-        # should this be dependent on wavelength??
         return self._dark_current
 
     def get_read_noise(self):
@@ -95,11 +118,15 @@ class instrument:
         self.spectral_resolution = u.Quantity(self.config.spectral_resolution)
         self.nonlinear_depth = u.Quantity(self.config.nonlinear_depth)
         self.slit_options = [ [u.Quantity(x) for x in y] * u.arcsec for y in self.config.slit_options] * u.arcsec
-        self.mode = self.config.defaults.mode  # Currently does nothing, TODO -- support for different modes
+        self.mode = self.config.defaults.mode
         self.active_parameters = ['name', 'slit', 'mode', 'binning']  # TODO -- adjust based on gratings, grism, filter, etc.
-        
+        for parameter in ['grating', 'grism', 'filter']:
+            if parameter in vars(self.config.defaults).keys():
+                vars(self)[parameter] = vars(self.config.defaults)[parameter]
+                self.active_parameters.append(parameter)
 
         self._read_throughput()
+        self._update_wavelengths()
 
     def set_parameter(self, name, value):
         # TODO -- input validation
@@ -107,6 +134,16 @@ class instrument:
             self.set_name(value.lower())
         elif name == 'mode':
             self.mode = str(value.lower())
+            self._update_wavelengths()
+        elif name == 'grating':
+            self.grating = str(value.upper())
+            self._update_wavelengths()
+        elif name == 'filter':
+            self.filter = str(value.upper())
+            self._update_wavelengths()
+        elif name == 'grism':
+            self.grism = str(value.upper())
+            self._update_wavelengths()
         elif name == 'binning':
             if isinstance(value, str):
                 value = [int(x) for x in split('x|,', value)]
@@ -117,9 +154,10 @@ class instrument:
             self.binning = u.Quantity(value)
         elif name == 'slit':
             if isinstance(value, str):
+                # Allow formats of width x height or width,height
                 value = split('x|,', value)
             try:
-                # If dimensionless, assume arcsec, otherwise convert to arcsec
+                # If dimensionless, assume arcsec
                 value = [u.Quantity(x) * u.arcsec if u.Quantity(x).unit==u.dimensionless_unscaled else u.Quantity(x) for x in value] * u.arcsec
                 if (not self.config.custom_slits) and (not any([(value==x).all() for x in self.slit_options])):
                     raise ValueError()

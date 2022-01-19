@@ -4,66 +4,40 @@
 defaults:
   grating: '600ZD'  # What should these defaults be?
   filter: 'GG400'
-  slit_width: 0.5 arcsec  # What should these defaults be?
-  slit_length: 10 arcsec  # ?
-  binning: '1x1'
-  mode: 'spectral'
+  slit: [ 0.75 arcsec, 10 arcsec ] # What should these defaults be?
+  pixel_size: 0.01404 arcsec^2/pixel
+  wavelength_band: G
+  binning: [1, 1]
+  mode: 'spectroscopic'
+
+throughput_path: throughput
+
+spectral_resolution: 2700  # WHAT IS THIS FOR DEIMOS ??? λ/Δλ
+
+nonlinear_depth: 30000 adu  # WHAT IS THIS FOR DEIMOS???
+
+gain: 1.213 electron / adu  # average of 1.229, 1.191, 1.258, 1.221, 1.190, 1.180, 1.209, 1.225 across detectors
 
 # grating options
-gratings: ['600ZD', '830G', '900ZD', '1200G', '1200B']  # Imaging mode replaces grating w/ mirror, how does this affect throughput? Should I set grating: None for imaging?
-# Imaging mode ~ .4 throughput at 6000A...
+grating_options: ['600ZD', '830G', '900ZD', '1200G', '1200B']  # Imaging mode replaces grating w/ mirror, how does this affect throughput? Should I set grating: None for imaging?
 
 # filter options
-filters: ['GG400', 'GG455', 'OG550']
+filter_options: ['GG400', 'GG455', 'OG550']
 
-# binning options
-binnings: ['1x1', '1x2', '2x1', '2x2']
+grism_options: []
+
+# binning options [spatial, spectral]
+binning_options: [ [1,1], [1,2], [2,1], [2,2] ]
 
 # operation modes
-modes: ['spectral', 'direct']
+mode_options: ['spectroscopic']
 
 # Slit available options
-slits: [ ]  # No pre-set slit options available
+slit_options: []  # No pre-set slit options available
+
 # Are custom slits available?
 custom_slits: true
 
-# available amplifiers
-amplifiers: [1A, 1B, 2A, 2B, 3A, 3B, 4A, 4B, 5B, 6B, 7B, 8B]
+read_noise: 2.543 sqrt(electron/pixel)  # Average of 2.576, 2.497, 2.638, 2.560, 2.494, 2.474, 2.534, 2.568 across detectors
 
-
-# The following are per detector, check w/ Sherry, but assuming use worse case value?
-read_noise:
-  direct:
-    1A: 2.582 electron
-    1B: 2.473 electron
-    2A: 1.782 electron
-    2B: 2.454 electron
-    3A: 2.445 electron
-    3B: 2.659 electron
-    4A: 3.905 electron
-    4B: 2.546 electron
-  spectral:
-    1B: 2.467 electron
-    2B: 2.456 electron
-    3B: 2.655 electron
-    4B: 2.536 electron
-    5B: 49.657 electron  # obviously wrong, how should I deal with this?
-    6B: 2.515 electron
-    7B: 2.503 electron
-    8B: 2.534 electron
-
-dark_current:
-  direct:
-    1B: 4.19 electron / (pixel * hour)
-    2B: 3.46 electron / (pixel * hour)
-    3B: 4.03 electron / (pixel * hour)
-    4B: 3.80 electron / (pixel * hour)
-  spectral:
-    1B: 3.30 electron / (pixel * hour)
-    2B: 3.60 electron / (pixel * hour)
-    3B: 3.50 electron / (pixel * hour)
-    4B: 3.70 electron / (pixel * hour)
-    5B: 2.70 electron / (pixel * hour)
-    6B: 3.80 electron / (pixel * hour)
-    7B: 3.30 electron / (pixel * hour)
-    8B: 3.70 electron / (pixel * hour)
+dark_current:  3.94 electron / (pixel * hour)  # Average of 4.19, 3.46, 4.03, 3.80, 4.71, 4.28, 3.33, 3.69 across detectors

@@ -299,7 +299,7 @@ const apiRequest = async (query, parameters) => {
         }
     }
     // Send fetch request and return data
-    const request = await fetch('http://localhost:8080', {
+    const request = await fetch('http://vm-internship:8080', {
         method: 'POST',
         headers: {'Content-Type': 'text/plain'},
         body: query
@@ -419,15 +419,15 @@ const updateVSPlot = () => {
 }
 
 const updateUI = (parameters) => {
+    // Handle case of custom slit
+
     // Loop through all inputs in app
     document.querySelectorAll('input-select, input-spin, input-slider').forEach( input => {
         const name = input.id.replaceAll('-','_');
         // If id is not parameter, parameter-unit, parameter-min, or parameter-max, then hide inactive element 
-        if (!(name in parameters || name.replace('_unit','') in parameters || 
-            name.replace('_min','') in parameters || name.replace('_max','') in parameters))
-        {
+        if ( !(name in parameters || name.split('_')[0] in parameters) ) {
             input.parentElement.classList.add('hidden');
-        } else if (!name.endsWith('unit') && !name.endsWith('min') && !name.endsWith('max')) {
+        } else if (!name.endsWith('unit') && !name.endsWith('min') && !name.endsWith('max') && !name.endsWith('width') && !name.endsWith('length')) {
             // Otherwise, get value from parameters
             let value = parameters[name].value;
 
@@ -452,6 +452,15 @@ const updateUI = (parameters) => {
             if (parameters[name].options) {
                 input.options = parameters[name].options;
             }
+            // In the case of custom slit, set width and height inputs to value
+            if (name === 'slit' && 
+                input.options.filter(o => o.value === 'Custom').length > 0 &&
+                input.options.filter(o => o.value === value).length === 0 )
+            {
+                document.querySelector('#slit-width').value = value[0];
+                document.querySelector('#slit-length').value = value[1];
+                value = 'Custom';
+            }
 
             // Set value
             input.value = value;
@@ -462,6 +471,9 @@ const updateUI = (parameters) => {
             input.parentElement.classList.remove('hidden');
         }
     });
+
+    // Update instrument name
+    setInstrument(parameters.name.value);
 
     // Update first plot according to target
     const target = document.querySelector('#target').value;
@@ -491,7 +503,7 @@ const updateUI = (parameters) => {
     }
 }
 
-const update = (reset, load) => {
+const update = (reset, load, instrumentChanged) => {
     // If reset is true, don't supply parameters to API call
     let parameters = {};
     if (load) {
@@ -512,6 +524,8 @@ const update = (reset, load) => {
         document.cookie = 'etcparameters={}; expires=' + new Date();
         window.localStorage.clear();
         document.querySelector('#file-upload').removeAttribute('file');
+    } else if (instrumentChanged) {
+        parameters.name = document.querySelector('.instrument.selected').id.toUpperCase();
     } else {
         parameters = getParameters(false);
     }
@@ -557,11 +571,11 @@ const getParameters = isForVSPlot => {
     const options = [
         'exposure', 'signal_noise_ratio', 'dithers', 'repeats', 'coadds', 'reads',
         'type', 'flux', 'wavelength_band', 'redshift', 'index', 'temperature', 'width',
-        'mode', 'slit', 'binning', 'grating', 'grism',
-        'seeing', 'airmass', 'water_vapor', 'target' // Target is last because it must be set after exp. or snr
+        'mode', 'slit', 'binning', 'grating', 'grism', 'filter', 'seeing', 'airmass',
+        'water_vapor', 'target' // Target is last because it resets snr/exp to default
     ];
-    const parameters = isForVSPlot ? {wavelengths: [vsPlotWavelength.location+'nm']} : {};
-    parameters['name'] = document.querySelector('.instrument.selected').textContent;
+    // Set instrument name first so that all instrument-specific parameters will be applied
+    const parameters = { name: document.querySelector('.instrument.selected').id.toUpperCase() };
     
     // If custom source SED uploaded, add to query
     const customSource = document.querySelector('#file-upload').file;
@@ -579,20 +593,34 @@ const getParameters = isForVSPlot => {
     for (parameter of options) {
         const id = '#'+parameter.replaceAll('_','-');
         const element = document.querySelector(id);
+        
+        // Loop through each visible element with set value
         if (!!element && !element.parentElement.classList.contains('hidden') && element.value){
+            // If available, set unit
             const unit = !!document.querySelector(id+'-unit') ? document.querySelector(id+'-unit').value : '';
+
+            // For vs. plot, get range of exp/snr from min and max elements
             if (isForVSPlot && (id==='#exposure' || id==='#signal-noise-ratio')){
-                // For vs. plot, get range of exp/snr from min and max elements
                 const start = parseFloat(document.querySelector(id+'-min').value);
                 const stop = parseFloat(document.querySelector(id+'-max').value);
                 const step = (stop - start) / (25-1); // Hard-coded value of 25 points
                 const list = Array(25).fill(start).map((x, i) => x + i * step);
                 parameters[parameter] = list.map(x => x+unit);
+            
+            // For custom slit, get values from width and length inputs
+            } else if (id==='#slit' && element.value === 'Custom') {
+                const unit = document.querySelector('#slit-unit').value;
+                const width = document.querySelector('#slit-width').value;
+                const length = document.querySelector('#slit-length').value;
+                parameters[parameter] = width + unit + ',' + length + unit;
+            
+            // Otherwise, get value from element
             } else {
                 parameters[parameter] = element.value + unit;
             }
         }
     }
+
     // Save current parameters as cookie, to resume session on future site load
     if (!isForVSPlot) {
         const exp_date = new Date( new Date().getTime() + 48 * 60 * 60 * 1000 );  // Add 48 hours to current date
@@ -605,13 +633,24 @@ const getParameters = isForVSPlot => {
         if (parameters['typeb64']) { 
             window.localStorage.setItem('etcTypeDefinition',parameters.typeb64);
         }
+    } else {
+        // For vs. plot, specify wavelength
+        parameters.wavelengths = [vsPlotWavelength.location+'nm']
     }
     return parameters;
 }
 
+const setInstrument = name => {
+    const element = document.querySelector('.instrument#' + String(name).toLowerCase());
+    if (element) {
+        document.querySelectorAll('.instrument').forEach( (el) => el.classList.remove('selected'));
+        element.classList.add('selected');
+    }
+}
+
 
 // Called when page loads
-setup = async () => {
+const setup = async () => {
     // Get data for flux of vega from async call
     vegaFlux = await vegaFlux;
 
@@ -619,52 +658,15 @@ setup = async () => {
     document.querySelectorAll('.instrument-menu .instrument').forEach( 
         element => element.addEventListener('click', () => {
             // For now, instead of proper behavior, display unavailability alert
-            alert('Instruments besides NIRES have not yet been implemented');
-            // document.querySelectorAll('.instrument').forEach( (el) => el.classList.remove('selected'));
-            // element.classList.add('selected');
-            // if (!guiInactive) { update() }
+            //alert('Instruments besides NIRES have not yet been implemented');
+            setInstrument(element.id);
+            if (!guiInactive) update( false, false, true );
         })
     );
 
     // Define reset button click handling
     document.querySelector('button#reset').addEventListener('click', () => {
         update(true);
-    });
-
-    // Define download button click handling
-    document.querySelector('button#download').addEventListener('click', () => {
-        const table_to_csv = (source) => {
-            const columns = Object.keys(source.data)
-            const nrows = source.get_length()
-            const lines = [columns.join(',')]
-        
-            for (let i = 0; i < nrows; i++) {
-                let row = [];
-                for (let j = 0; j < columns.length; j++) {
-                    const column = columns[j]
-                    row.push(source.data[column][i].toString())
-                }
-                lines.push(row.join(','))
-            }
-            return lines.join('\\n').concat('\\n')
-        }
-        
-        
-        const filename = 'etc_results.csv'
-        const filetext = table_to_csv(source)
-        const blob = new Blob([filetext], { type: 'text/csv;charset=utf-8;' })
-        
-        //for IE
-        if (navigator.msSaveBlob) {
-            navigator.msSaveBlob(blob, filename)
-        } else {
-            const link = document.createElement('a')
-            link.href = URL.createObjectURL(blob)
-            link.download = filename
-            link.target = '_blank'
-            link.style.visibility = 'hidden'
-            link.dispatchEvent(new MouseEvent('click'))
-        }
     });
 
     // Define mobile collapse / expand behavior
@@ -681,6 +683,18 @@ setup = async () => {
             }
         });
     });
+
+    // Define behavior of custom slit option
+    // document.querySelector('#slit').addEventListener('change', event => {
+    //     console.log('hellloooooo');
+    //     if ( String(event.newValue).toLowerCase() === 'custom' ) {
+    //         console.log('one');
+    //         document.querySelector('#slit-width').parentElement.classList.remove('hidden');
+    //     } else {
+    //         console.log('two');
+    //         document.querySelector('#slit-width').parentElement.classList.add('hidden');
+    //     }
+    // });
 
     // Read in mouseover text file
     fetch('static/mouseover_text.json').then(response => 
@@ -782,14 +796,50 @@ setup = async () => {
         e.preventDefault();
     },false);
 
+
+    // Define download button click handling
+    document.querySelector('button#download').addEventListener('click', () => {
+        const table_to_csv = (source) => {
+            // Remove 'parameters' column from data
+            const { parameters, ...data } = source.data;
+            const columns = Object.keys(data);
+            const nrows = source.get_length();
+            const lines = [columns.join(',')];
+            for (let i = 0; i < nrows; i++) {
+                let row = [];
+                for (let j = 0; j < columns.length; j++) {
+                    const column = columns[j];
+                    row.push(data[column][i].toString());
+                }
+                lines.push(row.join(','));
+            }
+            return lines.join('\\n').concat('\\n');
+        }
+        
+        const filename = 'etc_results.csv';
+        const filetext = table_to_csv(source);
+        const blob = new Blob([filetext], { type: 'text/csv;charset=utf-8;' });
+        
+        //for IE
+        if (navigator.msSaveBlob) {
+            navigator.msSaveBlob(blob, filename);
+        } else {
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.target = '_blank';
+            link.style.visibility = 'hidden';
+            link.dispatchEvent(new MouseEvent('click'));
+        }
+    });
+
+
 };
 
 
 Bokeh.set_log_level('error');
 
 window.addEventListener('DOMContentLoaded', setup);
-// Resize event on page load to fix formatting bug due to loading content into cache
-window.addEventListener('load', () => window.dispatchEvent(new Event('resize')));
 
-// TODO -- Handle GUI changes in JS, only call updateUI on load!
-// TODO -- Store values in cookies
+// Resize event on page load to fix formatting bug when loading content into cache
+window.addEventListener('load', () => window.dispatchEvent(new Event('resize')));

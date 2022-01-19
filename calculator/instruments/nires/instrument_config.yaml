@@ -7,6 +7,7 @@ defaults:
   slit: [0.55 arcsec, 18 arcsec]  # Width, length
   pixel_size: 0.0225 arcsec^2/pixel  # Check w/ Sherry, in her code this was s^2/px^2 but I think that's a typo... ?
   mode: spectroscopic
+  wavelength_band: K
   binning: [1, 1]
 
   
@@ -15,7 +16,7 @@ dark_current: 0.13 electron / (pixel s)
 read_noise: 15 sqrt(electron/pixel)  # Kind of a nonsense unit, but read noise is actually variance and needs to be squared later...
 # Is this per pixel?? Check w/ Sherry and make sure!
 
-throughput_path: throughput.txt  # Relative path to throughput file
+throughput_path: throughput  # Relative path to throughput file directory
 
 slit_options: [ [0.55 arcsec, 18 arcsec] ]
 
@@ -24,6 +25,12 @@ custom_slits: false
 spectral_resolution: 2700  # Spectral resolving power of instrument, defined as λ / Δλ
 
 mode_options: [spectroscopic]
+
+filter_options: []
+
+grating_options: []
+
+grism_options: []
 
 gain: 3.8 electron / adu
 

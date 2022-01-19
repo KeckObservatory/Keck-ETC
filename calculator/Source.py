@@ -245,11 +245,14 @@ class source:
             raise ValueError('In source.add_template() -- Provided file must be either FITS or ASCII.ECSV format')
         def define_data_scope(data):  # Wrapper function to narrow the scope of data and make sure each interpolation uses its own dataset
             def scale_and_interpolate(w):
-                wavelengths = data['WAVELENGTH'].to(u.angstrom) * (1 + self.redshift)  # Apply redshift
-                light = data['FLUX'].to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(wavelengths) + self.spectral_density_vega(wavelengths.to(u.angstrom)))  # Convert to units of light
-                central_wavelength = u.Quantity(vars(self.config.wavelength_band_options)[self.wavelength_band])  # Get central wavelength of passband
-                light = light / interpolate(central_wavelength, wavelengths, light) * self.flux.to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(central_wavelength) + self.spectral_density_vega(central_wavelength.to(u.angstrom)))  # Scale source by given mag/flux
-                return interpolate(w, wavelengths, light, left=0, right=0)
+                try:
+                    wavelengths = data['WAVELENGTH'].to(u.angstrom) * (1 + self.redshift)  # Apply redshift
+                    light = data['FLUX'].to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(wavelengths) + self.spectral_density_vega(wavelengths.to(u.angstrom)))  # Convert to units of light
+                    central_wavelength = u.Quantity(vars(self.config.wavelength_band_options)[self.wavelength_band])  # Get central wavelength of passband
+                    light = light / interpolate(central_wavelength, wavelengths, light) * self.flux.to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(central_wavelength) + self.spectral_density_vega(central_wavelength.to(u.angstrom)))  # Scale source by given mag/flux
+                    return interpolate(w, wavelengths, light, left=0, right=0)
+                except Exception as e:
+                    raise ValueError('In source.add_template() -- provided SED is invalid, must have columns "WAVELENGTH" and "FLUX" with valid units specified\n' + str(e))
             return scale_and_interpolate
         self._functions[name.split('.')[0]] = define_data_scope(data)  # Save function corresponding to this source
         if name.split('.')[0] not in self.available_types:

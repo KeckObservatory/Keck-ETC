@@ -46,9 +46,11 @@ def process_request(query):
                 # Coerce to valid JSON format by converting NaN to string
                 return_vals[key] = replaceNaN(return_vals[key], 'NaN')
 
+        print(etc.instrument.min_wavelength)
+        print(etc.instrument.max_wavelength)
         return return_vals, False
     except Exception as e:
-        return f'An error occured while processing your request<br>{e}<br><br>', True
+        return f'An error occured while processing your request<br>{repr(e)}<br><br>', True
 
 def text2html(text):
     text = text.replace('&', '&#38;')

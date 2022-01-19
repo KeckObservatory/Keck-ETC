@@ -42,14 +42,14 @@ LICENSE file in the root directory of this source tree.
         <section>
             <div class='title-bar'>
                 <div class="instrument-menu">
-                    <div class='instrument'>LRIS</div>
-                    <div class='instrument selected'>NIRES</div>
-                    <div class='instrument'>DEIMOS</div>
-                    <div class='instrument'>HIRES</div>
-                    <div class='instrument'>NIRC2</div>
-                    <div class='instrument'>KCWI</div>
-                    <div class='instrument'>ESI</div>
-                    <div class='instrument'>OSIRIS</div>
+                    <div class='instrument' id=lris>LRIS</div>
+                    <div class='instrument selected' id=nires>NIRES</div>
+                    <div class='instrument' id=deimos>DEIMOS</div>
+                    <div class='instrument' id=hires>HIRES</div>
+                    <div class='instrument' id=nirc2>NIRC2</div>
+                    <div class='instrument' id=kcwi>KCWI</div>
+                    <div class='instrument' id=esi>ESI</div>
+                    <div class='instrument' id=orisiris>OSIRIS</div>
                 </div>
                 <button id='reset' type='button'>Reset Calculator</button>
             </div>
@@ -161,8 +161,17 @@ LICENSE file in the root directory of this source tree.
                                     <option>spectroscopic</option>
                                 </input-select>
                             </div>
+
                             <div class='input-row'>
                                 <input-select label='Slit' id=slit></input-select>
+                            </div>
+
+                            <div class='input-row' style='margin-top:0'>
+                                <input-spin id=slit-width>Width</input-spin>
+                                <input-spin id=slit-length>Length</input-spin>
+                                <input-select id=slit-unit>
+                                    <option>arcsec</option>
+                                </input-select>
                             </div>
 
                             <div class='input-row'>

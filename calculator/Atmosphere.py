@@ -9,7 +9,8 @@ from astropy import units as u
 from astropy.table import Table
 import yaml
 from os import listdir
-import numpy as np
+from numpy import arange, zeros
+# Including scipy introduces an additional dependency to project, but is significantly faster implementing manually
 from scipy.interpolate import RegularGridInterpolator
 from warnings import warn
 
@@ -17,7 +18,7 @@ from warnings import warn
 
 class atmosphere:
 
-    global _CONFIG_FILEPATH; _CONFIG_FILEPATH = 'calculator/sky_background/atmosphere_config.yaml'
+    global _CONFIG_FILEPATH; _CONFIG_FILEPATH = 'calculator/atmosphere/atmosphere_config.yaml'
 
     def _mount_config(self, config_path):
         # From https://www.geeksforgeeks.org/convert-nested-python-dictionary-to-object/
@@ -46,13 +47,13 @@ class atmosphere:
         self._water_vapor_index = [u.Quantity(x).to(u.mm).value for x in self.config.water_vapor_index] * u.mm
         self._airmass_index = u.Quantity(self.config.airmass_index)
         self.config.wavelength_index = [u.Quantity(x).to(u.angstrom) for x in self.config.wavelength_index]
-        self._wavelength_index = np.arange(
+        self._wavelength_index = arange(
             u.Quantity(self.config.wavelength_index[0]).value,
             u.Quantity(self.config.wavelength_index[1]).value,
             u.Quantity(self.config.wavelength_index[2]).value
         ) * u.angstrom  # np.arange doesn't support units, see https://github.com/astropy/astropy/issues/11582
-        self._transmission = np.zeros([len(self._airmass_index), len(self._water_vapor_index), len(self._wavelength_index)])
-        self._emission = np.zeros([len(self._airmass_index), len(self._water_vapor_index), len(self._wavelength_index)])
+        self._transmission = zeros([len(self._airmass_index), len(self._water_vapor_index), len(self._wavelength_index)])
+        self._emission = zeros([len(self._airmass_index), len(self._water_vapor_index), len(self._wavelength_index)])
         # Iterate through directory, filling in self._transmission and self._emission arrays
         for i, filename in enumerate(listdir(self.config.file_directory)):
             #print('\rATMOSPHERE: Reading file '+str(i+1)+'/'+str(len(listdir(self.config.file_directory))), end='')
@@ -162,36 +163,14 @@ class atmosphere:
         self._load_files()
 
 
-    def _trilinear_interpolation(self, values, wavelengths):
-        # Manual method, slower than RegularGridInterpolator, currently unused and probably will be deleted soon
-        values = np.array([[np.interp(wavelengths, self._wavelength_index, x) for x in y] for y in values])
-        am = [ self._airmass_index[self._airmass_index < self.airmass][-1].value, self._airmass_index[self._airmass_index > self.airmass][0].value ]
-        wv = [ self._water_vapor_index[self._water_vapor_index < self.water_vapor][-1].value, self._water_vapor_index[self._water_vapor_index > self.water_vapor][0].value ]
-        result = (1 / ( np.diff(am)*np.diff(wv) ))[0]
-        result *= np.array([ [am[1]*wv[1], -am[1]*wv[0], -am[0]*wv[1], am[0]*wv[0]],
-            [-wv[1], wv[0], wv[1], -wv[0]],
-            [-am[1], am[1], am[0], -am[0]],
-            [1, -1, -1, 1] ])
-        result = np.matmul(result, [values[self._airmass_index.value==am[0], self._water_vapor_index.value==wv[0], :][0],
-            values[self._airmass_index.value==am[0], self._water_vapor_index.value==wv[1], :][0],
-            values[self._airmass_index.value==am[1], self._water_vapor_index.value==wv[0], :][0],
-            values[self._airmass_index.value==am[1], self._water_vapor_index.value==wv[1], :][0]])
-        result = np.matmul([1, self.airmass.value, self.water_vapor.value, self.airmass.value*self.water_vapor.value], result)
-        #return np.interp(wavelengths, self._wavelength_index, result)
-        return result
-
-
     def get_transmission(self, wavelengths):
 
-        results = np.zeros(len(wavelengths))
+        results = zeros(len(wavelengths))
 
         # Check for and remove out-of-bounds wavelengths to avoid RegularGridInterpolator throwing errors
         wavelengths_trim = wavelengths[(self._wavelength_index[0] <= wavelengths) & (wavelengths <= self._wavelength_index[-1])]
         # If results are outside the wavelength bounds, return 0
         results[(self._wavelength_index[0] > wavelengths) | (wavelengths > self._wavelength_index[-1])] = 0
-        if len(wavelengths_trim) != len(wavelengths):
-            warn('In atmosphere.get_transmission() -- some or all provided wavelengths are outside the current bounds of [' +
-            str(self._wavelength_index[0])+', '+str(self._wavelength_index[-1])+'], returning zero', RuntimeWarning)
 
         # Perform trilinear interpolation to find transmission values
         interpolation = RegularGridInterpolator( (self._airmass_index, self._water_vapor_index, self._wavelength_index), self._transmission )
@@ -202,15 +181,12 @@ class atmosphere:
 
 
     def get_emission(self, wavelengths):
-        results = np.zeros(len(wavelengths))
+        results = zeros(len(wavelengths))
 
         # Check for and remove out-of-bounds wavelengths to avoid RegularGridInterpolator throwing errors
         wavelengths_trim = wavelengths[(self._wavelength_index[0] <= wavelengths) & (wavelengths <= self._wavelength_index[-1])]
-        # If results are outside the wavelength bounds, return NaN
-        results[(self._wavelength_index[0] > wavelengths) | (wavelengths > self._wavelength_index[-1])] = np.NaN
-        if len(wavelengths_trim) != len(wavelengths):
-            warn('WARNING: In atmosphere.get_emission() -- some or all provided wavelengths are outside the current bounds of [' +
-            str(self._wavelength_index[0])+', '+str(self._wavelength_index[-1])+'], returning NaN', RuntimeWarning)
+        # If results are outside the wavelength bounds, return 0
+        results[(self._wavelength_index[0] > wavelengths) | (wavelengths > self._wavelength_index[-1])] = 0
 
         # Perform trilinear interpolation to find emission values
         interpolation = RegularGridInterpolator( (self._airmass_index, self._water_vapor_index, self._wavelength_index), self._emission )
