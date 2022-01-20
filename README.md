@@ -1,16 +1,10 @@
 ## W. M. Keck Observatory Exposure Time Calculator
 
-Copyright (c) 2022, W. M. Keck Observatory
-
-All rights reserved.
-
-This project is licensed under the BSD-style license found in the LICENSE file in the root directory of this source tree.
-
-### About Program
+### About
 
 This project contains the source code for the server running the W.M.K.O. exposure time calculator.
 
-The calculator GUI can be found at <https://www2.keck.hawaii.edu/software/keckETC/>, while the API can be found at <https://www2.keck.hawaii.edu/software/keckETC/getETC2.php>. Usage instructions for the GUI and API can be found on their relevant pages.
+The calculator GUI can be found at [www2.keck.hawaii.edu/software/keckETC](https://www2.keck.hawaii.edu/software/keckETC/), while the API can be found at [www2.keck.hawaii.edu/software/keckETC/getETC2.php](https://www2.keck.hawaii.edu/software/keckETC/getETC2.php). Usage instructions for the GUI and API can be found on their relevant pages.
 
 The remainder of this document contains instructions to download, install, and run the API server and GUI on your own local machine.
 
@@ -34,12 +28,12 @@ if using `conda`.
 ### Requirements
 
 - Bash v?
-- Python 3.8?
+- Python 3.7
 
 - Python Libraries:
     - numpy v?
     - astropy v?
-    - scipy v?s
+    - scipy v?
 
 ### Running 
 
@@ -90,3 +84,11 @@ This project was developed by Keaton Blair and Sherry Yeh at the W. M. Keck Obse
 [To submit a bug report or feature request, click here.](https://github.com/KeckObservatory/Keck-ETC/issues/new/choose)
 
 For other feedback or information, contact Sherry Yeh at [syeh@keck.hawaii.edu](mailto:syeh@keck.hawaii.edu).
+
+### License
+
+Copyright (c) 2022, W. M. Keck Observatory
+
+All rights reserved.
+
+This project is licensed under the BSD-style license found in the LICENSE file in the root directory of this source tree.

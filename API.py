@@ -15,12 +15,14 @@ from base64 import b64decode
 from numpy import NaN, isnan
 from datetime import datetime
 from os import getpid
+from sys import argv
 
 
 hostName = "0.0.0.0"
 serverPort = 8080
 
-# TODO -- initialize etc when beginning server, then reset it in between requests
+
+
 def process_request(query):
     if len(query) == 0:
         return '', True
@@ -45,12 +47,10 @@ def process_request(query):
                 return_vals[key] = vars(etc)[key].value.tolist()
                 # Coerce to valid JSON format by converting NaN to string
                 return_vals[key] = replaceNaN(return_vals[key], 'NaN')
-
-        print(etc.instrument.min_wavelength)
-        print(etc.instrument.max_wavelength)
         return return_vals, False
     except Exception as e:
-        return f'An error occured while processing your request<br>{repr(e)}<br><br>', True
+        # For a more informative (but messier) error msg, use repr(e)
+        return f'An error occured while processing your request<br>{e}<br><br>', True
 
 def text2html(text):
     text = text.replace('&', '&#38;')
@@ -173,7 +173,19 @@ class APIServer(BaseHTTPRequestHandler):
         etc.reset_parameters()
 
 
-if __name__ == "__main__":  
+if __name__ == "__main__":
+
+    # Handle command line argument to specify port
+    if len(argv) > 2:
+        print('Invalid number of arguments, must be 0 or 1')
+        exit(-1)
+    elif len(argv) == 2:
+        if argv[-1].isdigit():
+            serverPort = int(argv[-1])
+        else:
+            print('Invalid port number', argv[-1])
+            exit(-1)
+
 
     etc = exposure_time_calculator()  # Initialize etc
 

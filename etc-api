@@ -129,7 +129,7 @@ if [ "$action" == "start" ] || [ "$action" == "restart" ]; then
     # TODO -- check to make sure port is not in use, then verify that it worked and output success message
     # TODO -- use -W ignore to supress warnings by default, include option for verbose logging where warnings are output...
 
-    nohup python3 -u API.py &>"$log" &
+    nohup python3 -u API.py $port &>"$log" &
     pid="$!"
 
     # Wait to see evidence of successful start in log

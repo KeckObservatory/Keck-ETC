@@ -538,6 +538,7 @@ const update = (reset, load, instrumentChanged) => {
         window.localStorage.clear();
         document.querySelector('#file-upload').removeAttribute('file');
     } else if (instrumentChanged) {
+        // TODO -- figure out how to keep atmosphere, exposure, source parameters while changing instrument
         parameters.name = document.querySelector('.instrument.selected').id.toUpperCase();
     } else {
         // Get parameters from GUI
@@ -843,4 +844,8 @@ Bokeh.set_log_level('error');
 window.addEventListener('DOMContentLoaded', setup);
 
 // Resize event on page load to fix formatting bug when loading content into cache
-window.addEventListener('load', () => window.dispatchEvent(new Event('resize')));
+//window.addEventListener('load', () => window.dispatchEvent(new Event('resize')));
+
+// For incorporation into iframe, dispatch resize events when height changes
+const resizeObserver = new ResizeObserver(() => window.dispatchEvent(new Event('resize')));
+resizeObserver.observe(document.querySelector('html'));
