@@ -11,8 +11,8 @@
 # Get directory of this script
 PROGRAM_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
-# Define script variables to default values
-version="0.0.1"
+# Define script variables as default values
+version="1.0"
 port=8080
 printhelp=false
 printversion=false
@@ -21,8 +21,9 @@ forcekill=false
 statusall=true
 action="none"
 log="log/etc.log"
+
 usage=$(cat << END
-Usage: $PROGRAM_DIR/etc-api {start,stop,status,restart,test} [-f] [-h] [-v] [-w] [-p port_number] [-l log_file]
+Usage: etc-api {start,stop,status,restart,test} [-fhvw] [-p port_number] [-l log_file]
     Positional arguments: {start,stop,status,restart,test}
         start           Begin running the server
         stop            Stop running the server
@@ -36,12 +37,13 @@ Usage: $PROGRAM_DIR/etc-api {start,stop,status,restart,test} [-f] [-h] [-v] [-w]
         -w, --warn      Log python warnings, ignored by default
         -v, --version   Display program version
         -h, --help      Displays this message
+
+For more information, visit https://github.com/KeckObservatory/Keck-ETC
 END
 )
 
 
 # Get command line arguments and set appropriate variables
-# TODO -- add test command to verify installation
 while [[ -n $1 ]]; do
     case $1 in
         start | stop | status | restart | test ) action="$1";;
@@ -90,16 +92,81 @@ fi
 # Navigate to base directory for ETC
 cd $PROGRAM_DIR
 
-# TODO -- get info here, print if action = status, then do stop, restart, start accordingly
+# Initialize empty arrays to hold values of all running servers
+declare -a runningports=()
+declare -a runningpids=()
+
+# Loop through log file, identifying all servers currently running
+while read -r start; do
+    pid="$(echo $start | cut -d " " -f8)"
+    line="$(echo $start | cut -d ":" -f1)"
+    prt="$(echo $start | cut -d ":" -f3 | cut -d " " -f1)"
+    stop="$(grep -n ":$prt" $log | grep -i "server stopped" | grep " $pid " | tail -1 | cut -d ":" -f1)"
+    if [ -z $stop ] || [ $stop -lt $line ]; then
+        # Use ps to check if server is still running
+        name="$(ps -p $pid -o command | grep "API.py")"
+        if [ ! -z $name ]; then
+            runningports+=($prt)
+            runningpids+=($pid)
+        fi
+    fi
+done < <(grep -in "server started" $log)
+
+
+# If action is status, print current status
+if [ "$action" == "status" ]; then
+
+    # If port was unspecified, defualt to all ports "*",
+    # otherwise filter status to specified port
+    if $statusall; then 
+        port="*"; 
+        # Format arrays with ", " as separator
+        outports="${runningports[@]}"
+        outports="${outports// /, }"
+
+        outpids="${runningpids[@]}"
+        outpids="${outpids// /, }"
+    else
+        # Filter outputs to the specified port
+        outports=""
+        outpids=""
+        for i in "${!runningports[@]}"; do
+            if [ "${runningports[i]}" == "$port" ]; then
+                outports="$port"
+                outpids="${runningpids[i]}"
+                runningports=($outports)
+                runningpids=($outpids)
+            fi
+        done
+        if [ -z $outports ]; then runningports=(); fi # Filter to proper length
+    fi
+
+    # Print appropriate output based on the length of status
+    if [ ${#runningports[@]} == 0 ]; then
+        echo "No servers currently running on port $port"
+    fi
+
+    if [ ${#runningports[@]} == 1 ]; then
+        echo "Running 1 server on port $outports with pid $outpids"
+    fi
+
+    if [ ${#runningports[@]} -gt 1 ]; then
+        echo "Running ${#runningports[@]} servers on ports $outports with pids $outpids"
+    fi
+
+fi
+
 
 # If command is stop or restart, stop corresponding server
 if [ "$action" == "stop" ] || [ "$action" == "restart" ]; then
 
-    log="$(tac ./log/etc.log | grep -m1 "$port * Server started")"
-    ip="$(echo $log | awk '{print $1;}')"
-    pid="$(echo $log | cut -d " " -f8)"
+    pid=""
+    for i in "${!runningports[@]}"; do
+        if [ "${runningports[i]}" == "$port" ]; then
+            pid="${runningpids[i]}"
+        fi
+    done
 
-    # TODO -- check log for "Server stopped" with date > "Server started" and output accordingly
     if [[ -z $pid ]]; then
         echo "Error: could not find server running on port $port" >&2
         exit -1
@@ -122,21 +189,33 @@ if [ "$action" == "stop" ] || [ "$action" == "restart" ]; then
 
 fi
 
+# If command is start or restart, start corresponding server
 if [ "$action" == "start" ] || [ "$action" == "restart" ]; then
 
-    echo "Starting server on port $port"
-
-    # TODO -- check to make sure port is not in use, then verify that it worked and output success message
-    # TODO -- use -W ignore to supress warnings by default, include option for verbose logging where warnings are output...
-
-    nohup python3 -u API.py $port &>"$log" &
+    if [ "$action" == "start" ] && [ " ${array[*]} " =~ " ${value} " ]; then
+        echo "Error: server on port $port already running" >&2
+        exit -1
+    fi
+    # TODO -- check to see whether port is being used!
+    # if lsof -Pi ":$port" -sTCP:LISTEN -t >/dev/null ; then
+    #     echo "running"
+    # else
+    #     echo "not running"
+    # fi
+    
+    # Supress warnings by default, only output if user 
+    if $warn; then
+        nohup python3 -u API.py $port &>"$log" &
+    else
+        nohup python3 -u -W ignore API.py $port &>"$log" &
+    fi
     pid="$!"
 
     # Wait to see evidence of successful start in log
     started=false
     timer=$SECONDS
     while [ !$started ]; do
-        log="$(tac ./log/etc.log | grep -m1 "$port * \"Server started\" $pid")"
+        log="$(tail -1 $log | grep ":$port" | grep -i "server started" | grep " $pid ")"
         if [[ ! -z $log ]]; then
             started=true
         fi
@@ -152,45 +231,6 @@ if [ "$action" == "start" ] || [ "$action" == "restart" ]; then
         echo "Error: timed out while waiting for confirmation of server start"
         exit -1
     fi
-
-fi
-
-# TODO -- fix status command
-if [ "$action" == "status" ]; then
-
-    if $statusall; then port="*"; fi
-    
-    echo "Checking status of server on port $port"
-
-    apiports=""
-
-    while read -r log; do
-        log=($log)
-        pid=${log[5]}
-        if ps -p $pid > /dev/null; then
-            elif [[ ${log[3]} == "api" && "$(ps $pid)" == *"python3 API.py"* ]]; then
-                apiports+="${log[4]}, "
-            fi
-        fi
-    done < <(grep "start $server $port" ./log/etc.log)
-
-    # Write status to stdout
-    if [[ $(echo $apiports | wc -w) -gt 1 ]]; then
-        echo "Running $(echo $apiports | wc -w) API servers on ports ${apiports%??}"
-    elif [[ $(echo $apiports | wc -w) -gt 0 ]]; then
-        echo "Running $(echo $apiports | wc -w) API server on port ${apiports%??}"
-    elif [ "$server" != "gui" ]; then
-        echo "No API servers running on port $port"
-    fi
-
-    if [[ $(echo $guiports | wc -w) -gt 1 ]]; then
-        echo "Running $(echo $guiports | wc -w) GUI servers on ports ${guiports%??}"
-    elif [[ $(echo $guiports | wc -w) -gt 0 ]]; then
-        echo "Running $(echo $guiports | wc -w) GUI server on port ${guiports%??}"
-    elif [ "$server" != "api" ]; then
-        echo "No GUI servers running on port $port"
-    fi
-
 
 fi
 
@@ -212,7 +252,7 @@ if [ "$action" == "test" ]; then
     fi
 
     if [ "$(python3 --version)" == *"command not found"* ]; then
-        echo "Python3 is not installed -- run 'sudo apt-get install python3' to correct"
+        echo "Python3 is not installed -- run 'apt-get install python3' to correct"
         exit 0
     fi
 
