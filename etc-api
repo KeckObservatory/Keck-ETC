@@ -105,7 +105,8 @@ while read -r start; do
     if [ -z $stop ] || [ $stop -lt $line ]; then
         # Use ps to check if server is still running
         name="$(ps -p $pid -o command | grep "API.py")"
-        if [ ! -z $name ]; then
+        
+        if [ ! -z "$name" ]; then
             runningports+=($prt)
             runningpids+=($pid)
         fi
@@ -167,7 +168,7 @@ if [ "$action" == "stop" ] || [ "$action" == "restart" ]; then
         fi
     done
 
-    if [[ -z $pid ]]; then
+    if [[ -z "$pid" ]]; then
         echo "Error: could not find server running on port $port" >&2
         exit -1
     fi
@@ -178,6 +179,15 @@ if [ "$action" == "stop" ] || [ "$action" == "restart" ]; then
         err="$(kill $pid 2>&1)"
     fi
 
+    # Wait to confirm that port is freed before cotinuing
+    timer=$SECONDS
+    while [ -z $err ] && [ ! -z "$(netstat -na | grep $port | grep "LISTEN")" ]; do
+        # Timeout after 5 seconds
+        if (( $SECONDS > $timer + 5 )); then
+            err="Timed out while waiting for port to be free"
+        fi
+    done
+
     # If an error exists, then print error message and exit
     if [[ ! -z $err ]]; then 
         printf "Error terminating server on port $port \n$err\n" >&2
@@ -185,47 +195,46 @@ if [ "$action" == "stop" ] || [ "$action" == "restart" ]; then
     fi
     # If no error was detected, print success message and append to log
     echo "Succesfully terminated server on port $port"
-    echo "$ip - - [$[date +"%d/%b/%Y %H:%M:%S"]] \"Server stopped\" $pid -" >> "$log"
+    echo "0.0.0.0:$port - - [$(date +"%d/%b/%Y %H:%M:%S")] \"Server stopped\" $pid -" >> "$log"
 
 fi
 
 # If command is start or restart, start corresponding server
 if [ "$action" == "start" ] || [ "$action" == "restart" ]; then
 
-    if [ "$action" == "start" ] && [ " ${array[*]} " =~ " ${value} " ]; then
+
+    if [ "$action" == "start" ] && [ ! -z $runningports ] && [[ " ${runningports[*]} " =~ " $port " ]]; then
         echo "Error: server on port $port already running" >&2
         exit -1
     fi
-    # TODO -- check to see whether port is being used!
-    # if lsof -Pi ":$port" -sTCP:LISTEN -t >/dev/null ; then
-    #     echo "running"
-    # else
-    #     echo "not running"
-    # fi
+    
+    
+    if [ ! -z "$(netstat -na | grep $port | grep "LISTEN")" ] ; then
+        echo "Error: port $port is already in use" >&2
+        exit -1
+    fi
     
     # Supress warnings by default, only output if user 
     if $warn; then
-        nohup python3 -u API.py $port &>"$log" &
+        nohup python3 -u API.py $port &>>"$log" &
     else
-        nohup python3 -u -W ignore API.py $port &>"$log" &
+        nohup python3 -u -W ignore API.py $port &>>"$log" &
     fi
     pid="$!"
 
     # Wait to see evidence of successful start in log
-    started=false
+    started=""
     timer=$SECONDS
-    while [ !$started ]; do
-        log="$(tail -1 $log | grep ":$port" | grep -i "server started" | grep " $pid ")"
-        if [[ ! -z $log ]]; then
-            started=true
-        fi
+    while [ -z "$started" ]; do
+        started="$(tail -1 $log | grep ":$port" | grep -i "server started" | grep " $pid ")"
+        
         # Timeout after 10 seconds with no results
         if (( $SECONDS > $timer + 10 )); then
             break
         fi
     done
 
-    if $started; then
+    if [ ! -z "$started" ]; then
         echo "Succesfully started server on port $port with pid $pid"
     else
         echo "Error: timed out while waiting for confirmation of server start"
@@ -236,9 +245,13 @@ fi
 
 
 if [ "$action" == "test" ]; then
+    # TODO -- check versions against requirements and issue message to update
+
+    err=false
 
     if ! command -v git &> /dev/null; then
         echo "Error verifying installation, git is not installed" >&2
+        err=true
     fi
 
     status="$(git status --porcelain)"
@@ -248,26 +261,28 @@ if [ "$action" == "test" ]; then
     elif [ "$status" != "" ]; then
         echo "Git has detected the following changes to your local files"
         echo "$status"
-        exit 0
+        err=true
     fi
 
     if [ "$(python3 --version)" == *"command not found"* ]; then
         echo "Python3 is not installed -- run 'apt-get install python3' to correct"
-        exit 0
+        err=true
     fi
 
     if [ "$(echo "import astropy" | python3)" != "" ]; then
         echo "Astropy is not installed -- run 'pip install astropy' to correct"
-        exit 0
+        err=true
     fi
 
     if [ "$(echo "import scipy" | python3)" != "" ]; then
         echo "Scipy is not installed -- run 'pip install scipy' to correct"
-        exit 0
+        err=true
     fi
 
-    echo "No problems detected, succesful installation verified"
-    exit 0
+    if ! $err; then
+        echo "No problems detected, succesful installation verified"
+    fi
+
 
 fi
 
