@@ -113,13 +113,15 @@ $   ./etc-validate
 No configuration problems discovered
 ```
 
-## Acknowledgements
+### Acknowledgements
 
-*Atmospheric transmission and emission data from Gemini Observatory, [gemini.edu/observing/telescopes-and-sites/sites](https://www.gemini.edu/observing/telescopes-and-sites/sites). Generated using ATRAN (Lord, S. D., 1992, NASA Technical Memorandum 103957)*
+Atmospheric transmission and emission data from Gemini Observatory, [gemini.edu/observing/telescopes-and-sites/sites](https://www.gemini.edu/observing/telescopes-and-sites/sites)
 
-*Source SEDs from STScI `pysynphot` package, [pysynphot.readthedocs.io/en/latest/spectrum.html](https://pysynphot.readthedocs.io/en/latest/spectrum.html)*
+Sky background generated using ATRAN (Lord, S. D., 1992, NASA Technical Memorandum 103957)
 
-*Instrument specs and throughput data from W. M. Keck Observatory, [www2.keck.hawaii.edu/inst](https://www2.keck.hawaii.edu/inst)*
+Source SEDs from STScI `pysynphot` package, [pysynphot.readthedocs.io/en/latest/spectrum.html](https://pysynphot.readthedocs.io/en/latest/spectrum.html)
+
+Instrument specs and throughput data from W. M. Keck Observatory, [www2.keck.hawaii.edu/inst](https://www2.keck.hawaii.edu/inst)
 
 ### Contact
 

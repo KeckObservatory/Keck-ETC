@@ -44,7 +44,7 @@ class source:
             if 'filename' in vars(source_type).keys():
                 data = Table.read(self.config.template_filepath+source_type.filename, format='ascii.ecsv')
                 def define_data_scope(data):  # Wrapper function to narrow the scope of data and make sure each interpolation uses its own dataset
-                    def scale_and_interpolate(w):  # TODO -- Figure out why each function is returning the same results...
+                    def scale_and_interpolate(w):
                         wavelengths = data['wavelength'].to(u.angstrom) * (1 + self.redshift)  # Apply redshift
                         light = data['flux'].to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(wavelengths) + self.spectral_density_vega(wavelengths.to(u.angstrom)))  # Convert to units of light
                         central_wavelength = u.Quantity(vars(self.config.wavelength_band_options)[self.wavelength_band])  # Get central wavelength of passband
@@ -207,6 +207,7 @@ class source:
 
     def _blackbody(self, wavelengths):
         # From https://pysynphot.readthedocs.io/en/latest/spectrum.html
+        wavelengths = wavelengths / (1 + self.redshift)  # Apply inverse redshift to get actual wavelengths
         light = (2*h*c**2 / wavelengths**5) / (exp(h*c/(wavelengths*self.temperature*k_B)) - 1)
         # Scale light by the given mag / wavelength
         central_wavelength = u.Quantity(vars(self.config.wavelength_band_options)[self.wavelength_band])  # Get central wavelength of passband
@@ -215,10 +216,12 @@ class source:
 
 
     def _flat(self, wavelengths):
+        wavelengths = wavelengths / (1 + self.redshift)  # Apply inverse redshift to get actual wavelengths
         return ([self.flux] * len(wavelengths) * self.flux.unit).to(self.photlam, equivalencies=u.spectral_density(wavelengths.to(u.angstrom)) + self.spectral_density_vega(wavelengths.to(u.angstrom)))
 
 
     def _power_law(self, wavelengths):
+        wavelengths = wavelengths / (1 + self.redshift)  # Apply inverse redshift to get actual wavelengths
         central_wavelength = u.Quantity(vars(self.config.wavelength_band_options)[self.wavelength_band])
         light = self.flux.to(self.photlam, equivalencies=u.spectral_density(wavelengths.to(u.angstrom)) + self.spectral_density_vega(wavelengths.to(u.angstrom))) * (wavelengths / central_wavelength) ** self.index
         return light

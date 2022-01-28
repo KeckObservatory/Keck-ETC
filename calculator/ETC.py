@@ -173,6 +173,7 @@ class exposure_time_calculator:
         self.atmosphere = atmosphere()
         self.source = source()
         u.add_enabled_units([self.source.flam, self.source.photlam])
+        u.imperial.enable()
 
         self.reset_parameters()
 
