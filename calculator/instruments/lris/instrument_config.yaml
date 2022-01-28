@@ -27,7 +27,7 @@ spectroscopic:
   gain: 1.63 electron / adu  # average of 1.55, 1.56, 1.63, 1.7, 1.71, 1.64, 1.61, 1.67 across detectors
 
   # grating options
-  grating_options: ['300/5000', '400/8500', '600/5000', '600/7500', '600/10000', '831/8200', '1200/9000']  # Imaging mode replaces grating w/ mirror, how does this affect throughput? Should I set grating: None for imaging?
+  grating_options: ['400/8500', '600/7500', '600/10000', '831/8200', '1200/9000']  # Imaging mode replaces grating w/ mirror, how does this affect throughput? Should I set grating: None for imaging?
 
   # no available filter options, since throughput data for each filter is not available
   filter_options: []

@@ -588,7 +588,7 @@ const getParameters = isForVSPlot => {
     const options = [
         'exposure', 'signal_noise_ratio', 'dithers', 'repeats', 'coadds', 'reads',
         'type', 'flux', 'wavelength_band', 'redshift', 'index', 'temperature', 'width',
-        'mode', 'slit', 'binning', 'grating', 'grism', 'filter', 'seeing', 'airmass',
+        'mode', 'slit', 'binning', 'dichroic', 'grating', 'grism', 'filter', 'seeing', 'airmass',
         'water_vapor', 'target' // Target is last because it resets snr/exp to default
     ];
     // Set instrument name first so that all instrument-specific parameters will be applied
