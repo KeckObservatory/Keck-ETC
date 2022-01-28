@@ -5,39 +5,46 @@ defaults:
   grating: '600ZD'  # What should these defaults be?
   filter: 'GG400'
   slit: [ 0.75 arcsec, 10 arcsec ] # What should these defaults be?
-  pixel_size: 0.01404 arcsec^2/pixel
   wavelength_band: G
   binning: [1, 1]
   mode: 'spectroscopic'
 
-throughput_path: throughput
-
-spectral_resolution: 2700  # WHAT IS THIS FOR DEIMOS ??? λ/Δλ
-
-nonlinear_depth: 30000 adu  # WHAT IS THIS FOR DEIMOS???
-
-gain: 1.213 electron / adu  # average of 1.229, 1.191, 1.258, 1.221, 1.190, 1.180, 1.209, 1.225 across detectors
-
-# grating options
-grating_options: ['600ZD', '830G', '900ZD', '1200G', '1200B']  # Imaging mode replaces grating w/ mirror, how does this affect throughput? Should I set grating: None for imaging?
-
-# filter options
-filter_options: ['GG400', 'GG455', 'OG550']
-
-grism_options: []
-
-# binning options [spatial, spectral]
-binning_options: [ [1,1], [1,2], [2,1], [2,2] ]
 
 # operation modes
 mode_options: ['spectroscopic']
 
-# Slit available options
-slit_options: []  # No pre-set slit options available
+throughput_path: throughput
 
-# Are custom slits available?
-custom_slits: true
 
-read_noise: 2.543 sqrt(electron/pixel)  # Average of 2.576, 2.497, 2.638, 2.560, 2.494, 2.474, 2.534, 2.568 across detectors
+spectroscopic:
 
-dark_current:  3.94 electron / (pixel * hour)  # Average of 4.19, 3.46, 4.03, 3.80, 4.71, 4.28, 3.33, 3.69 across detectors
+  pixel_size: 0.01404 arcsec^2/pixel
+
+  spectral_resolution: 2700  # WHAT IS THIS FOR DEIMOS ??? λ/Δλ
+
+  nonlinear_depth: 60000 adu
+
+  gain: 1.213 electron / adu  # average of 1.229, 1.191, 1.258, 1.221, 1.190, 1.180, 1.209, 1.225 across detectors
+
+  # grating options
+  grating_options: ['600ZD', '830G', '900ZD', '1200G', '1200B']  # Imaging mode replaces grating w/ mirror, how does this affect throughput? Should I set grating: None for imaging?
+
+  # filter options
+  filter_options: ['GG400', 'GG455', 'OG550']
+
+  grism_options: []
+
+  dichroic_options: []
+
+  # binning options [spatial, spectral]
+  binning_options: [ [1,1], [1,2], [2,1], [2,2] ]
+
+  # Slit available options
+  slit_options: []  # No pre-set slit options available
+
+  # Are custom slits available?
+  custom_slits: true
+
+  read_noise: 2.543 sqrt(electron/pixel)  # Average of 2.576, 2.497, 2.638, 2.560, 2.494, 2.474, 2.534, 2.568 across detectors
+
+  dark_current:  3.94 electron / (pixel hour)  # Average of 4.19, 3.46, 4.03, 3.80, 4.71, 4.28, 3.33, 3.69 across detectors

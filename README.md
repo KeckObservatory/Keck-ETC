@@ -6,15 +6,13 @@ This project contains the source code for the server running the W.M.K.O. exposu
 
 The calculator GUI can be found at [www2.keck.hawaii.edu/software/keckETC](https://www2.keck.hawaii.edu/software/keckETC/), while the API can be found at [www2.keck.hawaii.edu/software/keckETC/getETC2.php](https://www2.keck.hawaii.edu/software/keckETC/getETC2.php). Usage instructions for the GUI and API can be found on their relevant web pages.
 
-The remainder of this document contains instructions to download, install, and run the API server and GUI on your own local machine.
-
-*Acknowledgments to gemini & others go here*
+The remainder of this document contains instructions to download, install, and run the API server and GUI on your local machine.
 
 ### Installation
 
 To install this program, clone this directory using `git clone https://github.com/KeckObservatory/Keck-ETC.git`.
 
-Next, ensure that all requirments are met. To install requirements, use
+Next, ensure that all requirments are met. To install the necessary python packages, use
 ```
 pip install astropy
 pip install scipy
@@ -28,20 +26,22 @@ if using `conda`.
 
 ### Requirements
 
-- Bash v4
+The following are minimum system requirements necessary to run the API server and view the GUI.
+
+- Bash 4
 - Python 3.7
 
 - Python libraries:
-    - astropy v4
-    - scipy v1.5
+    - astropy 4
+    - scipy 1.6
 
 - Browsers:
-    - Chrome v?
-    - Firefox v?
-    - Safari v?
-    - Edge v?
+    - Chrome 51
+    - Firefox 54
+    - Safari 10
+    - Edge 15
 
-### Running 
+### Execution
 
 To run the API server, run the executable file `etc-api` with argument `start`. To see usage, use `--help`. An example is shown below:
 
@@ -84,7 +84,44 @@ For more information, visit https://github.com/KeckObservatory/Keck-ETC
 
 Once the API server is running on `localhost:8080`, open the file `index.html` in a browser to view the GUI.
 
-### Contact Us
+### Modifications
+
+The exposure time calculator is designed to be easily modified. For example, to add a new instrument to the calculator, create a new directory under `instruments` and add the appropriate files. An example of a new instrument directory tree is shown here:
+
+```
+calculator/
+└── instruments/
+    └── new_instrument/
+        ├── instrument_config.yaml
+        └── throughput_files
+            ├── file_1.fits
+            ├── ...
+            └── file_n.fits
+```
+
+After making any changes, such as editing configuration files or source templates, run the shell script `etc-validate` to ensure that your changes will function as intended.
+
+```
+$   ./etc-validate
+
+Error: missing required value dark_current for spectroscopic mode in file calculator/instruments/new_instrument/instrument_config.yaml
+
+$   nano calculator/instruments/new_instrument/instrument_config.yaml
+
+$   ./etc-validate
+
+No configuration problems discovered
+```
+
+## Acknowledgements
+
+*Atmospheric transmission and emission data from Gemini Observatory, [gemini.edu/observing/telescopes-and-sites/sites](https://www.gemini.edu/observing/telescopes-and-sites/sites). Generated using ATRAN (Lord, S. D., 1992, NASA Technical Memorandum 103957)*
+
+*Source SEDs from STScI `pysynphot` package, [pysynphot.readthedocs.io/en/latest/spectrum.html](https://pysynphot.readthedocs.io/en/latest/spectrum.html)*
+
+*Instrument specs and throughput data from W. M. Keck Observatory, [www2.keck.hawaii.edu/inst](https://www2.keck.hawaii.edu/inst)*
+
+### Contact
 
 This project was developed by Keaton Blair and Sherry Yeh at the W. M. Keck Observatory.
 

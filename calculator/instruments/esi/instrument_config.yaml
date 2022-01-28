@@ -1,0 +1,60 @@
+---
+
+# default values
+defaults:
+  slit: [ 1 arcsec, 20 arcsec ] # What should these defaults be?
+  wavelength_band: G
+  binning: [1, 1]
+  mode: 'echelle'
+
+# operation modes
+mode_options: ['echelle']  # Other modes I currently don't have throughput data for are ['echelle', 'low_dispersion', 'imaging']
+
+throughput_path: throughput
+
+# CONFIG FOR ECHELLE SPECTROSCOPY MODE
+echelle:
+
+  pixel_size: 0.01404 arcsec^2/pixel
+
+  spectral_resolution: 700  # Assuming worst case scenario, resolving power increases as slit width decreases
+
+  nonlinear_depth: 60000 adu
+
+  gain: 1.213 electron / adu  # average of 1.229, 1.191, 1.258, 1.221, 1.190, 1.180, 1.209, 1.225 across detectors
+
+  # grating options
+  grating_options: []
+
+  # filter options
+  filter_options: []
+
+  grism_options: []
+
+  dichroic_options: []
+
+  # binning options [spatial, spectral]
+  binning_options: [ [1,1], [1,2], [2,1], [2,2] ]
+
+  # Slit available options
+  slit_options: [ 
+    [0.3 arcsec, 20 arcsec],
+    [0.5 arcsec, 20 arcsec],
+    [0.75 arcsec, 20 arcsec],
+    [1.0 arcsec, 20 arcsec],
+    [1.25 arcsec, 20 arcsec],
+    [6 arcsec, 20 arcsec]
+                ]
+
+  # Are custom slits available?
+  custom_slits: true
+
+  read_noise: 2.543 sqrt(electron/pixel)  # Average of 2.576, 2.497, 2.638, 2.560, 2.494, 2.474, 2.534, 2.568 across detectors
+
+  dark_current:  3.94 electron / (pixel hour)  # Average of 4.19, 3.46, 4.03, 3.80, 4.71, 4.28, 3.33, 3.69 across detectors
+
+# CONFIG FOR LOW-DISPERSION SPECTROSCOPY MODE
+low_dispersion:
+
+# CONFIG FOR DIRECT IMAGING MODE
+imaging:

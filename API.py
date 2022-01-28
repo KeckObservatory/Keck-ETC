@@ -34,7 +34,7 @@ def process_request(query):
         else:
             return_vals = { query['return'] : [] }
         del query['return']
-        
+
         etc.set_parameters(query)
         # Get the requested values
         for key in return_vals.keys():
@@ -47,10 +47,11 @@ def process_request(query):
                 return_vals[key] = vars(etc)[key].value.tolist()
                 # Coerce to valid JSON format by converting NaN to string
                 return_vals[key] = replaceNaN(return_vals[key], 'NaN')
+
         return return_vals, False
     except Exception as e:
         # For a more informative (but messier) error msg, use repr(e)
-        return f'An error occured while processing your request<br>{e}<br><br>', True
+        return f'An error occured while processing your request<br>{str(e)}<br><br>', True
 
 def text2html(text):
     text = text.replace('&', '&#38;')
@@ -106,16 +107,7 @@ class APIServer(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
 
-    def do_POST(self):
-        with open('static/api_instructions.txt', 'r') as file:
-            self.usage = text2html(file.read())
-
-        try:
-            query = self.rfile.read( int(self.headers.get('Content-Length')) ).decode('utf-8')
-            query = sanitize_input(query)
-            query = query2dict(query)
-        except:
-            query = {}
+    def respond(self, query):
         response, error = process_request(query)
         if len(response) == 0:
             self.send_response(200)
@@ -135,7 +127,19 @@ class APIServer(BaseHTTPRequestHandler):
             self.send_header("Content-type", "application/json")
             self.end_headers()
             self.wfile.write(bytes(json.dumps(response, ensure_ascii=False), 'utf-8'))
-            
+
+    def do_POST(self):
+        with open('static/api_instructions.txt', 'r') as file:
+            self.usage = text2html(file.read())
+
+        try:
+            query = self.rfile.read( int(self.headers.get('Content-Length')) ).decode('utf-8')
+            query = sanitize_input(query)
+            query = query2dict(query)
+        except:
+            query = {}
+        
+        self.respond(query)    
         # Reset etc for future API call
         etc.reset_parameters()
 
@@ -149,26 +153,8 @@ class APIServer(BaseHTTPRequestHandler):
             query = query2dict(query)
         except:
             query = {}
-        response, error = process_request(query)
-        if len(response) == 0:
-            self.send_response(200)
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.send_header('Content-type', 'text/html')
-            self.end_headers()
-            self.wfile.write(bytes(self.usage, 'utf-8'))
-        elif error:
-            self.send_response(400)
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.send_header('Content-type', 'text/html')
-            self.end_headers()
-            self.wfile.write(bytes(response, 'utf-8'))
-        else:
-            self.send_response(200)
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.send_header("Content-type", "application/json")
-            self.end_headers()
-            self.wfile.write(bytes(json.dumps(response, ensure_ascii=False), 'utf-8'))
             
+        self.respond(query)
         # Reset etc for future API call
         etc.reset_parameters()
 

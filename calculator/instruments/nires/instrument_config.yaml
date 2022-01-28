@@ -5,36 +5,41 @@
 
 defaults:
   slit: [0.55 arcsec, 18 arcsec]  # Width, length
-  pixel_size: 0.0225 arcsec^2/pixel  # Check w/ Sherry, in her code this was s^2/px^2 but I think that's a typo... ?
   mode: spectroscopic
   wavelength_band: K
   binning: [1, 1]
 
-  
-dark_current: 0.13 electron / (pixel s)
-
-read_noise: 15 sqrt(electron/pixel)  # Kind of a nonsense unit, but read noise is actually variance and needs to be squared later...
-# Is this per pixel?? Check w/ Sherry and make sure!
+mode_options: [spectroscopic]
 
 throughput_path: throughput  # Relative path to throughput file directory
 
-slit_options: [ [0.55 arcsec, 18 arcsec] ]
 
-custom_slits: false
+spectroscopic:
 
-spectral_resolution: 2700  # Spectral resolving power of instrument, defined as λ / Δλ
+  pixel_size: 0.0225 arcsec^2/pixel
 
-mode_options: [spectroscopic]
+  dark_current: 0.13 electron / (pixel s)
 
-filter_options: []
+  read_noise: 15 sqrt(electron/pixel)  # Kind of a nonsense unit, but read noise is actually variance and needs to be squared later...
+  # Is this per pixel?? Check w/ Sherry and make sure!
 
-grating_options: []
+  slit_options: [ [0.55 arcsec, 18 arcsec] ]
 
-grism_options: []
+  custom_slits: false
 
-gain: 3.8 electron / adu
+  spectral_resolution: 2700  # Spectral resolving power of instrument, defined as λ / Δλ
 
-nonlinear_depth: 30000 adu  # Confirm number with Sherry
+  filter_options: []
 
-# Options for binning [spatial, spectral]
-binning_options: [ [1,1] ]
+  grating_options: []
+
+  grism_options: []
+
+  dichroic_options: []
+
+  gain: 3.8 electron / adu
+
+  nonlinear_depth: 30000 adu  # Confirm number with Sherry
+
+  # Options for binning [spatial, spectral]
+  binning_options: [ [1,1] ]

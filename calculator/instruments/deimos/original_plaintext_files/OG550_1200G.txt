@@ -10,6 +10,7 @@
 # - {GRATING: 1200G}
 # - {GRISM: none}
 # - {MODE: spectroscopic}
+# - {DICHROIC: none}
 # schema: astropy-2.0
 WAV EFF EFF_UNC
 6645.35 0.18253 0.00438

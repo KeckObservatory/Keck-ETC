@@ -298,6 +298,7 @@ const apiRequest = async (query, parameters) => {
             query += '&' + key + '=' + value;
         }
     }
+    
     // Send fetch request and return data
     const request = await fetch('http://vm-internship:8080', {
         method: 'POST',
@@ -460,7 +461,8 @@ const updateUI = (parameters) => {
             // In the case of custom slit, set width and height inputs to value
             if (name === 'slit' && 
                 input.options.filter(o => o.value === 'Custom').length > 0 &&
-                input.options.filter(o => o.value === value).length === 0 )
+                ( input.value === 'Custom' ||
+                input.options.filter(o => String(o.value) === String(value)).length === 0 ))
             {
                 document.querySelector('#slit-width').value = value[0];
                 document.querySelector('#slit-length').value = value[1];
@@ -623,7 +625,6 @@ const getParameters = isForVSPlot => {
             
             // For custom slit, get values from width and length inputs
             } else if (id==='#slit' && element.value === 'Custom') {
-                const unit = document.querySelector('#slit-unit').value;
                 const width = document.querySelector('#slit-width').value;
                 const length = document.querySelector('#slit-length').value;
                 parameters[parameter] = width + unit + ',' + length + unit;

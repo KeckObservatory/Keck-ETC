@@ -7,6 +7,7 @@
 # - {FILTER: none}
 # - {GRATING: none}
 # - {GRISM: none}
+# - {DICHROIC: none}
 # - {MODE: spectroscopic}
 # schema: astropy-2.0
 WAV EFF

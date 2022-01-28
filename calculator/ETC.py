@@ -214,6 +214,12 @@ class exposure_time_calculator:
         # Parameter belongs to other class
         if name not in vars(self).keys():
 
+            # Aliases for instrument name and source type
+            if name == 'instrument':
+                name = 'instrument.name'
+            elif name == 'source':
+                name = 'source.type'
+
             # Coerce parameter name, if applicable
             if name in vars(self.instrument).keys():
                 warn(f'In ETC.set_parameter() -- coercing parameter {name} to instrument.{name}')
@@ -294,17 +300,24 @@ class exposure_time_calculator:
                         parameters[name]['unit'] = str(vars(obj)[name].unit)
                 else:
                     parameters[name] = { 'value': vars(obj)[name]}
+                
+                # Look for options in config
+                options = None
                 if name+'_options' in vars(obj.config).keys():
                     options = vars(obj.config)[name+'_options']
-                    if isinstance(options, list):
-                        if len(options) > 0 and isinstance(options[0], list):
-                            parameters[name]['options'] = [ {'value': [u.Quantity(option[0]).value, u.Quantity(option[1]).value]} for option in options ]
-                            if u.Quantity(options[0][0]).unit != u.dimensionless_unscaled:
-                                parameters[name]['unit'] = str(u.Quantity(options[0][0]).unit)
-                        else:
-                            parameters[name]['options'] = [ {'value': option} for option in options ]
+                # Since instrument config is arranged differently, check for options under config.mode
+                if self.instrument.mode in vars(obj.config).keys() and name+'_options' in vars(vars(obj.config)[self.instrument.mode]).keys():
+                    options = vars(vars(obj.config)[self.instrument.mode])[name+'_options']
+                
+                if isinstance(options, list):
+                    if len(options) > 0 and isinstance(options[0], list):
+                        parameters[name]['options'] = [ {'value': [u.Quantity(option[0]).value, u.Quantity(option[1]).value]} for option in options ]
+                        if u.Quantity(options[0][0]).unit != u.dimensionless_unscaled:
+                            parameters[name]['unit'] = str(u.Quantity(options[0][0]).unit)
                     else:
-                        parameters[name]['options'] = [ {'value': x} for x in vars(options).keys()]
+                        parameters[name]['options'] = [ {'value': option} for option in options ]
+                elif options is not None:
+                    parameters[name]['options'] = [ {'value': x} for x in vars(options).keys()]
             return parameters
 
         # Add self parameters
@@ -328,7 +341,7 @@ class exposure_time_calculator:
         # Update instrument slit
         for slit in parameters['slit']['options']:
             slit['name'] = f'{slit["value"][0]}" x {slit["value"][1]}"'
-        if self.instrument.config.custom_slits:
+        if vars(self.instrument.config)[self.instrument.mode].custom_slits:
             parameters['slit']['options'] += [{'value': 'Custom'}]
         # Format wavelength band so that { value: K, options: [K,...] } --> { value: 21900, options: [ {name: K, value: 21900}, ... ] }
         options = { key: val for key, val in vars(self.source.config.wavelength_band_options).items() if self.wavelengths[0] <= u.Quantity(val) <= self.wavelengths[-1] }

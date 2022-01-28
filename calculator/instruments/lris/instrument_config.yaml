@@ -1,0 +1,57 @@
+---
+
+# default values
+defaults:
+  grating: 400/8500
+  grism: 400/3400
+  dichroic: D560
+  slit: [ 1 arcsec, 25 arcsec ]
+  wavelength_band: B
+  binning: [1, 1]
+  mode: 'spectroscopic'
+
+# operation modes
+mode_options: ['spectroscopic']
+
+throughput_path: throughput
+
+
+spectroscopic:
+
+  pixel_size: 0.0182 arcsec^2/pixel
+
+  spectral_resolution: 2700  # WHAT IS THIS FOR LRIS ??? λ/Δλ
+
+  nonlinear_depth: 59000 adu
+
+  gain: 1.63 electron / adu  # average of 1.55, 1.56, 1.63, 1.7, 1.71, 1.64, 1.61, 1.67 across detectors
+
+  # grating options
+  grating_options: ['300/5000', '400/8500', '600/5000', '600/7500', '600/10000', '831/8200', '1200/9000']  # Imaging mode replaces grating w/ mirror, how does this affect throughput? Should I set grating: None for imaging?
+
+  # no available filter options, since throughput data for each filter is not available
+  filter_options: []
+
+  grism_options: ['300/5000', '400/3400', '600/4000', '1200/3400']
+
+  dichroic_options: [MIRROR, D460, D500, D560, D680, CLEAR]
+
+  # binning options [spatial, spectral]
+  binning_options: [ [1,1], [1,2], [2,1], [2,2] ]
+
+  # Slit available options
+  slit_options: [ 
+    [1 arcsec, 25 arcsec],
+    [1.5 arcsec, 25 arcsec],
+    [0.7 arcsec, 175 arcsec],
+    [1.0 arcsec, 175 arcsec],
+    [1.5 arcsec, 175 arcsec],
+    [8.7 arcsec, 175 arcsec]
+                ]
+
+  # Are custom slits available?
+  custom_slits: true
+
+  read_noise: 3.70 sqrt(electron/pixel)  # Average of 3.9, 4.2, 3.6, 3.6, 3.64, 3.45, 3.65, 3.52 across detectors
+
+  dark_current:  0 electron / (pixel hour)  # Can't find dark current data for LRIS currently
