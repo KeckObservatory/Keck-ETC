@@ -22,10 +22,12 @@
 
     "dithers": "Specify number of dithers, default to 1 (no dither)",
 
-    "repeats": "Specify number of dither repeats  ",
+    "repeats": "Specify number of dither repeats",
 
     "coadds": "Specify number of coadds, default to 1",
 
-    "reads": "Specify detector number of reads, default to 2 (CDS)"
+    "reads": "Specify detector number of CDS reads",
+
+    "slit": "Specify slit, in WIDTH x LENGTH format"
 
 }

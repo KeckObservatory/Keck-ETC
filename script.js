@@ -419,8 +419,7 @@ const updateVSPlot = () => {
 
 }
 
-const updateUI = (parameters) => {
-    // Handle case of custom slit
+const updateUI = (parameters, instrumentChanged) => {
 
     // Loop through all inputs in app
     document.querySelectorAll('input-select, input-spin, input-slider').forEach( input => {
@@ -459,9 +458,9 @@ const updateUI = (parameters) => {
                 input.options = parameters[name].options;
             }
             // In the case of custom slit, set width and height inputs to value
-            if (name === 'slit' && 
+            if (name === 'slit' &&
                 input.options.filter(o => o.value === 'Custom').length > 0 &&
-                ( input.value === 'Custom' ||
+                ( ( input.value === 'Custom' && !instrumentChanged ) ||
                 input.options.filter(o => String(o.value) === String(value)).length === 0 ))
             {
                 document.querySelector('#slit-width').value = value[0];
@@ -540,7 +539,7 @@ const update = (reset, load, instrumentChanged) => {
         window.localStorage.clear();
         document.querySelector('#file-upload').removeAttribute('file');
     } else if (instrumentChanged) {
-        // TODO -- figure out how to keep atmosphere, exposure, source parameters while changing instrument
+        // TODO -- don't reset atmosphere, exposure, source parameters while changing instrument
         parameters.name = document.querySelector('.instrument.selected').id.toUpperCase();
     } else {
         // Get parameters from GUI
@@ -557,7 +556,7 @@ const update = (reset, load, instrumentChanged) => {
         } else {
             // Update data sources and UI
             updateDataSource(source, data);
-            updateUI(data.parameters);
+            updateUI(data.parameters, instrumentChanged);
             // Change results to reflect new data
             updateResults();
             // Get vs. data and update plot
@@ -656,11 +655,17 @@ const getParameters = isForVSPlot => {
 }
 
 const setInstrument = name => {
-    const element = document.querySelector('.instrument#' + String(name).toLowerCase());
-    if (element) {
-        document.querySelectorAll('.instrument').forEach( (el) => el.classList.remove('selected'));
-        element.classList.add('selected');
+    // For now, instead of proper behavior, display unavailability alert
+    if (['nirc2', 'kcwi', 'osiris', 'hires'].includes(String(name).toLowerCase())){
+        alert('This instrument has not yet been added to the ETC');
+    } else {
+        const element = document.querySelector('.instrument#' + String(name).toLowerCase());
+        if (element) {
+            document.querySelectorAll('.instrument').forEach( (el) => el.classList.remove('selected'));
+            element.classList.add('selected');
+        }
     }
+    
 }
 
 
@@ -672,8 +677,6 @@ const setup = async () => {
     // Define instrument-menu click behavior
     document.querySelectorAll('.instrument-menu .instrument').forEach( 
         element => element.addEventListener('click', () => {
-            // For now, instead of proper behavior, display unavailability alert
-            //alert('Instruments besides NIRES have not yet been implemented');
             setInstrument(element.id);
             if (!guiInactive) update( false, false, true );
         })
