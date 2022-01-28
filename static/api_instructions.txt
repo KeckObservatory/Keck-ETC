@@ -1,4 +1,5 @@
-USAGE:  /etc_api?return=[desired_values]&parameter1=value1&parameter2=value2&...
+USAGE:  /etc_api?return=[option1,option2,...]&parameter1=value1&parameter2=value2&...
+    Any parameters not specified will be set to calculator default values; for example, if instrument.name is not specified, instrument will default to NIRES
 
 EXAMPLES:
     /etc_api?return=[signal_noise_ratio]&exposure=[3600s,7200s]&instrument.name=NIRES&dithers=4&atmosphere.seeing=1.0&source.brightness=20mag(AB)
@@ -6,25 +7,25 @@ EXAMPLES:
     /etc_api?return=[background_count,source_count,read_noise_count,dark_current_count]&instrument.mode=spectroscopic&source.redshift=5.2
 
 AVAILABLE RETURN OPTIONS:
-    exposure:               description
-    signal_noise_ratio:     description
-    wavelengths:            description
-    source_flux:            description
-    source_count_adu:       description
-    background_count_adu:   description
-    read_noise_count_adu:   description
-    dark_current_count_adu: description
-    total_integraion_time:  description
-    parameters:             description
+    exposure:               list of single exposure times in seconds if target is SNR, otherwise nested lists of exposure times corresponding to SNR then wavelength
+    signal_noise_ratio:     list of SNR (per unit resolution) if target is exposure, otherwise nested lists of SNR corresponding to exposure then wavelength
+    wavelengths:            list of wavelengths in angstrom
+    source_flux:            source spectral density, in flam (erg / (AA cm2 s))
+    source_count_adu:       source detector counts, in ADU per pixel
+    background_count_adu:   sky background detector counts, in ADU per pixel
+    read_noise_count_adu:   read noise detector counts, in ADU per pixel
+    dark_current_count_adu: dark current detector counts, in ADU per pixel
+    total_integraion_time:  list of integration times corresponding to exposures, but taking into account dithers, coadds, etc.
+    parameters:             JSON object detailing all parameters of the ETC, including units and alternative options
 
 AVAILABLE PARAMETERS:
     exposure:               list of exposure times with units, i.e. [500s,10min,2.1hr]
     signal_noise_ratio:     list of snr values, i.e. [10,50.1,220]
     target:                 calculation target, possible values are 'exposure' or 'signal_noise_ratio'
-    dithers:                number of dithers, must be > 0
-    repeats:                number of repeats, must be > 0
-    coadds:                 number of coadds, must be > 0
-    reads:                  number of reads, possible values are 2, 4, 8, 16, 32, 64, 128
+    dithers:                number of dithers, must be positive integer (1 dither = stare)
+    repeats:                number of dither repeats, must be positive integer
+    coadds:                 number of coadds, must be positive integer
+    reads:                  number of CDS reads, possible values are 1, 2, 4, 8, 16, 32, 64
     binning:                binning in [spatial, spectral], i.e. [1,2]
     source.type:            source template, possible values are emission, blackbody, power, flat, vega, qso, seyfert1, seyfert2
     source.flux:            source flux/magnitude with units, available units are mag(AB), mag(vega), mag(ST), Jy, flam, photlam
@@ -35,16 +36,16 @@ AVAILABLE PARAMETERS:
     atmosphere.seeing:      seeing with units, available units are arcsec, arcmin
     atmosphere.airmass:     airmass, must be between 1.0 and 2.0 inclusive
     atmosphere.water_vapor: waver vapor with units of length, must be between 1.0 and 5.0 mm
-    instrument.name:        instrument name, possible values are nires, deimos, lris, hires, nirc2, kcwi, esi
+    instrument.name:        instrument name, possible values are nires, deimos, lris, hires, esi
     instrument.slit:        slit [width, length] with units of angle, i.e. [0.5arcsec,10arcsec], must be valid for instrument
     instrument.mode:        instrument mode, available options are:
-                                NIRES: spectroscopic
+                                ESI: echelle, low_dispersion, imaging
     instrument.grating:     selected grating, available options are:
-                                DEIMOS: 600, 830, 900, 1200
-                                ...
+                                DEIMOS: 600ZD, 830G, 900ZD, 1200G, 1200B
+                                LRIS: 400/8500, 600/7500, 600/10000, 831/8200, 1200/9000
     instrument.filter:      selected filter, available options are:
-                                DEIMOS: BAL12, GG400, GG455, GG495, OG550
-                                ...
+                                DEIMOS: GG400, GG455, OG550
     instrument.grism:       selected grism, available options are:
-                                ...
-    ...
+                                LRIS: 300/5000, 400/3400, 600/4000, 1200/3400
+    instrument.dichroic:    selected dichroic, available options are:
+                                LRIS: MIRROR, D460, D500, D560, D680, CLEAR
