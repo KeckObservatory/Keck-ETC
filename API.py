@@ -28,6 +28,10 @@ def process_request(query):
         return '', True
 
     try:
+        # Informative error if no return values specified
+        if not 'return' in query.keys():
+            raise ValueError('Must specify return values, i.e. return=[exposure]')
+
         # Remove return values from query
         if isinstance(query['return'], list):
             return_vals = { x:[] for x in query['return'] }

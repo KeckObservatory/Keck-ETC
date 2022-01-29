@@ -212,14 +212,14 @@ class exposure_time_calculator:
 
     def set_parameter(self, name, value, run_calculator=True):
 
+        # Aliases for instrument name and source type
+        if name == 'instrument':
+            name = 'instrument.name'
+        elif name == 'source':
+            name = 'source.type'
+
         # Parameter belongs to other class
         if name not in vars(self).keys():
-
-            # Aliases for instrument name and source type
-            if name == 'instrument':
-                name = 'instrument.name'
-            elif name == 'source':
-                name = 'source.type'
 
             # Coerce parameter name, if applicable
             if name in vars(self.instrument).keys():

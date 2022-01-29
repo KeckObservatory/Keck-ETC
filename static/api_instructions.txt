@@ -1,5 +1,4 @@
 USAGE:  /etc_api?return=[option1,option2,...]&parameter1=value1&parameter2=value2&...
-    Any parameters not specified will be set to calculator default values; for example, if instrument.name is not specified, instrument will default to NIRES
 
 EXAMPLES:
     /etc_api?return=[signal_noise_ratio]&exposure=[3600s,7200s]&instrument.name=NIRES&dithers=4&atmosphere.seeing=1.0&source.brightness=20mag(AB)
@@ -16,6 +15,7 @@ AVAILABLE RETURN OPTIONS:
     read_noise_count_adu:   read noise detector counts, in ADU per pixel
     dark_current_count_adu: dark current detector counts, in ADU per pixel
     total_integraion_time:  list of integration times corresponding to exposures, but taking into account dithers, coadds, etc.
+    nonlinear_depth_adu:    nonlinear depth of detector, in ADU per pixel
     parameters:             JSON object detailing all parameters of the ETC, including units and alternative options
 
 AVAILABLE PARAMETERS:
@@ -28,10 +28,11 @@ AVAILABLE PARAMETERS:
     reads:                  number of CDS reads, possible values are 1, 2, 4, 8, 16, 32, 64
     binning:                binning in [spatial, spectral], i.e. [1,2]
     source.type:            source template, possible values are emission, blackbody, power, flat, vega, qso, seyfert1, seyfert2
+    source.redshift:        redshift value of source, i.e. 2.3
     source.flux:            source flux/magnitude with units, available units are mag(AB), mag(vega), mag(ST), Jy, flam, photlam
     source.wavelength_band: name of wavelength band, possible values are ...
     source.width:           width of emission line, i.e. 200nm
-    source.temperature:     temperature of blackbody source, available units are K and deg_C
+    source.temperature:     temperature of blackbody source, available units are Kelvin, Celsius, Fahrenheit, and Rankine
     source.index:           index of power law source type, i.e. -1.0
     atmosphere.seeing:      seeing with units, available units are arcsec, arcmin
     atmosphere.airmass:     airmass, must be between 1.0 and 2.0 inclusive
