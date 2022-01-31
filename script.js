@@ -14,11 +14,18 @@ const convertUnits = (value, unitFrom, unitTo, wavelength) => {
         length: {
             'angstrom': 10**-10,
             'nm': 10**-9,
+            'nanometer': 10**-9,
             'um': 10**-6,
+            'micrometer': 10**-6,
+            'micron': 10**-6,
             'mm': 10**-3,
+            'millimeter': 10**-3,
             'cm': 10**-2,
+            'centimeter': 10**-2,
             'm': 1,
-            'km': 10**3
+            'meter': 1,
+            'km': 10**3,
+            'kilometer': 10**3
         },
         angle: {
             'marcsec': 10**-3,
@@ -187,8 +194,8 @@ const createPlots = (source, vsSource) => {
         source: source, 
         legend_label: ''
     });
-    wavelengthPlot.toolbar.tools.at(-1).tooltips = [['S/N', '$y{0.0}'], ['λ (nm)', '$x{0}']];
-    wavelengthPlot.xaxis[0].axis_label = 'Wavelength (nm)';
+    wavelengthPlot.toolbar.tools.at(-1).tooltips = [['S/N', '$y{0.0}'], ['λ (\u03bcm)', '$x{0.00}']];
+    wavelengthPlot.xaxis[0].axis_label = 'Wavelength (\u03bcm)';
     wavelengthPlot.yaxis[0].axis_label = 'Signal to Noise Ratio';
     scatter.visible = false;  // Initially start hidden
     wavelengthPlot.output_backend = 'svg';
@@ -216,8 +223,8 @@ const createPlots = (source, vsSource) => {
     countsPlot.line({field: 'wavelengths'}, {field: 'read_noise_count_adu'}, { source: source, legend_label: 'Read Noise', line_color: '#CC79A7' });
     countsPlot.line({field: 'wavelengths'}, {field: 'dark_current_count_adu'}, { source: source, legend_label: 'Dark Current', line_color: '#000000' });
     countsPlot.line({field: 'wavelengths'}, {field: 'nonlinear_depth_adu'}, { source: source, legend_label: 'Non-linearity', line_color: '#D55E00', line_dash: 'dashed' });
-    countsPlot.toolbar.tools.at(-1).tooltips = [['Count (ADU/px)', '$y{0}'], ['λ (nm)', '$x{0}']];
-    countsPlot.xaxis[0].axis_label = 'wavelengths (nm)';
+    countsPlot.toolbar.tools.at(-1).tooltips = [['Count (ADU/px)', '$y{0}'], ['Wavelength (\u03bcm)', '$x{0.00}']];
+    countsPlot.xaxis[0].axis_label = 'Wavelength (\u03bcm)';
     countsPlot.yaxis[0].axis_label = 'Counts (ADU/px)';
     countsPlot.legend.label_height = 10;
     countsPlot.legend.label_width = 10;
@@ -233,7 +240,7 @@ const createPlots = (source, vsSource) => {
 
     // Define third plot, exp vs. snr
     const vsPlot = new Bokeh.Plotting.figure({
-        title: 'Wavelength: ',
+        title: 'Wavelength: 0.00 \u03bcm',
         plot_width: 450,
         plot_height: 100,
         min_width: 250,
@@ -274,7 +281,7 @@ const createPlots = (source, vsSource) => {
 
     Bokeh.Plotting.show(grid, '#output-plots');
 
-    return {resPanelWavelength: resPanelWavelength, vsPlotWavelength: vsPlotWavelength, wavelengthPlot: wavelengthPlot, vsPlot: vsPlot};
+    return {resPanelWavelength: resPanelWavelength, vsPlotWavelength: vsPlotWavelength, wavelengthPlot: wavelengthPlot, vsPlot: vsPlot, countsPlot: countsPlot};
 
 }
 
@@ -348,14 +355,27 @@ const updateDataSource = (source, data) => {
         }
     }
 
-    // Convert wavelengths from angstrom to nm
-    if (data.wavelengths) {
-        data.wavelengths = data.wavelengths.map( x => x/10 );
-    }
+    // Update wavelength unit in results and convert wavelengths to proper unit
+    if (data.wavelengths) data.wavelengths = setWavelengthUnit(data.wavelengths);
 
     // Update ColumnDataSource
     source.data = data;
     source.change.emit();
+}
+
+const nonlinearityWarning = () => {
+    for(let i = 0; i < source.data.wavelengths.length; i++) {
+        if (
+            source.data.dark_current_count_adu[i] +
+            source.data.source_count_adu[i] +
+            source.data.background_count_adu[i] +
+            source.data.read_noise_count_adu[i] >=
+            source.data.nonlinear_depth_adu[i]
+        ) {
+            alert('Warning: detector nonlinearity threshold exceeded. See counts plot for more details.');
+            break;
+        }
+    }
 }
 
 const updateResults = () => {
@@ -380,7 +400,7 @@ const updateResults = () => {
 const updateVSPlot = () => {
     // Get wavelength and set corresponding title
     const wavelength = vsPlotWavelength.location;
-    vsPlot.title.text = 'Wavelength: ' + wavelength.toFixed(0) + 'nm';
+    vsPlot.title.text = 'Wavelength: ' + wavelength.toPrecision(4) + ' ' + wavelengthUnit.name;
     // Update data for vs. plot
     apiRequest(getQuery(true), getParameters(true)).then( data => {
         // If API request returned errors, format and throw accordingly
@@ -484,9 +504,14 @@ const updateUI = (parameters, instrumentChanged) => {
 
     // Update first plot according to target
     const target = document.querySelector('#target').value;
+    // Define precision for plot tooltips
+    let precision = '0';
+    if (wavelengthUnit.value === 'micron') {
+        precision = '0.00';
+    }
     if (target === 'exposure') {
         wavelengthPlot.renderers[0].glyph.y = {field: 'exposure'};
-        wavelengthPlot.toolbar.tools.at(-1).tooltips = [['Exp (s)', '$y{0}'], ['\u03bb (nm)', '$x{0}']];
+        wavelengthPlot.toolbar.tools.at(-1).tooltips = [['Exp (s)', '$y{0}'], ['\u03bb (' + wavelengthUnit.name + ')', '$x{' + precision + '}']];
         wavelengthPlot.yaxis[0].axis_label = 'Exposure (s)';
         wavelengthPlot.title.text = 'Exposure';
         wavelengthPlot.renderers[0].visible = true;
@@ -498,7 +523,7 @@ const updateUI = (parameters, instrumentChanged) => {
         wavelengthPlot.reset.emit();
     } else if (target === 'signal_noise_ratio') {
         wavelengthPlot.renderers[0].glyph.y = {field: 'signal_noise_ratio'};
-        wavelengthPlot.toolbar.tools.at(-1).tooltips = [['S/N', '$y{0.0}'], ['\u03bb (nm)', '$x{0}']];
+        wavelengthPlot.toolbar.tools.at(-1).tooltips = [['S/N', '$y{0.0}'], ['\u03bb (' + wavelengthUnit.name + ')', '$x{' + precision + '}']];
         wavelengthPlot.yaxis[0].axis_label = 'SNR';
         wavelengthPlot.title.text = 'Signal to Noise Ratio';
         wavelengthPlot.renderers[0].visible = false;
@@ -563,6 +588,8 @@ const update = (reset, load, instrumentChanged) => {
             updateVSPlot();
             // Done updating document, remove loading symbols
             document.querySelectorAll('.panel.output.loading').forEach(el => el.classList.remove('loading'));
+            // If counts exceed nonlinearity threshold, trigger warning
+            nonlinearityWarning(data);
         }
     // On error, display to user
     }).catch( error => {
@@ -649,7 +676,7 @@ const getParameters = isForVSPlot => {
         }
     } else {
         // For vs. plot, specify wavelength
-        parameters.wavelengths = [vsPlotWavelength.location+'nm']
+        parameters.wavelengths = [vsPlotWavelength.location + wavelengthUnit.value];
     }
     return parameters;
 }
@@ -668,11 +695,60 @@ const setInstrument = name => {
     
 }
 
+const setWavelengthUnit = wavelengths => {
+    // If instrument is IR, use micrometers
+    let unit = { value: 'micron', name: '\u03bcm' }
+    // If instrument is optical, use angstroms
+    if (wavelengths[0] <= 6000) {
+        unit = { value: 'angstrom', name: '\u212b' }
+    }
+
+    // If the unit has changed, update plots and results appropriately
+    if (unit.value !== wavelengthUnit.value) {
+
+        // Define precision for plot tooltips
+        let precision = '0';
+        if (unit.value === 'micron') {
+            precision = '0.00';
+        }
+
+        // Set unit for results panel
+        document.querySelector('#output-wavelengths').unit = unit.name;
+        // Set unit for wavelength plot
+        wavelengthPlot.xaxis[0].axis_label = 'Wavelength (' + unit.name + ')';
+        wavelengthPlot.toolbar.tools.at(-1).tooltips = [
+            wavelengthPlot.toolbar.tools.at(-1).tooltips[0], 
+            ['\u03bb (' + unit.name + ')', '$x{' + precision + '}']
+        ];
+        // Set unit for counts plot
+        countsPlot.xaxis[0].axis_label = 'Wavelength (' + unit.name + ')';
+        countsPlot.toolbar.tools.at(-1).tooltips = [
+            countsPlot.toolbar.tools.at(-1).tooltips[0], 
+            ['Wavelength (' + unit.name + ')', '$x{' + precision + '}']
+        ];
+        
+        // Convert unit for plot wavelength markers
+        vsPlotWavelength.location = convertUnits(vsPlotWavelength.location, wavelengthUnit.value, unit.value);
+        resPanelWavelength.location = convertUnits(resPanelWavelength.location, wavelengthUnit.value, unit.value);
+
+        // Save unit changes to greater scope
+        wavelengthUnit = unit;
+    }
+
+    // Convert data to proper unit
+    wavelengths = wavelengths.map( x => convertUnits(x, 'angstrom', unit.value) );
+    return wavelengths;
+    
+}
+
 
 // Called when page loads
 const setup = async () => {
     // Get data for flux of vega from async call
     vegaFlux = await vegaFlux;
+
+    // Initialize wavelength unit to use in plots and results
+    wavelengthUnit = { value: 'micron', name: '\u03bcm' };
 
     // Define instrument-menu click behavior
     document.querySelectorAll('.instrument-menu .instrument').forEach( 
@@ -732,7 +808,7 @@ const setup = async () => {
     // Define ColumnDataSource
     ({source, vsSource} = createDataSources());
     // Define output plots
-    ({resPanelWavelength, vsPlotWavelength, wavelengthPlot, vsPlot} = createPlots(source, vsSource));
+    ({resPanelWavelength, vsPlotWavelength, wavelengthPlot, vsPlot, countsPlot} = createPlots(source, vsSource));
     // Update inputs and outputs with values from API
     update(false, true); // TODO -- read cookie value for settings, only reset from button
 
@@ -819,7 +895,7 @@ const setup = async () => {
                 }
                 lines.push(row.join(','));
             }
-            return lines.join('\\n').concat('\\n');
+            return lines.join('\n').concat('\n');
         }
         
         const filename = 'etc_results.csv';
@@ -842,14 +918,12 @@ const setup = async () => {
 
 };
 
-
+// For production, avoid filling console with warnings whenever empty plot is generated
 Bokeh.set_log_level('error');
 
+// Once content is loaded, call setup function to initialize page functionality
 window.addEventListener('DOMContentLoaded', setup);
 
-// Resize event on page load to fix formatting bug when loading content into cache
-//window.addEventListener('load', () => window.dispatchEvent(new Event('resize')));
-
-// For incorporation into iframe, dispatch resize events when height changes
+// For incorporation into iframe, dispatch resize events when page width or height changes
 const resizeObserver = new ResizeObserver(() => window.dispatchEvent(new Event('resize')));
 resizeObserver.observe(document.querySelector('html'));

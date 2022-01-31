@@ -104,12 +104,14 @@ After making any changes, such as editing configuration files or source template
 ```
 $   ./etc-validate
 
+Inspecting calculator/instruments/new_instrument/instrument_config.yaml
 Error: missing required value dark_current for spectroscopic mode in file calculator/instruments/new_instrument/instrument_config.yaml
 
 $   nano calculator/instruments/new_instrument/instrument_config.yaml
 
 $   ./etc-validate
 
+Inspecting calculator/instruments/new_instrument/instrument_config.yaml
 No configuration problems discovered
 ```
 
