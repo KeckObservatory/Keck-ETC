@@ -16,25 +16,25 @@ LICENSE file in the root directory of this source tree.
         
         <title>WMKO ETC</title>
 
-        <link rel='icon' type='image/x-icon' href='static/favicon.ico'>
-        <link rel='stylesheet' href='styles.css'>
+        <link rel='icon' type='image/x-icon' href='src/static/favicon.ico'>
+        <link rel='stylesheet' href='src/styles.css'>
 
         <!-- Custom element definitions -->
-        <script type='text/javascript' src='modules/input-label.js'></script>
-        <script type='text/javascript' src='modules/input-spin.js'></script>
-        <script type='text/javascript' src='modules/input-select.js'></script>
-        <script type='text/javascript' src='modules/input-slider.js'></script>
-        <script type='text/javascript' src='modules/input-file.js'></script>
-        <script type='text/javascript' src='modules/output-number.js'></script>
-        <script type='text/javascript' src='modules/cookie-message.js'></script>
+        <script type='text/javascript' src='src/modules/input-label.js'></script>
+        <script type='text/javascript' src='src/modules/input-spin.js'></script>
+        <script type='text/javascript' src='src/modules/input-select.js'></script>
+        <script type='text/javascript' src='src/modules/input-slider.js'></script>
+        <script type='text/javascript' src='src/modules/input-file.js'></script>
+        <script type='text/javascript' src='src/modules/output-number.js'></script>
+        <script type='text/javascript' src='src/modules/cookie-message.js'></script>
 
-        <!-- Import Bokeh js -->
-        <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-2.4.2.min.js" crossorigin="anonymous"></script>
-        <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-gl-2.4.2.min.js" crossorigin="anonymous"></script>
-        <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-api-2.4.2.min.js" crossorigin="anonymous"></script>
+        <!-- Import Bokeh -->
+        <script type='text/javascript' src='src/imports/bokeh-2.4.2.min.js'></script>
+        <script type='text/javascript' src='src/imports/bokeh-gl-2.4.2.min.js'></script>
+        <script type='text/javascript' src='src/imports/bokeh-api-2.4.2.min.js'></script>
 
         <!-- Main javascript code for app functionality -->
-        <script type='text/javascript' src='script.js'></script>
+        <script type='text/javascript' src='src/script.js'></script>
 
     </head>
 
@@ -121,7 +121,7 @@ LICENSE file in the root directory of this source tree.
                             </div>
 
                             <div class='input-row'>
-                                <input-spin id=redshift>Redshift</input-spin>
+                                <input-spin id=redshift min=0>Redshift</input-spin>
                             </div>
 
                             <div class='input-row'>
@@ -176,18 +176,12 @@ LICENSE file in the root directory of this source tree.
 
                             <div class='input-row'>
                                 <input-select label='Dichroic' id=dichroic></input-select>
+                                <input-select label='Grism' id=grism></input-select>
                             </div>
 
                             <div class='input-row'>
                                 <input-select label='Grating' id=grating></input-select>
-                            </div>
-
-                            <div class='input-row'>
                                 <input-select label='Filter' id=filter></input-select>
-                            </div>
-
-                            <div class='input-row'>
-                                <input-select label='Grism' id=grism></input-select>
                             </div>
 
                             <div class='input-row'>
@@ -222,7 +216,7 @@ LICENSE file in the root directory of this source tree.
                     <div class="row">
                         <div class='panel output loading' id='output-plots'>
                         <div class=loading-overlay>
-                            <img src=static/loading_symbol.svg alt='loading symbol'>
+                            <img src=src/static/loading_symbol.svg alt='loading symbol'>
                         </div>
                         </div>
                     </div>
@@ -231,7 +225,7 @@ LICENSE file in the root directory of this source tree.
                 <div class='sidebar'>
                     <div class='panel output loading'>
                         <div class=loading-overlay>
-                            <img src=static/loading_symbol.svg alt='loading symbol'>
+                            <img src=src/static/loading_symbol.svg alt='loading symbol'>
                         </div>
                         <div class='sticky-container'>
                             <div class='section-title'>Results</div>

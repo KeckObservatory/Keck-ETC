@@ -7,6 +7,7 @@ Plots:
 - Explanation of bokeh plotting tools
 - Hover to change results panel on right side
 - Click to set wavelength for third plot
+- Click on legend to hide/show lines
 
 Source:
 -

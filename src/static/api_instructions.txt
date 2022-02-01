@@ -14,6 +14,7 @@ AVAILABLE RETURN OPTIONS:
     background_count_adu:   sky background detector counts, in ADU per pixel
     read_noise_count_adu:   read noise detector counts, in ADU per pixel
     dark_current_count_adu: dark current detector counts, in ADU per pixel
+    total_count_adu:        sum of source, background, read noise, and dark current counts, in ADU per pixel
     total_integraion_time:  list of integration times corresponding to exposures, but taking into account dithers, coadds, etc.
     nonlinear_depth_adu:    nonlinear depth of detector, in ADU per pixel
     parameters:             JSON object detailing all parameters of the ETC, including units and alternative options

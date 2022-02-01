@@ -6,7 +6,7 @@
 
 
 // load JSON file to get vega flux
-let vegaFlux = fetch('static/vega_flux.json').then( res => res.json() ).catch(error => console.log(error));
+let vegaFlux = fetch('src/static/vega_flux.json').then( res => res.json() ).catch(error => console.log(error));
 // Method to convert between units, wavelength in Angstrom required for flux density conversions
 const convertUnits = (value, unitFrom, unitTo, wavelength) => {
     // Available units, divided into types
@@ -181,6 +181,7 @@ const createPlots = (source, vsSource) => {
         plot_width: 450,
         plot_height: 100,
         min_width: 250,
+        min_height: 100,
         sizing_mode: 'scale_width',
         tools: 'pan, box_zoom, zoom_in, zoom_out, wheel_zoom, undo, redo, reset, save, help, hover'
     });
@@ -215,12 +216,14 @@ const createPlots = (source, vsSource) => {
         plot_width: 450,
         plot_height: 100,
         min_width: 250,
+        min_height: 100,
         sizing_mode: 'scale_width',
         tools: 'pan, box_zoom, zoom_in, zoom_out, wheel_zoom, undo, redo, reset, save, help, hover'
     });
+    countsPlot.line({field: 'wavelengths'}, {field: 'total_count_adu'}, {source: source, legend_label: 'Total', line_color: '#CC79A7'});
     countsPlot.line({field: 'wavelengths'}, {field: 'source_count_adu'}, { source: source, legend_label: 'Source', line_color: '#009E73' });
     countsPlot.line({field: 'wavelengths'}, {field: 'background_count_adu'}, { source: source, legend_label: 'Background', line_color: '#0072B2' });
-    countsPlot.line({field: 'wavelengths'}, {field: 'read_noise_count_adu'}, { source: source, legend_label: 'Read Noise', line_color: '#CC79A7' });
+    countsPlot.line({field: 'wavelengths'}, {field: 'read_noise_count_adu'}, { source: source, legend_label: 'Read Noise', line_color: '#E69F00' });
     countsPlot.line({field: 'wavelengths'}, {field: 'dark_current_count_adu'}, { source: source, legend_label: 'Dark Current', line_color: '#000000' });
     countsPlot.line({field: 'wavelengths'}, {field: 'nonlinear_depth_adu'}, { source: source, legend_label: 'Non-linearity', line_color: '#D55E00', line_dash: 'dashed' });
     countsPlot.toolbar.tools.at(-1).tooltips = [['Count (ADU/px)', '$y{0}'], ['Wavelength (\u03bcm)', '$x{0.00}']];
@@ -244,12 +247,13 @@ const createPlots = (source, vsSource) => {
         plot_width: 450,
         plot_height: 100,
         min_width: 250,
+        min_height: 100,
         sizing_mode: 'scale_width',
         tools: 'pan, box_zoom, zoom_in, zoom_out, wheel_zoom, undo, redo, reset, save, help, hover'
     });
     vsPlot.line({field: 'exposure'}, {field: 'signal_noise_ratio'}, { source: vsSource });
     vsPlot.image_url({
-        url: 'static/plot_instructions.svg',
+        url: 'src/static/plot_instructions.svg',
         x: 0, y: 0, w: 10, h: 1,
         anchor: 'center'
     });
@@ -266,6 +270,10 @@ const createPlots = (source, vsSource) => {
             wavelengthPlot.height = 200;
             countsPlot.height = 200;
             vsPlot.height = 200;
+        } else {
+            wavelengthPlot.height = 100;
+            countsPlot.height = 100;
+            vsPlot.height = 100;
         }
     })
 
@@ -278,6 +286,7 @@ const createPlots = (source, vsSource) => {
         height: 100,
         sizing_mode: 'scale_width'
     });
+    grid.children[0].toolbar.logo = null;
 
     Bokeh.Plotting.show(grid, '#output-plots');
 
@@ -326,6 +335,7 @@ const createDataSources = () => {
         'background_count_adu': [],
         'read_noise_count_adu': [],
         'dark_current_count_adu': [],
+        'total_count_adu': [],
         'signal_noise_ratio': [],
         'nonlinear_depth_adu': [],
         'clock_time': [],
@@ -384,15 +394,11 @@ const updateResults = () => {
     // Set up interpolation
     const idx = source.data['wavelengths'].indexOf( source.data['wavelengths'].filter( x => x <= wavelength ).at(-1) );
     const ratio = (wavelength - source.data['wavelengths'][idx]) / (source.data['wavelengths'][idx+1] - source.data['wavelengths'][idx]);
-    // Loop through results and update
+    // Loop through results, interpolate and display
     for (const id of ['exposure', 'signal-noise-ratio','source-flux','wavelengths','clock-time','efficiency']) {
         const upper = source.data[id.replaceAll('-','_')][idx+1];
         const lower = source.data[id.replaceAll('-','_')][idx];
         document.querySelector('#output-'+id).value = lower + (upper - lower) * ratio;
-    }
-    // Convert units
-    if (document.querySelector('#output-wavelengths').unit === '\u00b5m') {
-        document.querySelector('#output-wavelengths').value /= 1000;
     }
 
 }
@@ -446,12 +452,13 @@ const updateUI = (parameters, instrumentChanged) => {
         const name = input.id.replaceAll('-','_');
         // If id is not parameter, parameter-unit, parameter-min, or parameter-max, then hide inactive element 
         if (!(name in parameters || name.replace('_unit','') in parameters || 
-            name.replace('_min','') in parameters || name.replace('_max','') in parameters))
+            name.replace('_min','') in parameters || name.replace('_max','') in parameters || 
+            name.replace('_width','') in parameters || name.replace('_length','') in parameters))
         {
-            input.parentElement.classList.remove('visible');
+            input.classList.remove('visible');
             
         } else if (name.startsWith('slit_') && String(document.querySelector('#slit').value).toLowerCase() !== 'custom') {
-            input.parentElement.classList.remove('visible');
+            input.classList.remove('visible');
         } else if (!name.endsWith('unit') && !name.endsWith('min') && !name.endsWith('max') && !name.endsWith('width') && !name.endsWith('length')) {
             // Otherwise, get value from parameters
             let value = parameters[name].value;
@@ -486,18 +493,34 @@ const updateUI = (parameters, instrumentChanged) => {
                 document.querySelector('#slit-width').value = value[0];
                 document.querySelector('#slit-length').value = value[1];
                 value = 'Custom';
+                document.querySelector('#slit-width').classList.add('visible');
+                document.querySelector('#slit-length').classList.add('visible');
             }
 
             // Set value
             input.value = value;
             guiInactive = false;
 
-            input.parentElement.classList.add('visible');
+            input.classList.add('visible');
         } else {
-            input.parentElement.classList.add('visible');
+            input.classList.add('visible');
         }
     });
-    document.querySelector('input-file').parentElement.classList.add('visible');
+    document.querySelector('input-file').classList.add('visible');
+
+    // Set input row visibility according to children
+    document.querySelectorAll('.input-row').forEach( row => {
+        // If any child is visible, set row to visible
+        const visible = [...row.children].reduce( (prev, curr) => 
+            [...curr.classList].includes('visible') ? true : prev, 
+        false);
+
+        if (visible) {
+            row.classList.add('visible');
+        } else {
+            row.classList.remove('visible');
+        }
+    });
 
     // Update instrument name
     setInstrument(parameters.name.value);
@@ -602,7 +625,7 @@ const update = (reset, load, instrumentChanged) => {
 const getQuery = (isForVSPlot) => {
     let query = 'return=[exposure,signal_noise_ratio'
     if (!isForVSPlot) {
-        query += ',source_count_adu,read_noise_count_adu,clock_time,' +
+        query += ',source_count_adu,read_noise_count_adu,total_count_adu,clock_time,' +
                 'wavelengths,background_count_adu,dark_current_count_adu,' +
                 'efficiency,source_flux,nonlinear_depth_adu,parameters';
     }
@@ -637,7 +660,7 @@ const getParameters = isForVSPlot => {
         const id = '#'+parameter.replaceAll('_','-');
         const element = document.querySelector(id);
 
-        if (!!element && element.parentElement.classList.contains('visible') && element.value){
+        if (!!element && element.classList.contains('visible') && element.value){
 
             const unit = !!document.querySelector(id+'-unit') ? document.querySelector(id+'-unit').value : '';
 
@@ -779,7 +802,7 @@ const setup = async () => {
     });
 
     // Read in mouseover text file
-    fetch('static/mouseover_text.json').then(response => 
+    fetch('src/static/mouseover_text.json').then(response => 
         response.json() ).then( data => { 
             // Add tooltips to appropriate elements based on file
             for (const [name, text] of Object.entries(data)) {
@@ -791,7 +814,7 @@ const setup = async () => {
         }).catch(error => console.log(error));
 
     // Read in instructions text file
-    fetch('static/gui_instructions.txt').then(response =>
+    fetch('src/static/gui_instructions.txt').then(response =>
         response.text() ).then( text => {
             // Add paragraph element to instructions for line of text
             const instructions = document.getElementById('instructions');

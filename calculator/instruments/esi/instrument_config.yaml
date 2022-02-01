@@ -12,6 +12,8 @@ mode_options: ['echelle']  # Other modes I currently don't have throughput data 
 
 throughput_path: throughput
 
+exposure_options: [dithers, repeats, coadds, reads]  # Specifies whether or not these parameters should be available for this instrument
+
 # CONFIG FOR ECHELLE SPECTROSCOPY MODE
 echelle:
 

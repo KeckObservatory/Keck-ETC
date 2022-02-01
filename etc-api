@@ -216,9 +216,9 @@ if [ "$action" == "start" ] || [ "$action" == "restart" ]; then
     
     # Supress warnings by default, only output if user 
     if $warn; then
-        nohup python3 -u API.py $port &>>"$log" &
+        nohup python3 -u calculator/API.py $port &>>"$log" &
     else
-        nohup python3 -u -W ignore API.py $port &>>"$log" &
+        nohup python3 -u -W ignore calculator/API.py $port &>>"$log" &
     fi
     pid="$!"
 

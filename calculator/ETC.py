@@ -1,7 +1,7 @@
 from astropy import units as u
-from calculator.Instrument import instrument
-from calculator.Source import source
-from calculator.Atmosphere import atmosphere
+from Instrument import instrument
+from Source import source
+from Atmosphere import atmosphere
 import yaml
 from numpy import pi, linspace, zeros, array, arccos, sqrt, NaN
 from warnings import warn
@@ -127,7 +127,6 @@ class exposure_time_calculator:
             self.exposure = [(t / number_exposures) for t in self.integration_time] * u.s
 
             # Calculate and save counts based on calculated exposure = f(wavelength)
-            # TODO -- convert to list of lists instead of list, this will break for multiple snr!!!
             self.source_count_adu = [source_rate * self.instrument.pixel_size / source_size * exp * number_exposures / self.instrument.gain for exp in self.exposure] * (u.adu/u.pixel)
             self.background_count_adu = [background_rate / slit_size * self.instrument.pixel_size * exp * number_exposures / self.instrument.gain for exp in self.exposure] * (u.adu/u.pixel)
             self.dark_current_count_adu = [dark_current_rate / slit_size_pixels * exp * number_exposures / self.instrument.gain for exp in self.exposure] * (u.adu/u.pixel)
@@ -137,6 +136,8 @@ class exposure_time_calculator:
             # Check that etc has a valid target set
             raise ValueError('ERROR: In ETC -- target must be set to "exposure" or "signal_noise_ratio"')
 
+        # Save total counts
+        self.total_count_adu = self.source_count_adu + self.background_count_adu + self.dark_current_count_adu + self.read_noise_count_adu
         # Save clock time, efficiency
         self.clock_time = self.integration_time * NaN
         self.efficiency = self.integration_time / self.clock_time
@@ -302,7 +303,7 @@ class exposure_time_calculator:
                 else:
                     parameters[name] = { 'value': vars(obj)[name]}
                 
-                # Look for options in config
+                # Look for available options in config
                 options = None
                 if name+'_options' in vars(obj.config).keys():
                     options = vars(obj.config)[name+'_options']
@@ -322,7 +323,7 @@ class exposure_time_calculator:
             return parameters
 
         # Add self parameters
-        parameters = construct_parameters(self, ['dithers', 'reads', 'repeats', 'coadds'])
+        parameters = construct_parameters(self, self.instrument.config.exposure_options)
         parameters['target'] = {'value': self.target, 'options': [{'value':'signal_noise_ratio', 'name':'Signal to Noise Ratio'}, {'value':'exposure','name':'Exposure'}]}
         if self.target == 'signal_noise_ratio':
             parameters['exposure'] = {'value': self.exposure.value.tolist(), 'unit': str(self.exposure.unit)}

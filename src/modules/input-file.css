@@ -5,6 +5,7 @@
     justify-content: center;
     display: flex;
     cursor: pointer;
+    box-sizing: border-box;
 }
 
 .dropbox:hover, .dropbox.hover {

@@ -13,6 +13,7 @@ mode_options: [spectroscopic]
 
 throughput_path: throughput  # Relative path to throughput file directory
 
+exposure_options: [dithers, repeats, coadds, reads]  # Specifies whether or not these parameters should be available for this instrument
 
 spectroscopic:
 

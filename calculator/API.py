@@ -8,7 +8,7 @@
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse
-from calculator.ETC import exposure_time_calculator
+from ETC import exposure_time_calculator
 import json
 from re import sub  # Processing regular expressions
 from base64 import b64decode
@@ -133,7 +133,7 @@ class APIServer(BaseHTTPRequestHandler):
             self.wfile.write(bytes(json.dumps(response, ensure_ascii=False), 'utf-8'))
 
     def do_POST(self):
-        with open('static/api_instructions.txt', 'r') as file:
+        with open('src/static/api_instructions.txt', 'r') as file:
             self.usage = text2html(file.read())
 
         try:
@@ -148,7 +148,7 @@ class APIServer(BaseHTTPRequestHandler):
         etc.reset_parameters()
 
     def do_GET(self):
-        with open('static/api_instructions.txt', 'r') as file:
+        with open('src/static/api_instructions.txt', 'r') as file:
             self.usage = text2html(file.read())
 
         try:
