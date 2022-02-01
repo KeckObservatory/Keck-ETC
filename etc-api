@@ -84,8 +84,21 @@ if ! [[ $port =~ ^[0-9]+$ ]]; then
     exit -1
 fi
 if [[ ! -f "$log" ]]; then
-    echo "Error: log file $log does not exist" >&2
-    exit -1
+    # If log file DNE, give user option to create it
+    echo "Log file $log does not exist and will be created. Continue? Y/n"
+    input='placeholder'
+    while [ "${input,,}" != "y" ] && [ "${input,,}" != "n" ] && [ "${input,,}" != "" ]; do
+        read input
+    done
+
+    # Exit program if user doesn't want to create file
+    if [ "${input,,}" == "n" ]; then
+        exit 0
+    fi
+
+    # Otherwise, recursively create directories (if necessary) and place file inside
+    touch "$log" 2>/dev/null || mkdir -p "${log%/*}" && touch "$log"
+
 fi
 
 
