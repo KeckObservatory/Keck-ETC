@@ -32,7 +32,7 @@ spectroscopic:
   grating_options: ['600ZD', '830G', '900ZD', '1200G', '1200B']  # Imaging mode replaces grating w/ mirror, how does this affect throughput? Should I set grating: None for imaging?
 
   # filter options
-  filter_options: ['GG400', 'GG455', 'OG550']
+  filter_options: ['GG400', 'GG455', 'GG495', 'OG550']
 
   grism_options: []
 

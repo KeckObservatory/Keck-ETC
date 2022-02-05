@@ -523,7 +523,9 @@ const updateUI = (parameters, instrumentChanged) => {
     });
 
     // Update instrument name
-    setInstrument(parameters.name.value);
+    guiInactive = true;
+    document.querySelector('instrument-menu').value = parameters.name.value;
+    guiInactive=  false;
 
     // Update first plot according to target
     const target = document.querySelector('#target').value;
@@ -588,7 +590,7 @@ const update = (reset, load, instrumentChanged) => {
         document.querySelector('#file-upload').removeAttribute('file');
     } else if (instrumentChanged) {
         // TODO -- don't reset atmosphere, exposure, source parameters while changing instrument
-        parameters.name = document.querySelector('.instrument.selected').id.toUpperCase();
+        parameters.name = document.querySelector('instrument-menu').value.toUpperCase();
     } else {
         // Get parameters from GUI
         parameters = getParameters(false);
@@ -612,7 +614,8 @@ const update = (reset, load, instrumentChanged) => {
             // Done updating document, remove loading symbols
             document.querySelectorAll('.panel.output.loading').forEach(el => el.classList.remove('loading'));
             // If counts exceed nonlinearity threshold, trigger warning
-            nonlinearityWarning(data);
+            // TODO -- get Sherry's input on this
+            //nonlinearityWarning(data);
         }
     // On error, display to user
     }).catch( error => {
@@ -641,7 +644,10 @@ const getParameters = isForVSPlot => {
         'water_vapor', 'target' // Target is last because it resets snr/exp to default
     ];
     // Set instrument name first so that all instrument-specific parameters will be applied
-    const parameters = { name: document.querySelector('.instrument.selected').id.toUpperCase() };
+    const parameters = {};
+    if (document.querySelector('instrument-menu').value) {
+        parameters.name = document.querySelector('instrument-menu').value.toUpperCase();
+    }
     
     // If custom source SED uploaded, add to query
     const customSource = document.querySelector('#file-upload').file;
@@ -704,20 +710,6 @@ const getParameters = isForVSPlot => {
     return parameters;
 }
 
-const setInstrument = name => {
-    // For now, instead of proper behavior, display unavailability alert
-    if (['nirc2', 'kcwi', 'osiris', 'hires'].includes(String(name).toLowerCase())){
-        alert('This instrument has not yet been added to the ETC');
-    } else {
-        const element = document.querySelector('.instrument#' + String(name).toLowerCase());
-        if (element) {
-            document.querySelectorAll('.instrument').forEach( (el) => el.classList.remove('selected'));
-            element.classList.add('selected');
-        }
-    }
-    
-}
-
 const setWavelengthUnit = wavelengths => {
     // If instrument is IR, use micrometers
     let unit = { value: 'micron', name: '\u03bcm' }
@@ -774,12 +766,11 @@ const setup = async () => {
     wavelengthUnit = { value: 'micron', name: '\u03bcm' };
 
     // Define instrument-menu click behavior
-    document.querySelectorAll('.instrument-menu .instrument').forEach( 
-        element => element.addEventListener('click', () => {
-            setInstrument(element.id);
-            if (!guiInactive) update( false, false, true );
-        })
-    );
+    document.querySelector('instrument-menu').addEventListener('change', () => {
+        if (!guiInactive) {
+            update(false, false, true)
+        }
+    });
 
     // Define reset button click handling
     document.querySelector('button#reset').addEventListener('click', () => {

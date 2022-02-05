@@ -109,6 +109,12 @@ class instrument:
         self.slit_options = [ [u.Quantity(x) for x in y] * u.arcsec for y in config.slit_options] * u.arcsec
 
     def set_name(self, name):
+        # Throw error if name is not valid
+        try:
+            listdir('calculator/instruments/'+name)
+        except:
+            raise ValueError('Error: In instrument.set_parameter() -- instrument '+name+' is not a valid option')
+
         self.__dict__ = {}  # clear parameters from previous instrument
         config_filepath = 'calculator/instruments/'+name+'/instrument_config.yaml'
         self._mount_config(config_filepath)

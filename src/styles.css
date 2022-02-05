@@ -64,7 +64,7 @@ html {
   color: #333;
   background: #fff;
   border: 1px solid #ccc;
-  z-index: 1;
+  z-index: 2;
   box-shadow: 1px 1px 5px 0 #000;
   font-weight: bold;
   font-size: x-large;
@@ -200,48 +200,10 @@ div.title-bar {
   border-bottom: 1px solid #e6e6e6;
   margin: 1vw 0;
 }
-.instrument-menu {
-  display: flex;
-  flex-direction: row;
-  -webkit-flex-direction: row;
-  align-self: flex-end;
-}
-.instrument-menu .instrument {
-  font-size: large;
-  font-weight: bold;
-  border-radius: 4px 4px 0 0;
-  padding: 0.5vw;
-  white-space: nowrap;
-  cursor: pointer;
-  color: #666666;
-  border: 1px solid transparent;
-  border-top-width: 3px;
-  border-bottom-width: 0;
-  box-sizing: border-box;
-  /* transition property for animation on selection? */
-}
-.instrument-menu .instrument:hover {
-  background-color: #f2f2f2;
-}
-.instrument-menu .instrument.selected {
-  color: #4d4d4d;
-  background-color: white;
-  border-color: #e6e6e6;
-}
 
 
 /* For mobile & vertical tablets */
 @media (max-width: 900px) {
-
-  /* Limit width of instrument menu */
-  .instrument-menu {
-    flex-grow: 1;
-    overflow-x: scroll;
-    margin-right: 10px;
-  }
-  .instrument-menu .instrument {
-    padding: 1vw;
-  }
 
   /* Stack panels instead of keeping side-by-side layout*/
   .row {
@@ -250,14 +212,21 @@ div.title-bar {
   .main, .sidebar {
     margin: 0;
   }
-  .panel, .input_panels .panel, .panel.first, .panel.last, .title-bar {
+  .panel, .input_panels .panel, .panel.first, .panel.last {
     display: block;
     width: 100%;
     margin: 10px auto;
+    padding: 2vw 1vw;
     min-height: 0;
     transition: all 0.5s;
     -webkit-transition: all 0.5s;
     -moz-transition: all 0.5s;
+  }
+  .input-row {
+    margin: 2vw 0;
+  }
+  input-spin, input-select, input-slider, input-file, .section-title {
+    margin: 0 1vw;
   }
 
   /* If panel is closed, don't display loading symbol */
@@ -293,7 +262,7 @@ div.title-bar {
   }
   .panel.open .section-title {
     border-bottom: 1px solid #ccc;
-    margin: 0 0.5vw 1vw;
+    margin: 0 1vw 1vw;
   }
   .section-title {
     border: none;
@@ -317,6 +286,24 @@ div.title-bar {
   /* Display scroll-to-top button */
   .scroll-to-top {
     display: block;
+  }
+
+  /* Fixed header */
+  div.title-bar {
+    background-color: #fff;
+    position: sticky;
+    position: -webkit-stikcy;
+    width: 100%;
+    margin: 0;
+    box-sizing: content-box;
+    border-right: 1px solid #fff;
+    border-left: 1px solid #fff;
+    border-top: 1px solid #fff;
+    margin-top: -8px;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    padding: 1em 0;
   }
 
 }

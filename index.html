@@ -27,6 +27,7 @@ LICENSE file in the root directory of this source tree.
         <script type='text/javascript' src='src/modules/input-file.js'></script>
         <script type='text/javascript' src='src/modules/output-number.js'></script>
         <script type='text/javascript' src='src/modules/cookie-message.js'></script>
+        <script type='text/javascript' src='src/modules/instrument-menu.js'></script>
 
         <!-- Import Bokeh -->
         <script type='text/javascript' src='src/imports/bokeh-2.4.2.min.js'></script>
@@ -41,16 +42,16 @@ LICENSE file in the root directory of this source tree.
     <body>
         <section>
             <div class='title-bar'>
-                <div class="instrument-menu">
-                    <div class='instrument' id=lris>LRIS</div>
-                    <div class='instrument selected' id=nires>NIRES</div>
-                    <div class='instrument' id=deimos>DEIMOS</div>
-                    <div class='instrument' id=hires>HIRES</div>
-                    <div class='instrument' id=nirc2>NIRC2</div>
-                    <div class='instrument' id=kcwi>KCWI</div>
-                    <div class='instrument' id=esi>ESI</div>
-                    <div class='instrument' id=osiris>OSIRIS</div>
-                </div>
+                <instrument-menu>
+                    <option>LRIS</option>
+                    <option>NIRES</option>
+                    <option>DEIMOS</option>
+                    <option>HIRES</option>
+                    <option>NIRC2</option>
+                    <option>KCWI</option>
+                    <option>ESI</option>
+                    <option data-href='https://oirlab.ucsd.edu/osiris/etc/#w-m-keck-observatory-osiris-exposure-time-calculator'>OSIRIS</option>
+                </instrument-menu>
                 <button id='reset' type='button'>Reset Calculator</button>
             </div>
             
