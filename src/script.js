@@ -780,6 +780,7 @@ const setup = async () => {
     // Define mobile collapse / expand behavior
     document.querySelectorAll('div.section-title, div.loading-overlay').forEach( (el) => {
         el.addEventListener('click', () => {
+
             // Get anscestor panel
             const toggle = el.closest('div.panel');
 
@@ -789,6 +790,7 @@ const setup = async () => {
             } else {
                 toggle.classList.add('open');
             }
+
         });
     });
 

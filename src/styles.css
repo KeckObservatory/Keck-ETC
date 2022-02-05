@@ -258,7 +258,6 @@ div.title-bar {
     display: block;
     width: calc(100% - 1vw);
     margin: 1vw 0.5vw;
-    padding: 1vw;
   }
   .panel.open .section-title {
     border-bottom: 1px solid #ccc;
@@ -304,6 +303,12 @@ div.title-bar {
     left: 0;
     z-index: 2;
     padding: 1em 0;
+  }
+
+  /* Increased padding on buttons */
+  button#reset, button#download {
+    padding: 2vw;
+    font-size: medium;
   }
 
 }
