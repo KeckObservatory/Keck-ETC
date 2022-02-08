@@ -39,7 +39,7 @@ spectroscopic:
   dichroic_options: []
 
   # binning options [spatial, spectral]
-  binning_options: [ [1,1], [1,2], [2,1], [2,2] ]
+  binning_options: [ [1,1] ]
 
   # Slit available options
   slit_options: []  # No pre-set slit options available

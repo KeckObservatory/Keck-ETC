@@ -218,9 +218,11 @@ div.title-bar {
     margin: 10px auto;
     padding: 2vw 1vw;
     min-height: 0;
-    transition: all 0.5s;
-    -webkit-transition: all 0.5s;
-    -moz-transition: all 0.5s;
+    max-height: 100vh;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    -webkit-transition: max-height 0.3s ease;
+    -moz-transition: max-height 0.3s ease;
   }
   .input-row {
     margin: 2vw 0;

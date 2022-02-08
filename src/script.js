@@ -778,7 +778,10 @@ const setup = async () => {
     });
 
     // Define mobile collapse / expand behavior
-    document.querySelectorAll('div.section-title, div.loading-overlay').forEach( (el) => {
+    document.querySelectorAll('div.section-title').forEach( (el) => {
+        // Initialize max height to allow CSS animations
+        el.closest('div.panel').style.maxHeight = window.getComputedStyle(el.closest('div.panel')).height;
+
         el.addEventListener('click', () => {
 
             // Get anscestor panel
@@ -786,8 +789,13 @@ const setup = async () => {
 
             // On click, toggle css .open class
             if (toggle.classList.contains('open')) {
-                toggle.classList.remove('open');
+                const paddingTop = parseFloat(window.getComputedStyle(toggle).paddingTop);
+                const paddingBottom = parseFloat(window.getComputedStyle(toggle).paddingBottom);
+                const titleHeight = parseFloat(window.getComputedStyle(toggle.querySelector('.section-title')).height);
+                toggle.style.maxHeight = titleHeight + paddingTop + paddingBottom + 'px';
+                window.setTimeout( () => toggle.classList.remove('open'), 300);
             } else {
+                toggle.style.maxHeight = '100vh';
                 toggle.classList.add('open');
             }
 

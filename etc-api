@@ -263,6 +263,7 @@ if [ "$action" == "test" ]; then
 
     if ! command -v git &> /dev/null; then
         echo "Error verifying installation, git is not installed" >&2
+        echo "To test the validity of the ETC config, run ./etc-validate" >&2
         err=true
     fi
 
@@ -273,6 +274,7 @@ if [ "$action" == "test" ]; then
     elif [ "$status" != "" ]; then
         echo "Git has detected the following changes to your local files"
         echo "$status"
+        echo "Run ./etc-validate to test the validity of your changes"
         err=true
     fi
 
