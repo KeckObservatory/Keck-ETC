@@ -218,7 +218,7 @@ div.title-bar {
     margin: 10px auto;
     padding: 2vw 1vw;
     min-height: 0;
-    max-height: 100vh;
+    max-height: 999vh;
     overflow: hidden;
     transition: max-height 0.3s ease;
     -webkit-transition: max-height 0.3s ease;
