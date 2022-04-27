@@ -2,7 +2,7 @@
 // All rights reserved.
 
 // This source code is licensed under the BSD-style license found in the
-// LICENSE file in the root directory of this source tree. 
+// LICENSE file in the root directory of this source tree.
 
 
 // load JSON file to get vega flux
@@ -99,7 +99,7 @@ const convertUnits = (value, unitFrom, unitTo, wavelength) => {
     }
 
     // Get type of both units
-    const type = Object.keys(units).filter( type => 
+    const type = Object.keys(units).filter( type =>
         unitFrom.toLowerCase() in units[type] && unitTo.toLowerCase() in units[type]
     );
 
@@ -168,7 +168,7 @@ const createPlots = (source, vsSource) => {
         line_color: '#333',
         line_dash: 'solid'
     });
-    const callbacks = { 
+    const callbacks = {
         mousemove: [new Bokeh.CustomJS({ args: {w: resPanelWavelength}, code: 'w.location=cb_obj.x; updateResults()' })],
         tap: [new Bokeh.CustomJS({ args: {w: vsPlotWavelength}, code: 'w.location=cb_obj.x; updateVSPlot()' })]
     };
@@ -186,13 +186,13 @@ const createPlots = (source, vsSource) => {
         tools: 'pan, box_zoom, zoom_in, zoom_out, wheel_zoom, undo, redo, reset, save, help, hover'
     });
     const scatter = wavelengthPlot.scatter({field: 'wavelengths'}, {field: 'signal_noise_ratio'}, {
-        source: source, 
-        alpha: 0.5, 
-        size: 6, 
+        source: source,
+        alpha: 0.5,
+        size: 6,
         legend_label: '\u00A0'
     });
     const line = wavelengthPlot.line({field: 'wavelengths'}, {field: 'signal_noise_ratio'}, {
-        source: source, 
+        source: source,
         legend_label: ''
     });
     wavelengthPlot.toolbar.tools.at(-1).tooltips = [['S/N', '$y{0.0}'], ['λ (\u03bcm)', '$x{0.00}']];
@@ -314,9 +314,9 @@ const apiRequest = async (query, parameters) => {
             query += '&' + key + '=' + value;
         }
     }
-    
+
     // Send fetch request and return data
-    const request = await fetch('http://vm-internship:8080', {
+    const request = await fetch('http://localhost:8080', {
         method: 'POST',
         headers: {'Content-Type': 'text/plain'},
         body: query
@@ -328,7 +328,7 @@ const apiRequest = async (query, parameters) => {
 
 const createDataSources = () => {
     // Create sources, define with placeholder arrays
-    const source = new Bokeh.ColumnDataSource({ data: { 
+    const source = new Bokeh.ColumnDataSource({ data: {
         'wavelengths': [],
         'exposure': [],
         'source_count_adu': [],
@@ -410,7 +410,7 @@ const updateVSPlot = () => {
     // Update data for vs. plot
     apiRequest(getQuery(true), getParameters(true)).then( data => {
         // If API request returned errors, format and throw accordingly
-        if (Object.keys(data).includes('error')) { 
+        if (Object.keys(data).includes('error')) {
             data.error.then(errorMessage => alert( errorMessage.replaceAll('<br>','\n').replaceAll('&nbsp;',' ')));
             update(true); // Reset calculator
         } else {
@@ -441,7 +441,7 @@ const updateVSPlot = () => {
         vsPlot.xaxis[0].axis_label = 'Exposure (s)';
         vsPlot.yaxis[0].axis_label = 'SNR';
     }
-    
+
 
 }
 
@@ -450,13 +450,13 @@ const updateUI = (parameters, instrumentChanged) => {
     // Loop through all inputs in app
     document.querySelectorAll('input-select, input-spin, input-slider').forEach( input => {
         const name = input.id.replaceAll('-','_');
-        // If id is not parameter, parameter-unit, parameter-min, or parameter-max, then hide inactive element 
-        if (!(name in parameters || name.replace('_unit','') in parameters || 
-            name.replace('_min','') in parameters || name.replace('_max','') in parameters || 
+        // If id is not parameter, parameter-unit, parameter-min, or parameter-max, then hide inactive element
+        if (!(name in parameters || name.replace('_unit','') in parameters ||
+            name.replace('_min','') in parameters || name.replace('_max','') in parameters ||
             name.replace('_width','') in parameters || name.replace('_length','') in parameters))
         {
             input.classList.remove('visible');
-            
+
         } else if (name.startsWith('slit_') && String(document.querySelector('#slit').value).toLowerCase() !== 'custom') {
             input.classList.remove('visible');
         } else if (!name.endsWith('unit') && !name.endsWith('min') && !name.endsWith('max') && !name.endsWith('width') && !name.endsWith('length')) {
@@ -511,8 +511,8 @@ const updateUI = (parameters, instrumentChanged) => {
     // Set input row visibility according to children
     document.querySelectorAll('.input-row').forEach( row => {
         // If any child is visible, set row to visible
-        const visible = [...row.children].reduce( (prev, curr) => 
-            [...curr.classList].includes('visible') ? true : prev, 
+        const visible = [...row.children].reduce( (prev, curr) =>
+            [...curr.classList].includes('visible') ? true : prev,
         false);
 
         if (visible) {
@@ -541,7 +541,7 @@ const updateUI = (parameters, instrumentChanged) => {
         wavelengthPlot.title.text = 'Exposure';
         wavelengthPlot.renderers[0].visible = true;
         wavelengthPlot.renderers[1].visible = false;
-        wavelengthPlot.js_event_callbacks = { 
+        wavelengthPlot.js_event_callbacks = {
             ...wavelengthPlot.js_event_callbacks,
             reset: [new Bokeh.CustomJS({ code: 'resetExposurePlot();' })]
         };
@@ -553,9 +553,9 @@ const updateUI = (parameters, instrumentChanged) => {
         wavelengthPlot.title.text = 'Signal to Noise Ratio';
         wavelengthPlot.renderers[0].visible = false;
         wavelengthPlot.renderers[1].visible = true;
-        wavelengthPlot.js_event_callbacks = { 
+        wavelengthPlot.js_event_callbacks = {
             ...wavelengthPlot.js_event_callbacks,
-            reset: [] 
+            reset: []
         };
     }
 }
@@ -600,7 +600,7 @@ const update = (reset, load, instrumentChanged) => {
     // Get results from ETC, update ui and data
     apiRequest(getQuery(false), parameters).then( data => {
         // If API request returned errors, format and throw accordingly
-        if (Object.keys(data).includes('error')) { 
+        if (Object.keys(data).includes('error')) {
             data.error.then(errorMessage => alert( errorMessage.replaceAll('<br>','\n').replaceAll('&nbsp;',' ')));
             update(true); // Reset calculator
         } else {
@@ -622,7 +622,7 @@ const update = (reset, load, instrumentChanged) => {
         alert('Error:\n'+error);
         update(true); // Reset calculator
     });
-    
+
 }
 
 const getQuery = (isForVSPlot) => {
@@ -648,7 +648,7 @@ const getParameters = isForVSPlot => {
     if (document.querySelector('instrument-menu').value) {
         parameters.name = document.querySelector('instrument-menu').value.toUpperCase();
     }
-    
+
     // If custom source SED uploaded, add to query
     const customSource = document.querySelector('#file-upload').file;
 
@@ -677,13 +677,13 @@ const getParameters = isForVSPlot => {
                 const step = (stop - start) / (25-1); // Hard-coded value of 25 points
                 const list = Array(25).fill(start).map((x, i) => x + i * step);
                 parameters[parameter] = list.map(x => x+unit);
-            
+
             // For custom slit, get values from width and length inputs
             } else if (id==='#slit' && element.value === 'Custom') {
                 const width = document.querySelector('#slit-width').value;
                 const length = document.querySelector('#slit-length').value;
                 parameters[parameter] = width + unit + ',' + length + unit;
-            
+
             // Otherwise, get value from element
             } else {
                 parameters[parameter] = element.value + unit;
@@ -700,7 +700,7 @@ const getParameters = isForVSPlot => {
         document.cookie = 'etcparameters=' + parameterString + '; expires=' + exp_date.toUTCString() + '; SameSite=Strict;';
 
         // If base 64 encoded source type definition was present, save in local storage instead of as cookie (too big for cookie)
-        if (parameters['typeb64']) { 
+        if (parameters['typeb64']) {
             window.localStorage.setItem('etcTypeDefinition',parameters.typeb64);
         }
     } else {
@@ -732,16 +732,16 @@ const setWavelengthUnit = wavelengths => {
         // Set unit for wavelength plot
         wavelengthPlot.xaxis[0].axis_label = 'Wavelength (' + unit.name + ')';
         wavelengthPlot.toolbar.tools.at(-1).tooltips = [
-            wavelengthPlot.toolbar.tools.at(-1).tooltips[0], 
+            wavelengthPlot.toolbar.tools.at(-1).tooltips[0],
             ['\u03bb (' + unit.name + ')', '$x{' + precision + '}']
         ];
         // Set unit for counts plot
         countsPlot.xaxis[0].axis_label = 'Wavelength (' + unit.name + ')';
         countsPlot.toolbar.tools.at(-1).tooltips = [
-            countsPlot.toolbar.tools.at(-1).tooltips[0], 
+            countsPlot.toolbar.tools.at(-1).tooltips[0],
             ['Wavelength (' + unit.name + ')', '$x{' + precision + '}']
         ];
-        
+
         // Convert unit for plot wavelength markers
         vsPlotWavelength.location = convertUnits(vsPlotWavelength.location, wavelengthUnit.value, unit.value);
         resPanelWavelength.location = convertUnits(resPanelWavelength.location, wavelengthUnit.value, unit.value);
@@ -753,7 +753,7 @@ const setWavelengthUnit = wavelengths => {
     // Convert data to proper unit
     wavelengths = wavelengths.map( x => convertUnits(x, 'angstrom', unit.value) );
     return wavelengths;
-    
+
 }
 
 
@@ -803,8 +803,8 @@ const setup = async () => {
     });
 
     // Read in mouseover text file
-    fetch('src/static/mouseover_text.json').then(response => 
-        response.json() ).then( data => { 
+    fetch('src/static/mouseover_text.json').then(response =>
+        response.json() ).then( data => {
             // Add tooltips to appropriate elements based on file
             for (const [name, text] of Object.entries(data)) {
                 const el = document.getElementById(name);
@@ -921,11 +921,11 @@ const setup = async () => {
             }
             return lines.join('\n').concat('\n');
         }
-        
+
         const filename = 'etc_results.csv';
         const filetext = table_to_csv(source);
         const blob = new Blob([filetext], { type: 'text/csv;charset=utf-8;' });
-        
+
         //for IE
         if (navigator.msSaveBlob) {
             navigator.msSaveBlob(blob, filename);
