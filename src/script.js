@@ -316,7 +316,7 @@ const apiRequest = async (query, parameters) => {
     }
     
     // Send fetch request and return data
-    const request = await fetch('http://vm-internship:8080', {
+    const request = await fetch('http://localhost:8080', {
         method: 'POST',
         headers: {'Content-Type': 'text/plain'},
         body: query

@@ -221,7 +221,7 @@ if [ "$action" == "start" ] || [ "$action" == "restart" ]; then
     fi
     
     
-    if [ ! -z "$(netstat -na | grep $port | grep "LISTEN")" ] ; then
+    if [ ! -z "$(netstat -na 2>/dev/null | grep $port | grep "LISTEN")" ] ; then
         echo "Error: port $port is already in use" >&2
         exit -1
     fi

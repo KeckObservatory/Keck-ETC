@@ -129,6 +129,7 @@ class instrument:
         # More explicit aliases for slit
         self.slit_width = self.slit[0]
         self.slit_length = self.slit[1]
+        
         self.binning = u.Quantity(self.config.defaults.binning)
 
         self.set_mode(self.config.defaults.mode)
