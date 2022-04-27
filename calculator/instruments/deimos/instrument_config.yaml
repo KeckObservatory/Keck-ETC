@@ -38,7 +38,7 @@ spectroscopic:
 
   dichroic_options: []
 
-  # binning options [spatial, spectral]
+  # binning options [spatial, spectral] -- nobody uses binning on spectroscopy mode for deimos
   binning_options: [ [1,1] ]
 
   # Slit available options

@@ -4,7 +4,7 @@ defaults:
   type: vega
   flux: 18 mag(AB)
   wavelength_band: K
-  redshift: 2.0  # negative for blueshift
+  redshift: 0.0  # negative for blueshift
 
 source_types:
 

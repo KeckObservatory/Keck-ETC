@@ -779,24 +779,42 @@ const setup = async () => {
 
     // Define mobile collapse / expand behavior
     document.querySelectorAll('div.section-title').forEach( (el) => {
+
         // Initialize max height to allow CSS animations
-        el.closest('div.panel').style.maxHeight = window.getComputedStyle(el.closest('div.panel')).height;
+        if (window.innerWidth < 900) {
+            el.closest('div.panel').style.maxHeight = window.getComputedStyle(el.closest('div.panel')).height;
+        }
 
-        el.addEventListener('click', () => {
+        // Set resize callback to initialize max height for desktop/mobile changes
+        window.addEventListener('resize', event => {
+            if (!event.isTrusted) return; // Only allow window generated events, i.e. width changes
 
-            // Get anscestor panel
-            const toggle = el.closest('div.panel');
-
-            // On click, toggle css .open class
-            if (toggle.classList.contains('open')) {
-                const paddingTop = parseFloat(window.getComputedStyle(toggle).paddingTop);
-                const paddingBottom = parseFloat(window.getComputedStyle(toggle).paddingBottom);
-                const titleHeight = parseFloat(window.getComputedStyle(toggle.querySelector('.section-title')).height);
-                toggle.style.maxHeight = titleHeight + paddingTop + paddingBottom + 'px';
-                window.setTimeout( () => toggle.classList.remove('open'), 300);
+            if (window.innerWidth < 900) {
+                el.closest('div.panel').classList.remove('open');
+                el.closest('div.panel').style.maxHeight = window.getComputedStyle(el.closest('div.panel')).height;
             } else {
-                toggle.style.maxHeight = '100vh';
-                toggle.classList.add('open');
+                el.closest('div.panel').style.maxHeight = '999vh';
+            }
+        });
+        
+        el.addEventListener('click', () => {
+            // For tablet/mobile only
+            if (window.innerWidth < 900) {
+
+                // Get anscestor panel
+                const toggle = el.closest('div.panel');
+
+                // On click, toggle css .open class
+                if (toggle.classList.contains('open')) {
+                    const paddingTop = parseFloat(window.getComputedStyle(toggle).paddingTop);
+                    const paddingBottom = parseFloat(window.getComputedStyle(toggle).paddingBottom);
+                    const titleHeight = parseFloat(window.getComputedStyle(toggle.querySelector('.section-title')).height);
+                    toggle.style.maxHeight = titleHeight + paddingTop + paddingBottom + 'px';
+                    window.setTimeout( () => toggle.classList.remove('open'), 300);
+                } else {
+                    toggle.style.maxHeight = '999vh';
+                    toggle.classList.add('open');
+                }
             }
 
         });
