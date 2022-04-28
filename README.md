@@ -86,7 +86,7 @@ Once the API server is running on `localhost:8080`, open the file `index.html` i
 
 ### Modifications
 
-The exposure time calculator is designed to be easily modified. For example, to add a new instrument to the calculator, create a new directory under `instruments` and add the appropriate files. An example of a new instrument directory tree is shown here:
+The exposure time calculator is designed to be easily modified. For example, to add a new instrument to the calculator, create a new directory under `calculator/instruments` and add the appropriate files. An example of a new instrument directory tree is shown here:
 
 ```
 calculator/
@@ -113,6 +113,21 @@ $   ./etc-validate
 
 Inspecting calculator/instruments/new_instrument/instrument_config.yaml
 No configuration problems discovered
+```
+
+All of the configurable paramaters for the ETC are explicitly stated in `yaml` files in the `/calculator/` directory tree. To change any one of these parameters, edit the appropriate files in a text editor, then run `./etc-validate`. Finally, run `./etc-api restart` to run the API server using your new changes.
+
+The GUI is designed to recieve all important parameters from the API. However, it may be helpful to modify the tooltips and instructions displayed by the GUI and API. These are stored in the folder `src/static`.
+```
+src/
+└── static/
+    ├── api_instructions.txt
+    ├── gui_instructions.txt
+    └── mouseover_text.json
+```
+To change the tooltip associated with any input, edit `mouseover_text.json` and add a key-value pair, following the format
+```
+    "INPUT ELEMENT ID": "Message to be displayed on mouseover of information icon"
 ```
 
 ### Troubleshooting
