@@ -852,7 +852,7 @@ const setup = async () => {
     // Define output plots
     ({resPanelWavelength, vsPlotWavelength, wavelengthPlot, vsPlot, countsPlot} = createPlots(source, vsSource));
     // Update inputs and outputs with values from API
-    update(false, true); // TODO -- read cookie value for settings, only reset from button
+    update(false, true);
 
 
     // Define callbacks on value changes for inputs

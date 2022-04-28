@@ -10,7 +10,7 @@
 
     "seeing-unit": "Specify seeing",
 
-    "water-vapor-unit": "Specify precipitable water vapor, negligile in wavelengths < 1.3 um  ",
+    "water-vapor-unit": "Specify precipitable water vapor, negligile in wavelengths < 1.3 um",
 
     "source-type": "Select source SED template ",
 

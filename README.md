@@ -115,6 +115,57 @@ Inspecting calculator/instruments/new_instrument/instrument_config.yaml
 No configuration problems discovered
 ```
 
+### Troubleshooting
+
+#### Front End
+
+If you're experiencing errors using the GUI, open the console to view the error messages. Double check that the API is running and the GUI is making API calls to the correct web address. If necessary, you may need to edit file `/src/script.js`, changing
+```
+318    // Send fetch request and return data
+319    const request = await fetch('http://localhost:8080', {
+320        method: 'POST',
+321        headers: {'Content-Type': 'text/plain'},
+322        body: query
+323    });
+```
+to match the location of the API server in your implementation.
+```
+319    const request = await fetch('API_ADDRESS_HERE', {
+```
+
+To determine whether a bug is being caused by the front end or back end, you can access the API directly by visiting [www2.keck.hawaii.edu/inst/etc/getETC2.php](https://www2.keck.hawaii.edu/inst/etc/getETC2.php), or [localhost:8080](http://localhost:8080) if running the API locally. If the unexpected behavior is present when making API calls, the bug you're experiencing is being caused by the back end.
+
+[To report a bug you've discovered or request a feature, click here.](https://github.com/KeckObservatory/Keck-ETC/issues/new/choose)
+
+#### Back End
+
+If you're experiencing errors using the API, first run the shell script
+```
+$ ./etc-api status
+```
+then try restarting the API with `./etc-api restart`.
+
+Run the command `./etc-api test` to verify that your installation matches [github](https://github.com/KeckObservatory/Keck-ETC) and that you have installed the required dependencies.
+
+If you have made any changes to the ETC, run the shell script
+```
+$ ./etc-validate
+```
+to test the format and contents of all configuration and source files.
+
+For more detailed information, view the log file, positioned by default at `/log/etc.log`. To log warnings as well as errors, use the `--warn` flag.
+```
+$ ./etc-api start -w
+```
+*Important: The script `etc-api` reads the contents of the log file to determine the API status. If you edit or delete the log file, stop the API first or you will have to manually kill the process later. If you use a non-standard location for your log file, you must always use the `--log` flag.*
+```
+$ ./etc-api status -l PATH_TO_LOG_FILE
+```
+
+[If you've discovered a bug, click here to report it.](https://github.com/KeckObservatory/Keck-ETC/issues/new/choose)
+
+[If you've made changes to the ETC and wish to contribute, submit a pull request here](https://github.com/KeckObservatory/Keck-ETC/pulls) or [contact us.](https://github.com/KeckObservatory/Keck-ETC#contact)
+
 ### Acknowledgements
 
 Atmospheric transmission and emission data from Gemini Observatory, [gemini.edu/observing/telescopes-and-sites/sites](https://www.gemini.edu/observing/telescopes-and-sites/sites)
