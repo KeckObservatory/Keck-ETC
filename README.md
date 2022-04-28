@@ -115,9 +115,9 @@ Inspecting calculator/instruments/new_instrument/instrument_config.yaml
 No configuration problems discovered
 ```
 
-All of the configurable paramaters for the ETC are explicitly stated in `yaml` files in the `/calculator/` directory tree. To change any one of these parameters, edit the appropriate files in a text editor, then run `./etc-validate`. Finally, run `./etc-api restart` to run the API server using your new changes.
+All of the configurable parameters for the ETC are explicitly stated in `yaml` files in the `/calculator/` directory tree. To change any one of these parameters, edit the appropriate files in a text editor, then run `./etc-validate` and `./etc-api restart` to start the API server using your modifications.
 
-The GUI is designed to recieve all important parameters from the API. However, it may be helpful to modify the tooltips and instructions displayed by the GUI and API. These are stored in the folder `src/static`.
+The GUI is designed to recieve all important information from the API, and should not need to be edited. However, it may be helpful to modify the tooltips and instructions displayed by the GUI and API. These are stored in the folder `src/static`.
 ```
 src/
 └── static/
@@ -125,7 +125,7 @@ src/
     ├── gui_instructions.txt
     └── mouseover_text.json
 ```
-To change the tooltip associated with any input, edit `mouseover_text.json` and add a key-value pair, following the format
+To change the tooltip associated with any input in the GUI, edit `mouseover_text.json` and add a key-value pair following the format
 ```
     "INPUT ELEMENT ID": "Message to be displayed on mouseover of information icon"
 ```
