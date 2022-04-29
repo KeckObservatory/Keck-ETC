@@ -1,0 +1,316 @@
+/*
+Copyright (c) 2022, W. M. Keck Observatory
+All rights reserved.
+
+This source code is licensed under the BSD-style license found in the
+LICENSE file in the root directory of this source tree. 
+*/
+
+
+/* Hide input elements by default, show on .visible class */
+.input-row:not(.visible),
+input-spin:not(.visible),
+input-select:not(.visible),
+input-slider:not(.visible)
+{
+  display: none !important;
+}
+
+/* Loading display */
+.panel.loading {
+  position: relative;
+}
+.panel .loading-overlay {
+  display: none;
+}
+.loading-overlay {
+  position: absolute;
+  border-radius: inherit;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1; 
+  background-color: rgba(63, 63, 63, 0.1);
+  align-items: center;
+  justify-content: center;
+}
+.loading-overlay img {
+  width: 100px;
+  height: 100px;
+  animation: spin 1.5s ease-in-out infinite;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.panel.loading .loading-overlay {
+  display: flex;
+}
+
+/* Mobile scroll to top of page button */
+html {
+  scroll-behavior: smooth;
+}
+.scroll-to-top {
+  position: fixed;
+  right: 15px;
+  bottom: 15px;
+  display: none;
+  width: 50px;
+  height: 50px;
+  text-align: center;
+  line-height: 50px;
+  color: #333;
+  background: #fff;
+  border: 1px solid #ccc;
+  z-index: 2;
+  box-shadow: 1px 1px 5px 0 #000;
+  font-weight: bold;
+  font-size: x-large;
+  text-decoration: none;
+  border-radius: 5px;
+}
+
+/* Styling for major layout w/ 6 panels */
+.panel {
+  border-radius: 10px;
+  border: 1px solid #e6e6e6;
+  padding: 0.8vw 0.5vw;
+  margin: 0 0.5vw 1vw 0.5vw;
+  min-width: 100px;
+  min-height: 100px;
+  box-sizing: border-box;
+  flex-grow: 1;
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+.panel:first-child {
+  margin-left: 0;
+}
+.panel:last-child {
+  margin-right: 0;
+}
+section {
+  margin: 0 auto;
+  width: 95%;
+}
+.row {
+  width: 100%;
+  display: flex;
+  align-items: stretch;
+}
+.main {
+  /*flex-grow: 1;*/
+  margin-right: 0.5vw;
+  width: 100%;
+  flex: 85;
+}
+.sidebar {
+  width: 100%;
+  margin-left: 0.5vw;
+  flex: 15;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Sidebar moves to stay in view */
+.sticky-container {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0.8vw;
+}
+
+/* Text */
+h2 {
+  font-size: large;
+  margin-block-end: 0.5em;
+  margin-block-start: 0.5em;
+}
+body {
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    font-size: small;
+    background-color: #fff;
+}
+
+/* Input elements */
+input-spin, input-select, input-slider, input-file {
+  flex-grow: 1;
+  margin: 0 0.3vw;
+  width: 100%;
+  box-sizing: border-box;
+}
+.input-row {
+  width: 100%;
+  margin: 0.5vw 0;
+  display: inline-flex;
+  display: -webkit-inline-flex;
+  flex-wrap: nowrap;
+  -webkit-flex-wrap: nowrap;
+  align-items: start;
+  -webkit-align-items: start;
+  flex-direction: row;
+  -webkit-flex-direction: row;
+  white-space: nowrap;
+}
+
+/* Title for each panel */
+.section-title {
+  padding: 0.2vw 0;
+  margin: 0 0.3vw 1vw;
+  border-bottom: 1px solid #ccc;
+  width: auto;
+  font-size: large;
+  font-weight: bold;
+  box-sizing: border-box;
+}
+
+/* Reset & download buttons*/
+button {
+  color: #333;
+  background-color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  padding: 0.5vw 1vw;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+button:hover {
+  background-color: #f5f5f5;
+  border-color: #b8b8b8;
+}
+button:active {
+  box-shadow: inset 0 3px 5px rgb(0 0 0 / 13%);
+}
+button#download {
+  text-align: center;
+  margin: 1vw 5%;
+  width: 90%;
+  box-sizing: border-box;
+}
+
+/* Menu to choose instrument */
+div.title-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e6e6e6;
+  margin: 1vw 0;
+}
+
+
+/* For mobile & vertical tablets */
+@media (max-width: 900px) {
+
+  /* Stack panels instead of keeping side-by-side layout*/
+  .row {
+    flex-direction: column;
+  }
+  .main, .sidebar {
+    margin: 0;
+  }
+  .panel, .input_panels .panel, .panel.first, .panel.last {
+    display: block;
+    width: 100%;
+    margin: 10px auto;
+    padding: 2vw 1vw;
+    min-height: 0;
+    max-height: 999vh;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    -webkit-transition: max-height 0.3s ease;
+    -moz-transition: max-height 0.3s ease;
+  }
+  .input-row {
+    margin: 2vw 0;
+  }
+  input-spin, input-select, input-slider, input-file, .section-title {
+    margin: 0 1vw;
+  }
+
+  /* If panel is closed, don't display loading symbol */
+  .panel.loading:not(.open):not(#output-plots) .loading-overlay {
+    display: none;
+  }
+  .panel:not(#output-plots) .loading-overlay {
+    cursor: pointer;
+  }
+
+  /* Bokeh has intermittent trouble with mobile sizing, so hide plot overflow */
+  .panel.output {
+    overflow: hidden;
+  }
+
+  /* Panel collapse/expand behavior */
+  .panel div.input-row,
+  .panel output-number, 
+  .panel button {
+    display: none;
+  }
+  .panel.open div.input-row,
+  .panel.open output-number {
+    display: inline-flex;
+    display: -webkit-inline-flex;
+    flex-grow: 1;
+  }
+  .panel.open button#download {
+    display: block;
+    width: calc(100% - 1vw);
+    margin: 1vw 0.5vw;
+  }
+  .panel.open .section-title {
+    border-bottom: 1px solid #ccc;
+    margin: 0 1vw 1vw;
+  }
+  .section-title {
+    border: none;
+    margin-bottom: 0;
+    background-image: url(static/select.svg);
+    background-position: right 0.5em center;
+    background-size: 8px 6px;
+    background-repeat: no-repeat;
+    cursor: pointer;
+  }
+
+  /* Format results into row instead of column */
+  .output-container {
+    display: flex;
+    justify-content: space-around;
+    align-items: stretch;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  /* Display scroll-to-top button */
+  .scroll-to-top {
+    display: block;
+  }
+
+  /* Fixed header */
+  div.title-bar {
+    background-color: #fff;
+    position: sticky;
+    position: -webkit-stikcy;
+    width: 100%;
+    margin: 0;
+    box-sizing: content-box;
+    border-right: 1px solid #fff;
+    border-left: 1px solid #fff;
+    border-top: 1px solid #fff;
+    margin-top: -8px;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    padding: 1em 0;
+  }
+
+  /* Increased padding on buttons */
+  button#reset, button#download {
+    padding: 2vw;
+    font-size: medium;
+  }
+
+}

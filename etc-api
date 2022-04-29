@@ -1,0 +1,304 @@
+#!/bin/bash
+
+# Copyright (c) 2022, W. M. Keck Observatory
+# All rights reserved.
+
+# This source code is licensed under the BSD-style license found in the
+# LICENSE file in the root directory of this source tree. 
+
+
+# Get directory of this script
+PROGRAM_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
+# Define script variables as default values
+version="1.0"
+port=8080
+printhelp=false
+printversion=false
+warn=false
+forcekill=false
+statusall=true
+action="none"
+log="log/etc.log"
+
+usage=$(cat << END
+Usage: etc-api {start,stop,status,restart,test} [-fhvw] [-p port_number] [-l log_file]
+    Positional arguments: {start,stop,status,restart,test}
+        start           Begin running the server
+        stop            Stop running the server
+        status          Print server status
+        restart         Restart the server
+        test            Verify successful program installation
+    Optional arguments:
+        -p, --port      Specifies port for server, defaults to 8080
+        -f, --force     Force kill running server, use with 'stop' or 'restart'
+        -l, --log       Path to logfile, defaults to ./log/etc.log
+        -w, --warn      Log python warnings, ignored by default
+        -v, --version   Display program version
+        -h, --help      Displays this message
+
+For more information, visit https://github.com/KeckObservatory/Keck-ETC
+END
+)
+
+
+# Get command line arguments and set appropriate variables
+while [[ -n $1 ]]; do
+    case $1 in
+        start | stop | status | restart | test ) action="$1";;
+        -h | --help ) printhelp=true;;
+        -v | --version ) printversion=true;;
+        -p | --port ) shift; port=$1; statusall=false;;
+        -f | --force ) forcekill=true;;
+        -l | --log ) shift; log=$1;;
+        -w | --warn ) warn=true;;
+        * ) 
+            echo "Invalid option: $1"
+            echo "$usage"
+            exit -1;;
+    esac
+    shift
+done
+
+# If help, print usage
+if $printhelp; then
+    echo "$usage"
+    exit 0
+fi
+
+# If version, print version
+if $printversion; then
+    echo "etc-api $version"
+    exit 0
+fi
+
+# Validate input
+if [ "$action" == "none" ]; then
+    echo "Missing required positional argument {start,stop,status,restart,test}" >&2
+    echo "$usage" >&2
+    exit -1
+fi
+if ! [[ $port =~ ^[0-9]+$ ]]; then
+    echo "Invalid port number $port" >&2
+    exit -1
+fi
+if [[ ! -f "$log" ]]; then
+    # If log file DNE, give user option to create it
+    echo -n "Log file $log does not exist and will be created. Continue? [Y/n]: "
+    input='placeholder'
+    while [ "${input,,}" != "y" ] && [ "${input,,}" != "n" ] && [ "${input,,}" != "" ]; do
+        read input
+    done
+
+    # Exit program if user doesn't want to create file
+    if [ "${input,,}" == "n" ]; then
+        exit 0
+    fi
+
+    # Otherwise, recursively create directories (if necessary) and place file inside
+    touch "$log" 2>/dev/null || mkdir -p "${log%/*}" && touch "$log"
+
+fi
+
+
+# Navigate to base directory for ETC
+cd $PROGRAM_DIR
+
+# Initialize empty arrays to hold values of all running servers
+declare -a runningports=()
+declare -a runningpids=()
+
+# Loop through log file, identifying all servers currently running
+while read -r start; do
+    pid="$(echo $start | cut -d " " -f8)"
+    line="$(echo $start | cut -d ":" -f1)"
+    prt="$(echo $start | cut -d ":" -f3 | cut -d " " -f1)"
+    stop="$(grep -n ":$prt" $log | grep -i "server stopped" | grep " $pid " | tail -1 | cut -d ":" -f1)"
+    if [ -z $stop ] || [ $stop -lt $line ]; then
+        # Use ps to check if server is still running
+        name="$(ps -p $pid -o command | grep "API.py")"
+        
+        if [ ! -z "$name" ]; then
+            runningports+=($prt)
+            runningpids+=($pid)
+        fi
+    fi
+done < <(grep -in "server started" $log)
+
+
+# If action is status, print current status
+if [ "$action" == "status" ]; then
+
+    # If port was unspecified, defualt to all ports "*",
+    # otherwise filter status to specified port
+    if $statusall; then 
+        port="*"; 
+        # Format arrays with ", " as separator
+        outports="${runningports[@]}"
+        outports="${outports// /, }"
+
+        outpids="${runningpids[@]}"
+        outpids="${outpids// /, }"
+    else
+        # Filter outputs to the specified port
+        outports=""
+        outpids=""
+        for i in "${!runningports[@]}"; do
+            if [ "${runningports[i]}" == "$port" ]; then
+                outports="$port"
+                outpids="${runningpids[i]}"
+                runningports=($outports)
+                runningpids=($outpids)
+            fi
+        done
+        if [ -z $outports ]; then runningports=(); fi # Filter to proper length
+    fi
+
+    # Print appropriate output based on the length of status
+    if [ ${#runningports[@]} == 0 ]; then
+        echo "No servers currently running on port $port"
+    fi
+
+    if [ ${#runningports[@]} == 1 ]; then
+        echo "Running 1 server on port $outports with pid $outpids"
+    fi
+
+    if [ ${#runningports[@]} -gt 1 ]; then
+        echo "Running ${#runningports[@]} servers on ports $outports with pids $outpids"
+    fi
+
+fi
+
+
+# If command is stop or restart, stop corresponding server
+if [ "$action" == "stop" ] || [ "$action" == "restart" ]; then
+
+    pid=""
+    for i in "${!runningports[@]}"; do
+        if [ "${runningports[i]}" == "$port" ]; then
+            pid="${runningpids[i]}"
+        fi
+    done
+
+    if [[ -z "$pid" ]]; then
+        echo "Error: could not find server running on port $port" >&2
+        exit -1
+    fi
+
+    if $forcekill; then
+        err="$(kill -SIGKILL $pid 2>&1)"
+    else
+        err="$(kill $pid 2>&1)"
+    fi
+
+    # Wait to confirm that port is freed before cotinuing
+    timer=$SECONDS
+    while [ -z $err ] && [ ! -z "$(netstat -na | grep $port | grep "LISTEN")" ]; do
+        # Timeout after 5 seconds
+        if (( $SECONDS > $timer + 5 )); then
+            err="Timed out while waiting for port to be free"
+        fi
+    done
+
+    # If an error exists, then print error message and exit
+    if [[ ! -z $err ]]; then 
+        printf "Error terminating server on port $port \n$err\n" >&2
+        exit -1
+    fi
+    # If no error was detected, print success message and append to log
+    echo "Succesfully terminated server on port $port"
+    echo "0.0.0.0:$port - - [$(date +"%d/%b/%Y %H:%M:%S")] \"Server stopped\" $pid -" >> "$log"
+
+fi
+
+# If command is start or restart, start corresponding server
+if [ "$action" == "start" ] || [ "$action" == "restart" ]; then
+
+
+    if [ "$action" == "start" ] && [ ! -z $runningports ] && [[ " ${runningports[*]} " =~ " $port " ]]; then
+        echo "Error: server on port $port already running" >&2
+        exit -1
+    fi
+    
+    
+    if [ ! -z "$(netstat -na 2>/dev/null | grep $port | grep "LISTEN")" ] ; then
+        echo "Error: port $port is already in use" >&2
+        exit -1
+    fi
+    
+    # Supress warnings by default, only output if user 
+    if $warn; then
+        nohup python3 -u calculator/API.py $port &>>"$log" &
+    else
+        nohup python3 -u -W ignore calculator/API.py $port &>>"$log" &
+    fi
+    pid="$!"
+
+    # Wait to see evidence of successful start in log
+    started=""
+    timer=$SECONDS
+    while [ -z "$started" ]; do
+        started="$(tail -1 $log | grep ":$port" | grep -i "server started" | grep " $pid ")"
+        
+        # Timeout after 10 seconds with no results
+        if (( $SECONDS > $timer + 10 )); then
+            break
+        fi
+    done
+
+    if [ ! -z "$started" ]; then
+        echo "Succesfully started server on port $port with pid $pid"
+    else
+        echo "Error: timed out while waiting for confirmation of server start"
+        exit -1
+    fi
+
+fi
+
+
+if [ "$action" == "test" ]; then
+    # TODO -- check versions against requirements and issue message to update
+
+    err=false
+
+    if ! command -v git &> /dev/null; then
+        echo "Error verifying installation, git is not installed" >&2
+        echo "To test the validity of the ETC config, run ./etc-validate" >&2
+        err=true
+    fi
+
+    status="$(git status --porcelain)"
+
+    if [ "$status" == *"not a git repository"* ]; then
+        echo "Error: Can't check files against source because this is not a git repository" >&2
+    elif [ "$status" != "" ]; then
+        echo "Git has detected the following changes to your local files"
+        echo "$status"
+        echo "Run ./etc-validate to test the validity of your changes"
+        err=true
+    fi
+
+    if [ "$(python3 --version)" == *"command not found"* ]; then
+        echo "Python3 is not installed -- run 'apt-get install python3' to correct"
+        err=true
+    fi
+
+    if [ "$(echo "import astropy" | python3)" != "" ]; then
+        echo "Astropy is not installed -- run 'pip install astropy' to correct"
+        err=true
+    fi
+
+    if [ "$(echo "import scipy" | python3)" != "" ]; then
+        echo "Scipy is not installed -- run 'pip install scipy' to correct"
+        err=true
+    fi
+
+    if ! $err; then
+        echo "No problems detected, succesful installation verified"
+    fi
+
+
+fi
+
+
+exit 0

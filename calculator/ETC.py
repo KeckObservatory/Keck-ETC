@@ -1,7 +1,7 @@
 from astropy import units as u
-from calculator.Instrument import instrument
-from calculator.Source import source
-from calculator.Atmosphere import atmosphere
+from Instrument import instrument
+from Source import source
+from Atmosphere import atmosphere
 import yaml
 from numpy import pi, linspace, zeros, array, arccos, sqrt, NaN
 from warnings import warn
@@ -127,7 +127,6 @@ class exposure_time_calculator:
             self.exposure = [(t / number_exposures) for t in self.integration_time] * u.s
 
             # Calculate and save counts based on calculated exposure = f(wavelength)
-            # TODO -- convert to list of lists instead of list, this will break for multiple snr!!!
             self.source_count_adu = [source_rate * self.instrument.pixel_size / source_size * exp * number_exposures / self.instrument.gain for exp in self.exposure] * (u.adu/u.pixel)
             self.background_count_adu = [background_rate / slit_size * self.instrument.pixel_size * exp * number_exposures / self.instrument.gain for exp in self.exposure] * (u.adu/u.pixel)
             self.dark_current_count_adu = [dark_current_rate / slit_size_pixels * exp * number_exposures / self.instrument.gain for exp in self.exposure] * (u.adu/u.pixel)
@@ -137,9 +136,32 @@ class exposure_time_calculator:
             # Check that etc has a valid target set
             raise ValueError('ERROR: In ETC -- target must be set to "exposure" or "signal_noise_ratio"')
 
+        # Save total counts
+        self.total_count_adu = self.source_count_adu + self.background_count_adu + self.dark_current_count_adu + self.read_noise_count_adu
         # Save clock time, efficiency
         self.clock_time = self.integration_time * NaN
         self.efficiency = self.integration_time / self.clock_time
+
+
+    def reset_parameters(self):
+
+        # Initialize values
+        self.telescope_area = u.Quantity(self.config.telescope_area)
+        self.exposure = [u.Quantity(x) for x in self.config.defaults.exposure] * u.s
+        self.signal_noise_ratio = [u.Quantity(x) for x in self.config.defaults.signal_noise_ratio] * u.dimensionless_unscaled
+        self.dithers = u.Quantity(self.config.defaults.dithers)
+        self.reads = u.Quantity(self.config.defaults.reads)
+        self.repeats = u.Quantity(self.config.defaults.repeats)
+        self.coadds = u.Quantity(self.config.defaults.coadds)
+        self.target = self.config.defaults.target
+
+        # Reset objects
+        self.instrument.set_parameter('name', self.config.defaults.instrument)
+        # Calculate default wavelengths array from min, max of instrument
+        self.wavelengths = linspace(self.instrument.min_wavelength, self.instrument.max_wavelength, self.config.defaults.default_wavelengths_number).to(u.angstrom)
+
+        self.atmosphere.reset_parameters()
+        self.source.reset_parameters()
 
 
     def __init__(self):
@@ -152,20 +174,9 @@ class exposure_time_calculator:
         self.atmosphere = atmosphere()
         self.source = source()
         u.add_enabled_units([self.source.flam, self.source.photlam])
+        u.imperial.enable()
 
-        # Initialize values
-        self.telescope_area = u.Quantity(self.config.telescope_area)
-        self.exposure = [u.Quantity(x) for x in self.config.defaults.exposure] * u.s
-        self.signal_noise_ratio = [u.Quantity(x) for x in self.config.defaults.signal_noise_ratio] * u.dimensionless_unscaled
-        self.dithers = u.Quantity(self.config.defaults.dithers)
-        self.reads = u.Quantity(self.config.defaults.reads)
-        self.repeats = u.Quantity(self.config.defaults.repeats)
-        self.coadds = u.Quantity(self.config.defaults.coadds)
-        self.target = self.config.defaults.target
-        # Calculate default wavelengths array from min, max of instrument and atmosphere
-        min_wavelength = max(self.atmosphere._wavelength_index[0], self.instrument.min_wavelength)
-        max_wavelength = min(self.atmosphere._wavelength_index[-1], self.instrument.max_wavelength)
-        self.wavelengths = linspace(min_wavelength, max_wavelength, self.config.defaults.default_wavelengths_number).to(u.angstrom)
+        self.reset_parameters()
 
         self._calculate()
 
@@ -181,18 +192,32 @@ class exposure_time_calculator:
 
         # Set each parameter, then calculate results
         errors = ''
+        # Handle b64 values first, removing the indicator 'b64' from key
+        for key, val in [ (key, val) for key, val in parameters.items() if 'b64' in key]:
+            try:
+                self.set_parameter(key.replace('b64',''), val, run_calculator=False)
+                parameters.pop(key)
+            except Exception as e:
+                errors += str(e).split(' -- ')[-1] + '\n'
+        # Set all other values
         for key, val in parameters.items():
             try:
                 self.set_parameter(key, val, run_calculator=False)
-            except ValueError as e:
+            except Exception as e:
                 errors += str(e).split(' -- ')[-1] + '\n'
-        
+
         self._calculate()
         if len(errors) > 0:
             raise ValueError(f'In ETC.set_parameters() -- encountered the following errors: \n{errors}')
 
 
     def set_parameter(self, name, value, run_calculator=True):
+
+        # Aliases for instrument name and source type
+        if name == 'instrument':
+            name = 'instrument.name'
+        elif name == 'source':
+            name = 'source.type'
 
         # Parameter belongs to other class
         if name not in vars(self).keys():
@@ -211,6 +236,12 @@ class exposure_time_calculator:
             # Assign parameter to appropriate place
             if name.startswith('instrument.'):
                 self.instrument.set_parameter(name.replace('instrument.',''), value)
+                # Calculate default wavelengths array from min, max of instrument
+                self.wavelengths = linspace(self.instrument.min_wavelength, self.instrument.max_wavelength, self.config.defaults.default_wavelengths_number).to(u.angstrom)
+                # If setting a different instrument, reset wavelength band and wavelengths according to instrument defaults
+                if name == 'instrument.name':
+                    # Set default wavelength band according to range of instrument
+                    self.source.set_parameter('wavelength_band', self.instrument.config.defaults.wavelength_band)
             elif name.startswith('source.'):
                 self.source.set_parameter(name.replace('source.',''), value)
             elif name.startswith('atmosphere.'):
@@ -271,21 +302,28 @@ class exposure_time_calculator:
                         parameters[name]['unit'] = str(vars(obj)[name].unit)
                 else:
                     parameters[name] = { 'value': vars(obj)[name]}
+                
+                # Look for available options in config
+                options = None
                 if name+'_options' in vars(obj.config).keys():
                     options = vars(obj.config)[name+'_options']
-                    if isinstance(options, list):
-                        if isinstance(options[0], list):
-                            parameters[name]['options'] = [ {'value': [u.Quantity(option[0]).value, u.Quantity(option[1]).value]} for option in options ]
-                            if u.Quantity(options[0][0]).unit != u.dimensionless_unscaled:
-                                parameters[name]['unit'] = str(u.Quantity(options[0][0]).unit)
-                        else:
-                            parameters[name]['options'] = [ {'value': option} for option in options ]
+                # Since instrument config is arranged differently, check for options under config.mode
+                if self.instrument.mode in vars(obj.config).keys() and name+'_options' in vars(vars(obj.config)[self.instrument.mode]).keys():
+                    options = vars(vars(obj.config)[self.instrument.mode])[name+'_options']
+                
+                if isinstance(options, list):
+                    if len(options) > 0 and isinstance(options[0], list):
+                        parameters[name]['options'] = [ {'value': [u.Quantity(option[0]).value, u.Quantity(option[1]).value]} for option in options ]
+                        if u.Quantity(options[0][0]).unit != u.dimensionless_unscaled:
+                            parameters[name]['unit'] = str(u.Quantity(options[0][0]).unit)
                     else:
-                        parameters[name]['options'] = [ {'value': x} for x in vars(options).keys()]
+                        parameters[name]['options'] = [ {'value': option} for option in options ]
+                elif options is not None:
+                    parameters[name]['options'] = [ {'value': x} for x in vars(options).keys()]
             return parameters
 
         # Add self parameters
-        parameters = construct_parameters(self, ['dithers', 'reads', 'repeats', 'coadds'])
+        parameters = construct_parameters(self, self.instrument.config.exposure_options)
         parameters['target'] = {'value': self.target, 'options': [{'value':'signal_noise_ratio', 'name':'Signal to Noise Ratio'}, {'value':'exposure','name':'Exposure'}]}
         if self.target == 'signal_noise_ratio':
             parameters['exposure'] = {'value': self.exposure.value.tolist(), 'unit': str(self.exposure.unit)}
@@ -296,6 +334,8 @@ class exposure_time_calculator:
         parameters.update(construct_parameters(self.atmosphere, ['seeing', 'airmass', 'water_vapor']))
         parameters.update(construct_parameters(self.source, self.source.active_parameters))
         parameters.update(construct_parameters(self.instrument, self.instrument.active_parameters))
+        # Add instrument name
+        parameters['name'] = { 'value': self.instrument.name }
         # Update source type
         parameters['type']['options'] = [{'value': x, 'name': vars(self.source.config.source_types)[x].name} 
                                         if 'name' in vars(vars(self.source.config.source_types)[x]).keys() 
@@ -303,8 +343,14 @@ class exposure_time_calculator:
         # Update instrument slit
         for slit in parameters['slit']['options']:
             slit['name'] = f'{slit["value"][0]}" x {slit["value"][1]}"'
-        if self.instrument.config.custom_slits:
+        if vars(self.instrument.config)[self.instrument.mode].custom_slits:
             parameters['slit']['options'] += [{'value': 'Custom'}]
+        # Format wavelength band so that { value: K, options: [K,...] } --> { value: 21900, options: [ {name: K, value: 21900}, ... ] }
+        options = { key: val for key, val in vars(self.source.config.wavelength_band_options).items() if self.wavelengths[0] <= u.Quantity(val) <= self.wavelengths[-1] }
+        if self.source.wavelength_band not in options.keys():
+            options[self.source.wavelength_band] = vars(self.source.config.wavelength_band_options)[self.source.wavelength_band]
+        parameters['wavelength_band']['value'] = round(u.Quantity(options[parameters['wavelength_band']['value']]).to(u.angstrom).value)
+        parameters['wavelength_band']['options'] = [{ 'name': band, 'value': round(u.Quantity(wavelength).to(u.angstrom).value) } for band, wavelength in options.items() ]
 
 
         return parameters

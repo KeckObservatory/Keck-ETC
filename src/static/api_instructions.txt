@@ -1,0 +1,53 @@
+USAGE:  /etc_api?return=[option1,option2,...]&parameter1=value1&parameter2=value2&...
+
+EXAMPLES:
+    /etc_api?return=[signal_noise_ratio]&exposure=[3600s,7200s]&instrument.name=NIRES&dithers=4&atmosphere.seeing=1.0&source.brightness=20mag(AB)
+
+    /etc_api?return=[background_count,source_count,read_noise_count,dark_current_count]&instrument.mode=spectroscopic&source.redshift=5.2
+
+AVAILABLE RETURN OPTIONS:
+    exposure:               list of single exposure times in seconds if target is SNR, otherwise nested lists of exposure times corresponding to SNR then wavelength
+    signal_noise_ratio:     list of SNR (per unit resolution) if target is exposure, otherwise nested lists of SNR corresponding to exposure then wavelength
+    wavelengths:            list of wavelengths in angstrom
+    source_flux:            source spectral density, in flam (erg / (AA cm2 s))
+    source_count_adu:       source detector counts, in ADU per pixel
+    background_count_adu:   sky background detector counts, in ADU per pixel
+    read_noise_count_adu:   read noise detector counts, in ADU per pixel
+    dark_current_count_adu: dark current detector counts, in ADU per pixel
+    total_count_adu:        sum of source, background, read noise, and dark current counts, in ADU per pixel
+    total_integraion_time:  list of integration times corresponding to exposures, but taking into account dithers, coadds, etc.
+    nonlinear_depth_adu:    nonlinear depth of detector, in ADU per pixel
+    parameters:             JSON object detailing all parameters of the ETC, including units and alternative options
+
+AVAILABLE PARAMETERS:
+    exposure:               list of exposure times with units, i.e. [500s,10min,2.1hr]
+    signal_noise_ratio:     list of snr values, i.e. [10,50.1,220]
+    target:                 calculation target, possible values are 'exposure' or 'signal_noise_ratio'
+    dithers:                number of dithers, must be positive integer (1 dither = stare)
+    repeats:                number of dither repeats, must be positive integer
+    coadds:                 number of coadds, must be positive integer
+    reads:                  number of CDS reads, possible values are 1, 2, 4, 8, 16, 32, 64
+    binning:                binning in [spatial, spectral], i.e. [1,2]
+    source.type:            source template, possible values are emission, blackbody, power, flat, vega, qso, seyfert1, seyfert2
+    source.redshift:        redshift value of source, i.e. 2.3
+    source.flux:            source flux/magnitude with units, available units are mag(AB), mag(vega), mag(ST), Jy, flam, photlam
+    source.wavelength_band: name of wavelength band, possible values are ...
+    source.width:           width of emission line, i.e. 200nm
+    source.temperature:     temperature of blackbody source, available units are Kelvin, Celsius, Fahrenheit, and Rankine
+    source.index:           index of power law source type, i.e. -1.0
+    atmosphere.seeing:      seeing with units, available units are arcsec, arcmin
+    atmosphere.airmass:     airmass, must be between 1.0 and 2.0 inclusive
+    atmosphere.water_vapor: waver vapor with units of length, must be between 1.0 and 5.0 mm
+    instrument.name:        instrument name, possible values are nires, deimos, lris, hires, esi
+    instrument.slit:        slit [width, length] with units of angle, i.e. [0.5arcsec,10arcsec], must be valid for instrument
+    instrument.mode:        instrument mode, available options are:
+                                ESI: echelle, low_dispersion, imaging
+    instrument.grating:     selected grating, available options are:
+                                DEIMOS: 600ZD, 830G, 900ZD, 1200G, 1200B
+                                LRIS: 400/8500, 600/7500, 600/10000, 831/8200, 1200/9000
+    instrument.filter:      selected filter, available options are:
+                                DEIMOS: GG400, GG455, OG550
+    instrument.grism:       selected grism, available options are:
+                                LRIS: 300/5000, 400/3400, 600/4000, 1200/3400
+    instrument.dichroic:    selected dichroic, available options are:
+                                LRIS: MIRROR, D460, D500, D560, D680, CLEAR

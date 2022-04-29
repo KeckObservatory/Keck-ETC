@@ -1,0 +1,191 @@
+#!/bin/bash
+
+# Copyright (c) 2022, W. M. Keck Observatory
+# All rights reserved.
+
+# This source code is licensed under the BSD-style license found in the
+# LICENSE file in the root directory of this source tree. 
+
+
+# Function to parse yaml files using python3, which is already a project dependency
+yaml() {
+# Read file and output bash commands, i.e. 'local name="value"'
+    python3 -c "
+import yaml
+file = yaml.safe_load(open('$1'))
+def print_yaml(f, pre):
+    for key, val in f.items():
+        if type(val) == dict:
+            print_yaml(val, pre+key+'_')
+        else:
+            print('local ' + pre + key + '=\"' + str(val) + '\"')
+print_yaml(file, '')
+    "
+}
+
+# Function to check quantity value using astropy to ensure validity
+astropy() {
+    python3 -c "
+from astropy import units as u
+if len('$1') > 0:
+    try:
+        u.Quantity('$1')
+    except:
+        print('error')
+    "
+}
+
+# Function to test throughput file using astropy
+test_throughput() {
+    python3 -c "
+from astropy.table import Table
+from astropy import units as u
+t = Table.read('$1', format='fits')
+try:
+    t['WAV']
+    t['WAV'].to(u.angstrom)
+    t['EFF']
+    t.meta['MODE']
+    t.meta['GRATING']
+    t.meta['GRISM']
+    t.meta['FILTER']
+    t.meta['DICHROIC']
+except:
+    print('error')
+    "
+}
+
+# Function to validate instrument_config files given filename
+validate_instrument() {
+
+    # Set all quantities from yaml file as variables
+    eval "$(yaml $1)"
+
+    # Make sure required default values are present
+    for name in slit wavelength_band binning mode; do
+        if [ -z "$(eval echo \$defaults_$name)" ]; then
+            echo -e "\nError: file $1 missing required default $name" >&2
+            return 1
+        fi
+    done
+
+    # Make sure default mode is present in mode options
+    if ! grep -q "$defaults_mode" <<< "'$mode_options'"; then
+        echo -e "\nError: default mode $mode not in mode_options in file $1"
+        return 1
+    fi
+
+    # Make sure throughput path is valid
+    path="${1%/*}/$throughput_path"
+    if [ ! -d "$path" ]; then
+        echo -e "\nError: throughput_path $path is not a valid directory in file $1" >&2
+        return 1
+    fi
+
+    # Test all FITS files in throughput directory for validity
+    for fitsfile in $path/*.fits; do
+        # Output status to console
+        echo -en "\r\e[KInspecting $fitsfile"
+
+        if [ ! -f $fitsfile ]; then
+            echo -e "\nError: throughput_path $path in file $1 does not contain any FITS files" >&2
+            return 1
+        fi
+        if [ ! -z "$(test_throughput $fitsfile)" ]; then
+            echo -e "\nError: throughput file $fitsfile is invalid"
+            return 1
+        fi
+    done
+
+    # Output status to console
+    echo -en "\r\e[KInspecting $1"
+
+    # Loop through available modes, validating mode-specific parameters
+    for mode in $mode_options; do
+        mode="$(echo "$mode" | cut -d"'" -f 2)"
+        required=(
+            "spectral_resolution" 
+            "nonlinear_depth"
+            "read_noise" 
+            "dark_current"
+            "gain"
+            "pixel_size"
+            "custom_slits"
+            "filter_options" 
+            "grating_options" 
+            "grism_options" 
+            "dichroic_options" 
+            "binning_options" 
+            "slit_options"
+        )
+        # For each required parameter, ensure it is present
+        for name in ${required[@]}; do
+            if [ -z "$(eval echo "\$${mode}_$name")" ]; then
+                echo -e "\nError: missing required value $name for $mode mode in file $1" >&2
+                return 1
+            fi
+        done
+
+        # For each "*_options" parameter, check to ensure that default value is present in options
+        for name in ${required[@]:7:6}; do
+            options="$(eval echo \$${mode}_$name)"
+            default="\$defaults_$name"
+            default="$(eval echo ${default%_options})"
+            if ! grep -q "$default" <<< "$options"; then
+                # Allow a default slit that's not in slit options if custom_slits is set to true
+                if [ "$name" == "slit_options" ] && [ "$(eval echo "\$${mode}_custom_slits")" == "True" ]; then
+                    :
+                else
+                    echo -e "\nError: default ${name%_options} value $default not present in ${name}_options for $mode mode in file $1" >&2
+                    return 1
+                fi
+            fi
+        done
+
+        # For each numerical parameter, ensure it is a valid astropy quantity
+        for name in ${required[@]:0:6}; do
+            value="$(eval echo "\$${mode}_$name")"
+            if [ ! -z "$(astropy "$value")" ]; then
+                echo -e "\nError: $name value $(eval echo "\$${mode}_$name") is not a valid astropy quantity for $mode mode in file $1" >&2
+                return 1
+            fi
+        done
+
+    done
+
+    return 0
+
+}
+
+# Get directory of this script
+PROGRAM_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
+# Set current directory to script location to enable relative addressing
+cd $PROGRAM_DIR
+
+# Track whether or not an error occurs
+error=false
+
+# Validate instrument config & throughput files
+for instrument in calculator/instruments/*/; do
+    if [ -f "${instrument}instrument_config.yaml" ]; then
+        # Instrument config exists, so read yaml and store each 
+        validate_instrument "${instrument}instrument_config.yaml" || error=true
+        
+    else
+        echo -e "\nError: missing required 'instrument_config.yaml' file in instrument directory $instrument" >&2
+        error=true
+    fi
+done
+
+# Validate atmosphere config and files
+# TODO
+
+# Validate source config and files
+# TODO
+
+echo ""
+if ! $error; then
+    echo "No configuration problems discovered"
+    exit 0
+fi

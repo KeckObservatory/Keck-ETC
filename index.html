@@ -1,3 +1,11 @@
+<!--
+Copyright (c) 2022, W. M. Keck Observatory
+All rights reserved.
+
+This source code is licensed under the BSD-style license found in the
+LICENSE file in the root directory of this source tree. 
+-->
+
 <!DOCTYPE html>
 <html lang="en">
   
@@ -8,41 +16,42 @@
         
         <title>WMKO ETC</title>
 
-        <link rel='icon' type='image/x-icon' href='static/favicon.ico'>
-        <link rel='stylesheet' href='styles.css'>
+        <link rel='icon' type='image/x-icon' href='src/static/favicon.ico'>
+        <link rel='stylesheet' href='src/styles.css'>
 
         <!-- Custom element definitions -->
-        <script type='text/javascript' src='modules/input-label.js'></script>
-        <script type='text/javascript' src='modules/input-spin.js'></script>
-        <script type='text/javascript' src='modules/input-select.js'></script>
-        <script type='text/javascript' src='modules/input-slider.js'></script>
-        <script type='text/javascript' src='modules/input-file.js'></script>
-        <script type='text/javascript' src='modules/output-number.js'></script>
-        <script type='text/javascript' src='modules/cookie-message.js'></script>
+        <script type='text/javascript' src='src/modules/input-label.js'></script>
+        <script type='text/javascript' src='src/modules/input-spin.js'></script>
+        <script type='text/javascript' src='src/modules/input-select.js'></script>
+        <script type='text/javascript' src='src/modules/input-slider.js'></script>
+        <script type='text/javascript' src='src/modules/input-file.js'></script>
+        <script type='text/javascript' src='src/modules/output-number.js'></script>
+        <script type='text/javascript' src='src/modules/cookie-message.js'></script>
+        <script type='text/javascript' src='src/modules/instrument-menu.js'></script>
 
-        <!-- Import Bokeh js -->
-        <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-2.4.2.min.js" crossorigin="anonymous"></script>
-        <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-gl-2.4.2.min.js" crossorigin="anonymous"></script>
-        <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-api-2.4.2.min.js" crossorigin="anonymous"></script>
+        <!-- Import Bokeh -->
+        <script type='text/javascript' src='src/imports/bokeh-2.4.2.min.js'></script>
+        <script type='text/javascript' src='src/imports/bokeh-gl-2.4.2.min.js'></script>
+        <script type='text/javascript' src='src/imports/bokeh-api-2.4.2.min.js'></script>
 
         <!-- Main javascript code for app functionality -->
-        <script type='text/javascript' src='script.js'></script>
+        <script type='text/javascript' src='src/script.js'></script>
 
     </head>
 
     <body>
         <section>
             <div class='title-bar'>
-                <div class="instrument-menu">
-                    <div class='instrument'>LRIS</div>
-                    <div class='instrument selected'>NIRES</div>
-                    <div class='instrument'>DEIMOS</div>
-                    <div class='instrument'>HIRES</div>
-                    <div class='instrument'>NIRC2</div>
-                    <div class='instrument'>KCWI</div>
-                    <div class='instrument'>ESI</div>
-                    <div class='instrument'>OSIRIS</div>
-                </div>
+                <instrument-menu>
+                    <option>LRIS</option>
+                    <option>NIRES</option>
+                    <option>DEIMOS</option>
+                    <option data-href='http://etc.ucolick.org/web_s2n/hires'>HIRES</option>
+                    <option data-href='https://www2.keck.hawaii.edu/inst/nirc2/nirc2_snr_eff.html'>NIRC2</option>
+                    <option data-href='https://www2.keck.hawaii.edu/inst/kcwi/etc.html'>KCWI</option>
+                    <option>ESI</option>
+                    <option data-href='https://oirlab.ucsd.edu/osiris/etc/#w-m-keck-observatory-osiris-exposure-time-calculator'>OSIRIS</option>
+                </instrument-menu>
                 <button id='reset' type='button'>Reset Calculator</button>
             </div>
             
@@ -72,21 +81,21 @@
                             </div>
 
                             <div class='input-row' style='margin-bottom: 0.5vw;'>
-                                <input-slider min='0' max='20' value='10' id='signal-noise-ratio'>Signal to Noise Ratio</input-slider>
+                                <input-slider id='signal-noise-ratio'>Signal to Noise Ratio</input-slider>
                             </div>
 
                             <div class='input-row' style='margin-top: 0;'>
-                                <input-spin min=0 value=0 id='signal-noise-ratio-min'>Min</input-spin>
-                                <input-spin min=0 value=20 id='signal-noise-ratio-max'>Max</input-spin>
+                                <input-spin min=0 id='signal-noise-ratio-min'>Min</input-spin>
+                                <input-spin min=0 id='signal-noise-ratio-max'>Max</input-spin>
                             </div>
 
                             <div class='input-row'>
-                                <input-spin min=1 value=1 id=dithers>Dithers</input-spin>
-                                <input-spin min=1 value=1 id=repeats>Repeats</input-spin>
+                                <input-spin min=1 id=dithers>Dithers</input-spin>
+                                <input-spin min=1 id=repeats>Repeats</input-spin>
                             </div>
 
                             <div class='input-row'>
-                                <input-spin min=1 value=1 id=coadds>Coadds</input-spin>
+                                <input-spin min=1 id=coadds>Coadds</input-spin>
                                 <input-select label='Reads' id=reads></input-select>
                             </div>
 
@@ -99,21 +108,25 @@
                             </div>
 
                             <div class='input-row'>
-                                <input-spin value=18 id=flux>Flux</input-spin>
-                                <input-select label='&nbsp;' id=flux-unit>
-                                    <option value='mag(AB)'>mag(AB)</option>
+                                <input-spin id=flux>Flux</input-spin>
+                                <input-select value='mag(AB)' id=flux-unit>
+                                    <option value='mag(AB)'>AB mag</option>
+                                    <option value='mag(vega)'>Vega mag</option>
+                                    <option value='mag(ST)'>ST mag</option>
+                                    <option value='flam'>Flam</option>
+                                    <option value='Jy'>Jy</option>
+                                    <option value='photlam'>Photlam</option>
                                 </input-select>
                                 <input-select label='Band' id=wavelength-band>
-                                    <option value='K'>K</option>
                                 </input-select>
                             </div>
 
                             <div class='input-row'>
-                                <input-spin value=2 id=redshift>Redshift</input-spin>
+                                <input-spin id=redshift min=0>Redshift</input-spin>
                             </div>
 
                             <div class='input-row'>
-                                <input-spin value=200 id=width>Line Width</input-spin>
+                                <input-spin id=width>Line Width</input-spin>
                                 <input-select value=nm min=0 id=width-unit>
                                     <option>Angstrom</option>
                                     <option>nm</option>
@@ -123,7 +136,7 @@
                             </div>
 
                             <div class='input-row'>
-                                <input-spin value=5000 id=temperature>Temperature</input-spin>
+                                <input-spin id=temperature min=0 step=1000>Temperature</input-spin>
                                 <input-select value=Kelvin id=temperature-unit>
                                     <option>Kelvin</option>
                                     <option>Celsius</option>
@@ -132,12 +145,12 @@
                                 </input-select>
                             </div>
 
-                            <div clas='input-row'>
-                                <input-spin value=-2 id=index>Power Index</input-spin>
+                            <div class='input-row'>
+                                <input-spin id=index>Power Index</input-spin>
                             </div>
 
                             <div class='input-row'>
-                                <input-file id=file-upload>Upload spectrum</input-file>
+                                <input-file id=file-upload accept='.txt,.fits'>Upload spectrum</input-file>
                             </div>
 
                         </div>
@@ -149,28 +162,31 @@
                                     <option>spectroscopic</option>
                                 </input-select>
                             </div>
+
                             <div class='input-row'>
-                                <input-select label='Slit' id=slit>
-                                    <option value='[0.55arcsec,18arcsec]'>0.55" x 18"</option>
+                                <input-select label='Slit' id=slit></input-select>
+                            </div>
+
+                            <div class='input-row' style='margin-top:0'>
+                                <input-spin id=slit-width min=0 step=0.1>Width</input-spin>
+                                <input-spin id=slit-length min=0>Length</input-spin>
+                                <input-select id=slit-unit>
+                                    <option>arcsec</option>
                                 </input-select>
                             </div>
 
                             <div class='input-row'>
-                                <input-select label='Grating' id=grating></input-select>
-                            </div>
-
-                            <div class='input-row'>
-                                <input-select label='Filter' id=filter></input-select>
-                            </div>
-
-                            <div class='input-row'>
+                                <input-select label='Dichroic' id=dichroic></input-select>
                                 <input-select label='Grism' id=grism></input-select>
                             </div>
 
                             <div class='input-row'>
-                                <input-select label='Binning' id=binning>
-                                    <option value='[1,1]'>1x1</option>
-                                </input-select>
+                                <input-select label='Grating' id=grating></input-select>
+                                <input-select label='Filter' id=filter></input-select>
+                            </div>
+
+                            <div class='input-row'>
+                                <input-select label='Binning' id=binning></input-select>
                             </div>
 
                         </div>
@@ -178,19 +194,19 @@
                             <div class='section-title'>Atmosphere</div>
                             
                             <div class='input-row'>
-                                <input-spin min=0 value=0.8 step=0.1 id=seeing>Seeing</input-spin>
+                                <input-spin min=0 step=0.1 id=seeing>Seeing</input-spin>
                                 <input-select id=seeing-unit>
                                     <option>arcsec</option>
                                 </input-select>
                             </div>
 
                             <div class='input-row'>
-                                <input-spin min=1 max=2 step=0.1 value=1.2 id=airmass>Airmass</input-spin>
+                                <input-spin min=1 max=2 step=0.1 id=airmass>Airmass</input-spin>
                             </div>
 
                             <div class='input-row'>
-                                <input-spin min=1 max=5 step=0.1 value=1.6 id=water-vapor>Water Vapor</input-spin>
-                                <input-select id=water-vapor-unit>
+                                <input-spin min=1 max=5 step=0.1 id=water-vapor>Water Vapor</input-spin>
+                                <input-select value=mm id=water-vapor-unit>
                                     <option>mm</option>
                                     <option>cm</option>
                                 </input-select>
@@ -201,7 +217,7 @@
                     <div class="row">
                         <div class='panel output loading' id='output-plots'>
                         <div class=loading-overlay>
-                            <img src=static/loading_symbol.svg alt='loading symbol'>
+                            <img src=src/static/loading_symbol.svg alt='loading symbol'>
                         </div>
                         </div>
                     </div>
@@ -210,7 +226,7 @@
                 <div class='sidebar'>
                     <div class='panel output loading'>
                         <div class=loading-overlay>
-                            <img src=static/loading_symbol.svg alt='loading symbol'>
+                            <img src=src/static/loading_symbol.svg alt='loading symbol'>
                         </div>
                         <div class='sticky-container'>
                             <div class='section-title'>Results</div>
@@ -232,8 +248,13 @@
             <article id='instructions' >
                 <h2>ETC Instructions</h2>
             </article>
+            <article id='github-link' >
+                <a href='https://github.com/KeckObservatory/Keck-ETC/' target=_blank>
+                    <p>To view the project documentation and source code, click here</p>
+                </a>
+            </article>
             <article id='bug-report' >
-                <a href='https://github.com/Keaton-Blair/etc-prototype/issues/new/choose' target=_blank>
+                <a href='https://github.com/KeckObservatory/Keck-ETC/issues/new/choose' target=_blank>
                     <p>To report a bug or request a feature, click here</p>
                 </a>
             </article>

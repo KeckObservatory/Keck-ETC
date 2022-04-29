@@ -39,13 +39,12 @@ class source:
 
     def _load_files(self):
         self._functions = {}
-        self.available_types = list(vars(self.config.source_types).keys())
 
         for name, source_type in vars(self.config.source_types).items():
             if 'filename' in vars(source_type).keys():
                 data = Table.read(self.config.template_filepath+source_type.filename, format='ascii.ecsv')
                 def define_data_scope(data):  # Wrapper function to narrow the scope of data and make sure each interpolation uses its own dataset
-                    def scale_and_interpolate(w):  # TODO -- Figure out why each function is returning the same results...
+                    def scale_and_interpolate(w):
                         wavelengths = data['wavelength'].to(u.angstrom) * (1 + self.redshift)  # Apply redshift
                         light = data['flux'].to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(wavelengths) + self.spectral_density_vega(wavelengths.to(u.angstrom)))  # Convert to units of light
                         central_wavelength = u.Quantity(vars(self.config.wavelength_band_options)[self.wavelength_band])  # Get central wavelength of passband
@@ -160,13 +159,26 @@ class source:
 
     def set_type(self, new_type):
         if new_type not in self.available_types:
-            warn(f'In Source.set_type() -- source type "{new_type}"" is not available', RuntimeWarning)
-            return
+            try:
+                self.add_template(new_type.split(',')[1], new_type.split(',')[0])
+                new_type = new_type.split(',')[0].split('.')[0]
+            except:
+                warn(f'In Source.set_type() -- source type "{new_type}"" is not available', RuntimeWarning)
+                return
         self.type = new_type
         self.active_parameters = list(vars(self.config.defaults).keys())
         if self.type in vars(self.config.source_types).keys() and 'parameters' in vars(vars(self.config.source_types)[self.type]).keys():
             self.__dict__.update({key: u.Quantity(val) for key, val in vars(vars(self.config.source_types)[self.type].parameters).items()})
             self.active_parameters += list(vars(vars(self.config.source_types)[self.type].parameters).keys())
+
+
+    def reset_parameters(self):
+        
+        self.type = self.config.defaults.type
+        self.available_types = self._original_types.copy()
+        self.set_flux(self.config.defaults.flux)
+        self.redshift = u.Quantity(self.config.defaults.redshift)
+        self.wavelength_band = self.config.defaults.wavelength_band
 
 
     def __init__(self):
@@ -175,10 +187,9 @@ class source:
 
         self._validate_config()
 
-        self.type = self.config.defaults.type
-        self.set_flux(self.config.defaults.flux)
-        self.redshift = u.Quantity(self.config.defaults.redshift)
-        self.wavelength_band = self.config.defaults.wavelength_band
+        self._original_types = list(vars(self.config.source_types).keys())
+
+        self.reset_parameters()
 
         self._load_files()
 
@@ -196,6 +207,7 @@ class source:
 
     def _blackbody(self, wavelengths):
         # From https://pysynphot.readthedocs.io/en/latest/spectrum.html
+        wavelengths = wavelengths / (1 + self.redshift)  # Apply inverse redshift to get actual wavelengths
         light = (2*h*c**2 / wavelengths**5) / (exp(h*c/(wavelengths*self.temperature*k_B)) - 1)
         # Scale light by the given mag / wavelength
         central_wavelength = u.Quantity(vars(self.config.wavelength_band_options)[self.wavelength_band])  # Get central wavelength of passband
@@ -204,10 +216,12 @@ class source:
 
 
     def _flat(self, wavelengths):
+        wavelengths = wavelengths / (1 + self.redshift)  # Apply inverse redshift to get actual wavelengths
         return ([self.flux] * len(wavelengths) * self.flux.unit).to(self.photlam, equivalencies=u.spectral_density(wavelengths.to(u.angstrom)) + self.spectral_density_vega(wavelengths.to(u.angstrom)))
 
 
     def _power_law(self, wavelengths):
+        wavelengths = wavelengths / (1 + self.redshift)  # Apply inverse redshift to get actual wavelengths
         central_wavelength = u.Quantity(vars(self.config.wavelength_band_options)[self.wavelength_band])
         light = self.flux.to(self.photlam, equivalencies=u.spectral_density(wavelengths.to(u.angstrom)) + self.spectral_density_vega(wavelengths.to(u.angstrom))) * (wavelengths / central_wavelength) ** self.index
         return light
@@ -234,15 +248,18 @@ class source:
             raise ValueError('In source.add_template() -- Provided file must be either FITS or ASCII.ECSV format')
         def define_data_scope(data):  # Wrapper function to narrow the scope of data and make sure each interpolation uses its own dataset
             def scale_and_interpolate(w):
-                wavelengths = data['WAVELENGTH'].to(u.angstrom) * (1 + self.redshift)  # Apply redshift
-                light = data['FLUX'].to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(wavelengths) + self.spectral_density_vega(wavelengths.to(u.angstrom)))  # Convert to units of light
-                central_wavelength = u.Quantity(vars(self.config.wavelength_band_options)[self.wavelength_band])  # Get central wavelength of passband
-                light = light / interpolate(central_wavelength, wavelengths, light) * self.flux.to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(central_wavelength) + self.spectral_density_vega(central_wavelength.to(u.angstrom)))  # Scale source by given mag/flux
-                return interpolate(w, wavelengths, light, left=0, right=0)
+                try:
+                    wavelengths = data['WAVELENGTH'].to(u.angstrom) * (1 + self.redshift)  # Apply redshift
+                    light = data['FLUX'].to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(wavelengths) + self.spectral_density_vega(wavelengths.to(u.angstrom)))  # Convert to units of light
+                    central_wavelength = u.Quantity(vars(self.config.wavelength_band_options)[self.wavelength_band])  # Get central wavelength of passband
+                    light = light / interpolate(central_wavelength, wavelengths, light) * self.flux.to(u.photon / (u.cm**2 * u.s * u.angstrom), equivalencies=u.spectral_density(central_wavelength) + self.spectral_density_vega(central_wavelength.to(u.angstrom)))  # Scale source by given mag/flux
+                    return interpolate(w, wavelengths, light, left=0, right=0)
+                except Exception as e:
+                    raise ValueError('In source.add_template() -- provided SED is invalid, must have columns "WAVELENGTH" and "FLUX" with valid units specified\n' + str(e))
             return scale_and_interpolate
-
         self._functions[name.split('.')[0]] = define_data_scope(data)  # Save function corresponding to this source
-        self.available_types.append(name.split('.')[0])  # Add to list of types available to choose from
+        if name.split('.')[0] not in self.available_types:
+            self.available_types.append(name.split('.')[0])  # Add to list of types available to choose from
         # Add name to config so that it's accessible
         class GenericObject:
             pass
@@ -275,6 +292,11 @@ class source:
         elif name == 'wavelength_band':
             if str(value) in vars(self.config.wavelength_band_options).keys():
                 self.wavelength_band = str(value)
+            elif round(float(value)) * u.angstrom in u.Quantity([ u.Quantity(x) for x in vars(self.config.wavelength_band_options).values() ]):
+                names = list(vars(self.config.wavelength_band_options).keys())
+                wavelengths = [ u.Quantity(x) for x in vars(self.config.wavelength_band_options).values()] * u.angstrom
+                index = [round(x) for x in wavelengths.value.tolist()].index(round(float(value)))
+                self.wavelength_band = names[index]
             else:
                 raise ValueError(f'In source.set_parameter() -- {value} is not a valid wavelength band')
         elif name == 'flux':
