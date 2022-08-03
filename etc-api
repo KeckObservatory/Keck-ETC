@@ -12,7 +12,7 @@ PROGRAM_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd 
 
 # Define script variables as default values
 version="1.0"
-port=8080
+port=50006
 printhelp=false
 printversion=false
 warn=false
@@ -30,7 +30,7 @@ Usage: etc-api {start,stop,status,restart,test} [-fhvw] [-p port_number] [-l log
         restart         Restart the server
         test            Verify successful program installation
     Optional arguments:
-        -p, --port      Specifies port for server, defaults to 8080
+        -p, --port      Specifies port for server, defaults to 50006 
         -f, --force     Force kill running server, use with 'stop' or 'restart'
         -l, --log       Path to logfile, defaults to ./log/etc.log
         -w, --warn      Log python warnings, ignored by default
