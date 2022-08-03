@@ -316,7 +316,7 @@ const apiRequest = async (query, parameters) => {
     }
 
     // Send fetch request and return data
-    const request = await fetch('http://localhost:8080', {
+    const request = await fetch('https://vm-appserver.keck.hawaii.edu:50006', {
         method: 'POST',
         headers: {'Content-Type': 'text/plain'},
         body: query
