@@ -19,7 +19,7 @@ warn=false
 forcekill=false
 statusall=true
 action="none"
-log="log/etc.log"
+log="./etc.log"
 
 usage=$(cat << END
 Usage: etc-api {start,stop,status,restart,test} [-fhvw] [-p port_number] [-l log_file]

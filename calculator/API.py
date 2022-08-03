@@ -18,7 +18,7 @@ from os import getpid
 from sys import argv
 
 
-hostName = "https://vm-appserver.keck.hawaii.edu"
+hostName = "0.0.0.0"
 serverPort = 50006 
 
 
