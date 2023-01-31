@@ -7,11 +7,11 @@ defaults:
   redshift: 0.0  # negative for blueshift
 
 source_types:
-
-  emission:
-    name: Emission Line
-    parameters:
-      width: 200 nm
+  # TODO: Enable when Emission Line is fixed
+  # emission:
+  #   name: Emission Line
+  #   parameters:
+  #     width: 200 nm
 
   blackbody:
     name: Blackbody
